@@ -1,0 +1,9 @@
+# tex file versions of Rnw files
+NimbleUserManual.tex
+MCMC.tex
+
+# Latex output files
+*.out
+*.log
+*.toc
+figure

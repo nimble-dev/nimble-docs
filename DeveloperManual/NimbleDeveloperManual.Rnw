@@ -1,0 +1,134 @@
+\documentclass{article}
+
+\begin{document}
+
+This manual documents the internal workings of NIMBLE: how BUGS models are processed, how NIMBLE functions are compiled, and how the C++ code works.
+
+\section{Processing BUGS code}
+\label{sec:proc-bugs-models}
+
+BUGS models are processed in a sequence of well defined steps, managed by a set of R classes.  The R reference class that manages most of the process is modelDefClass.
+
+Each of these steps will be described first, with the relevant R classes and objects stated.  At the end is a summary of these classes.
+
+
+
+\subsection{Parsing and representation of the parse tree}
+\label{sec:pars-repr-parse}
+
+Parsing is done simply with R's parse function.   Preprocessing is needed for just a few cases:
+\begin{itemize}
+\item Line breaks allowed in BUGS code that are not allowed in R code
+\item When we support I() notation, it will need to be preprocessed because it does not conform to parseable R syntax.
+\end{itemize}
+
+Brief example of R parse trees.  The parsed code is stored in the BUGScode field of modelDefClass.
+
+\subsection{Extracting content from each BUGS line}
+\label{sec:extr-cont-from}
+
+The content of each model declaration line (lines other than 'for' loops and '{' or '}') is stored in an object of R reference class BUGSdeclClass.  
+
+The function modelDefClass::processBUGScode manages this process.  The actual processing of a line is done by processBUGSline.
+
+Explain contexts.
+
+\subsection{Expanding distribution requests}
+\label{sec:expand-distr-requ}
+
+\subsection{Processing contexts}
+\label{sec:processing-contexts}
+
+\subsection{Processing links}
+\label{sec:processing-links}
+
+\subsection{Reparameterizing distributions}
+\label{sec:repar-distr}
+
+\subsection{Replacing constants}
+\label{sec:replacing-constants}
+
+\subsection{Processing distribution arguments that are expressions}
+\label{sec:proc-distr-argum}
+
+\subsection{Determining symbolic parent nodes}
+\label{sec:determ-symb-parent}
+
+\subsection{Determining expression replacements}
+\label{sec:determ-expr-repl}
+
+\subsection{Expanding indices}
+\label{sec:expanding-indices}
+
+\subsection{Collecting information about each variable}
+\label{sec:coll-inform-about}
+
+\subsection{Building the igraph}
+\label{sec:building-igraph}
+
+\subsection{Building the maps}
+\label{sec:building-maps}
+
+
+\section{Classes used for model definitions}
+\label{sec:classes-used-model}
+
+\section{Building models from the processed BUGS code}
+\label{sec:building-models-from}
+
+Summary of the processing related to model objects.
+
+
+\section{Processing nimbleFunctions}
+\label{sec:proc-nimbl}
+
+\section{Classes for processing nimbleFunctions}
+\label{sec:class-proc-nimbl}
+
+
+
+
+\section{Processing RCfunctions}
+\label{sec:proc-rcfunct}
+
+\subsection{Creating exprClass objects for the parse tree}
+\label{sec:creat-exprcl-objects}
+
+\subsection{Processing specific call replacements}
+\label{sec:proc-spec-call}
+
+\subsection{Generating intermediate variables for expressions that can't be evaluated in-place as arguments}
+\label{sec:gener-interm-vari}
+
+\subsection{Initializing size information from the symbol table}
+\label{sec:init-size-inform}
+
+\subsection{Generating size expressions for every step in the parse tree where possible}
+\label{sec:gener-size-expr}
+
+\subsection{Generating code for size assertions and resizes}
+\label{sec:generating-code-size}
+
+\subsection{Labeling for Eigen code generation (eigenization)}
+\label{sec:labeling-eigen-code}
+
+\subsection{Eigenization: Generating code for Eigen}
+\label{sec:eigen-gener-code}
+
+
+
+
+
+
+\section{Classes for C++ code}
+\label{sec:classes-c++-code}
+
+\subsection{nimArrays}
+
+\section{NIMBLE-provided algorithms}
+
+\subsection{Detecting conjugate relationships}
+
+\subsection{Determining default updaters for nodes}
+
+\end{document}
