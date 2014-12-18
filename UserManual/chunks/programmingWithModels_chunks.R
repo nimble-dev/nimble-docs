@@ -12,13 +12,13 @@ logProbCalcPlus <- nimbleFunction(
         returnType(double(0))
     })
 
-code <- modelCode({
+code <- nimbleCode({
     a ~ dnorm(0, 1); b ~ dnorm(a, 1)
 })
 testModel <- nimbleModel(code)
 logProbCalcPlusA <- logProbCalcPlus(testModel, 'a')
 testModel$b <- 1.5
-logProbCalcPlusA(0.5)
+logProbCalcPlusA$run(0.5)
 testModel$a  ## a was set to 0.5 + valueToAdd
 
 
@@ -31,7 +31,7 @@ ClogProbCalcPlusA <- CnfDemo$logProbCalcPlusA
 ## @knitr nf-using
 CtestModel$a      ## values were initialized from testModel
 CtestModel$b
-lpA <- ClogProbCalcPlusA(1.5)
+lpA <- ClogProbCalcPlusA$run(1.5)
 lpA
 ## verify the answer:
 dnorm(CtestModel$b, CtestModel$a, 1, log = TRUE) + 
@@ -41,11 +41,11 @@ testModel$a        ## the uncompiled model was not modified
 
 ## @knitr nf-modifyValueToAdd
 
-nfVar(logProbCalcPlusA, 'valueToAdd')  ## uncompiled
-nfVar(logProbCalcPlusA, 'valueToAdd') <- 2
-nfVar(ClogProbCalcPlusA, 'valueToAdd')  ## or compiled
-nfVar(ClogProbCalcPlusA, 'valueToAdd') <- 3
-ClogProbCalcPlusA(1.5)
+logProbCalcPlusA$valueToAdd  ## uncompiled
+logProbCalcPlusA$valueToAdd <- 2
+ClogProbCalcPlusA$valueToAdd  ## or compiled
+ClogProbCalcPlusA$valueToAdd <- 3
+ClogProbCalcPlusA$run(1.5)
 CtestModel$a     ## a == 1.5 + 3
 
 ## @knitr nf-RCfun
@@ -100,22 +100,22 @@ runFunction = function(){
 
 ## @knitr mv-compilation-example
 ##   Simple model and modelValue for example
-targetModelCode <- modelCode({
+targetnimbleCode <- nimbleCode({
     x ~ dnorm(0,1)
     for(i in 1:4)
         y[i] ~ dnorm(0,1)
 })
 
 ##	Code for proposal model
-propModelCode <- modelCode({
+propnimbleCode <- nimbleCode({
 	x ~ dnorm(0,2)
 	for(i in 1:4)
 		y[i] ~ dnorm(0,2)
 })
 
 ##	Building R models
-targetModel = nimbleModel(targetModelCode)
-propModel = nimbleModel(propModelCode)
+targetModel = nimbleModel(targetnimbleCode)
+propModel = nimbleModel(propnimbleCode)
 cTargetModel = compileNimble(targetModel)
 cPropModel = compileNimble(propModel)
 
@@ -157,16 +157,16 @@ CPropSamp <- compileNimble(RPropSamp, project = propModel)
 CImpWeights <- compileNimble(RImpWeights, project = targetModel)
 
 #Generating and saving proposal sample of size 10
-CPropSamp(10)
+CPropSamp$run(10)
 
 ## Calculating the importance weights and saving to mv
-CImpWeights()
+CImpWeights$run()
 
 ## Retrieving the modelValues objects
 ## Extracted objects are C-based modelValues objects
 
-savedPropSamp_1 = nfVar(CImpWeights, 'propModelValues')
-savedPropSamp_2 = nfVar(CPropSamp, 'mv')
+savedPropSamp_1 = CImpWeights$propModelValues
+savedPropSamp_2 = CPropSamp$mv
 
 # Subtle note: savedPropSamp_1 and savedPropSamp_2
 # both provide interface to the same compiled modelValues objects!
@@ -180,7 +180,7 @@ savedPropSamp_1['x',1] <- 0
 savedPropSamp_2['x',1]
 
 ## Viewing the saved importance weights
-savedWeights <- nfVar(CImpWeights, 'savedWeights')
+savedWeights <- CImpWeights$savedWeights
 unlist(savedWeights[['w']])
 
 #Viewing first 3 rows. Note that savedPropSsamp_1['x', 1] was altered 
@@ -209,10 +209,10 @@ methodsDemo <- nimbleFunction(
         }))
 
 methodsDemo1 <- methodsDemo()
-methodsDemo1(1:10)
-nfVar(methodsDemo1, 'sharedValue') <- 1
+methodsDemo1$run(1:10)
+methodsDemo1$sharedValue <- 1
 CmethodsDemo1 <- compileNimble(methodsDemo1)
-CmethodsDemo1(1:10)
+CmethodsDemo1$run(1:10)
 
 ## @knitr owningMemberFunctions
 
@@ -221,18 +221,18 @@ usePreviousDemo <- nimbleFunction(
         myMethodsDemo <- methodsDemo()
     },
     run = function(x = double(1)) {
-        nfVar(myMethodsDemo, 'sharedValue') <<- initialSharedValue
-        A <- myMethodsDemo(x[1:5])
+        myMethodsDemo$sharedValue <<- initialSharedValue
+        A <- myMethodsDemo$run(x[1:5])
         print(A)
-        B <- nfMethod(myMethodsDemo, 'times')(10)
+        B <- myMethodsDemo$times(10)
         return(B)
         returnType(double())
     })
 
 usePreviousDemo1 <- usePreviousDemo(2)
-usePreviousDemo1(1:10)
+usePreviousDemo1$run(1:10)
 CusePreviousDemo1 <- compileNimble(usePreviousDemo1)
-CusePreviousDemo1(1:10)
+CusePreviousDemo1$run(1:10)
 
 ## @knitr nimbleFunctionLists
 
@@ -244,7 +244,7 @@ baseClass <- nimbleFunctionVirtual(
 
 derived1 <- nimbleFunction(
     contains = baseClass,
-    setup = TRUE,
+    setup = function(){},
     run = function(x = double(1)) {
         print('run 1')
         return(sum(x))
@@ -259,7 +259,7 @@ derived1 <- nimbleFunction(
 
 derived2 <- nimbleFunction(
     contains = baseClass,
-    setup = TRUE,
+    setup = function(){},
     run = function(x = double(1)) {
         print('run 2')
         return(prod(x))
@@ -277,21 +277,22 @@ useThem <- nimbleFunction(
         nfl <- nimbleFunctionList(baseClass)
         nfl[[1]] <- derived1()
         nfl[[2]] <- derived2()
+        val <- 0
     },
     run = function(x = double(1)) {
         for(i in seq_along(nfl)) {
-            print(nfl[[i]](x))
-            print(nfMethod(nfl[[i]], 'foo')())
+            print( nfl[[i]]$run(x) )
+            print( nfl[[i]]$foo() )
         }
     }
     )
 
 useThem1 <- useThem()
 set.seed(0)
-useThem1(1:5)    
+useThem1$run(1:5)    
 CuseThem1 <- compileNimble(useThem1)
 set.seed(0)
-CuseThem1(1:5)
+CuseThem1$run(1:5)
 
 ## @knitr dataStructures
 
@@ -306,22 +307,22 @@ dataNF <- nimbleFunction(
 useDataNF <- nimbleFunction(
     setup = function(myDataNF) {},
     run = function(newX = double(), newY = double(1), newZ = double(2)) {
-        nfVar(myDataNF, 'X') <<- newX
-        nfVar(myDataNF, 'Y') <<- newY
-        nfVar(myDataNF, 'Z') <<- newZ
+        myDataNF$X <<- newX
+        myDataNF$Y <<- newY
+        myDataNF$Z <<- newZ
     })
 
 myDataNF <- dataNF()
 myUseDataNF <- useDataNF(myDataNF)
-myUseDataNF(as.numeric(100), as.numeric(100:110), matrix(as.numeric(101:120), nrow = 2))
-nfVar(myDataNF, 'X')
-nfVar(myDataNF, 'Y')
-nfVar(myDataNF, 'Z')
-nfVar(nfVar(myUseDataNF, 'myDataNF'), 'X')
+myUseDataNF$run(as.numeric(100), as.numeric(100:110), matrix(as.numeric(101:120), nrow = 2))
+myDataNF$X
+myDataNF$Y
+myDataNF$Z
+myUseDataNF$myDataNF$X
 
 CmyUseDataNF <- compileNimble(myUseDataNF)
-CmyUseDataNF(-100, -(100:110), matrix(-(101:120), nrow = 2))
-CmyDataNF <- nfVar(CmyUseDataNF, 'myDataNF')
+CmyUseDataNF$run(-100, -(100:110), matrix(-(101:120), nrow = 2))
+CmyDataNF <- CmyUseDataNF$myDataNF
 CmyDataNF$X
 CmyDataNF$Y
 CmyDataNF$Z

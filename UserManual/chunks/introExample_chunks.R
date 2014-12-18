@@ -1,6 +1,6 @@
 ## @knitr inputPump
 
-pumpCode <- modelCode({ 
+pumpCode <- nimbleCode({ 
   for (i in 1:N){
       theta[i] ~ dgamma(alpha,beta);
       lambda[i] <- theta[i]*t[i];
@@ -52,7 +52,7 @@ Cpump <- compileNimble(pump)
 Cpump$theta
 
 ## @knitr mcmcPump
-pumpSpec <- MCMCspec(pump, print = TRUE)
+pumpSpec <- configureMCMC(pump, print = TRUE)
 pumpSpec$addMonitors(c('alpha', 'beta', 'theta'))
 
 pumpMCMC <- buildMCMC(pumpSpec)
@@ -60,9 +60,9 @@ CpumpMCMC <- compileNimble(pumpMCMC, project = pump)
 
 niter <- 1000
 set.seed(0)
-CpumpMCMC(niter)
+CpumpMCMC$run(niter)
 
-samples <- as.matrix(nfVar(CpumpMCMC, 'mvSamples'))
+samples <- as.matrix(CpumpMCMC$mvSamples)
 
 par(mfrow = c(1, 4), mai = c(.5, .5, .1, .2))
 plot(samples[ , 'alpha'], type = 'l', xlab = 'iteration',
@@ -86,8 +86,8 @@ pumpMCMC2 <- buildMCMC(pumpSpec)
 CpumpNewMCMC <- compileNimble(pumpMCMC2, project  = pump, resetFunctions = TRUE)
 
 set.seed(0);
-CpumpNewMCMC(niter)
-samplesNew <- as.matrix(nfVar(CpumpNewMCMC, 'mvSamples'))
+CpumpNewMCMC$run(niter)
+samplesNew <- as.matrix(CpumpNewMCMC$mvSamples)
 
 par(mfrow = c(1, 4), mai = c(.5, .5, .1, .2))
 plot(samplesNew[ , 'alpha'], type = 'l', xlab = 'iteration',
@@ -113,7 +113,9 @@ box = list( list(c('alpha','beta'), c(0, Inf)))
 pumpMCEM <- buildMCEM(model = pump2, latentNodes = 'theta[1:10]',
                        boxConstraints = box)
 
-pumpMLE <- pumpMCEM()
+pumpMLE <- pumpMCEM()	# Note: buildMCEM returns an R function that contains a nimbleFunction
+						# rather than a nimble function. That is why pumpMCEM() is used instead of 
+						# pumpMCEM$run()
 pumpMLE
 
 ## @knitr nfPump
@@ -141,9 +143,9 @@ pump$alpha <- pumpMLE[1]
 pump$beta <- pumpMLE[2]
 calculate(pump, pump$getDependencies(c('alpha','beta'), determOnly = TRUE))
 saveTheta <- pump$theta
-simNodesTheta1to5(10)
-nfVar(simNodesTheta1to5, 'mv')[['theta']][1:2]
-nfVar(simNodesTheta1to5, 'mv')[['logProb_x']][1:2]
+simNodesTheta1to5$run(10)
+simNodesTheta1to5$mv[['theta']][1:2]
+simNodesTheta1to5$mv[['logProb_x']][1:2]
 
 ## @knitr runPumpSimsC
 CsimNodesTheta1to5 <- compileNimble(simNodesTheta1to5,
@@ -154,6 +156,6 @@ calculate(Cpump, Cpump$getDependencies(c('alpha','beta'), determOnly = TRUE))
 Cpump$theta <- saveTheta
 
 set.seed(0)
-CsimNodesTheta1to5(10)
-nfVar(CsimNodesTheta1to5, 'mv')[['theta']][1:2]
-nfVar(CsimNodesTheta1to5, 'mv')[['logProb_x']][1:2]
+CsimNodesTheta1to5$run(10)
+CsimNodesTheta1to5$mv[['theta']][1:2]
+CsimNodesTheta1to5$mv[['logProb_x']][1:2]
