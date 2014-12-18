@@ -128,10 +128,10 @@ sampleMV <- modelValues(sampleMVSpec)
 
 ##   nimbleFunction for generating proposal sample
 PropSamp_Gen <- nimbleFunction(
-    setup <- function(mv, propModel){
+    setup = function(mv, propModel){
         nodeNames <- propModel$getNodeNames()
     },
-    run <- function(m = integer() ){
+    run = function(m = integer() ){
         resize(mv, m)
         for(i in 1:m){
             simulate(propModel)
