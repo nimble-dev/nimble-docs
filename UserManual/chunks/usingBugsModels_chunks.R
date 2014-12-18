@@ -1,6 +1,6 @@
 ## @knitr usingModelsExample
 
-mc <- modelCode({
+mc <- nimbleCode({
     a ~ dnorm(0, 0.001)
     for(i in 1:5) {
         y[i] ~ dnorm(a, 0.1)
@@ -39,7 +39,7 @@ model$z[2, 2]
 
 ## @knitr multivariateDecExample
 
-multiVarCode <- modelCode({
+multiVarCode <- nimbleCode({
     X[1, 1:5] ~ dmnorm(mu[], cov[,])
     X[6:10, 3] ~ dmnorm(mu[], cov[,])
 })
@@ -56,10 +56,10 @@ model$y
 simulate(model, 'y')
 model$y
 model$z
-simulate(model, c('y[1:3]', 'z[1:3, 1:5]'))
+simulate(model, c('y[1:3]', 'z[1:5, 1:3]'))
 model$y
 model$z
-simulate(model, c('z[1:3, 1:5]'), includeData = TRUE)
+simulate(model, c('z[1:5, 1:3]'), includeData = TRUE)
 model$z
 
 ## @knitr calcSimGLPdirect
@@ -70,7 +70,7 @@ model$nodes[['y[2]']]$getLogProb()
 
 ## @knitr reinitPumpModel
 
-pumpCode <- modelCode({ 
+pumpCode <- nimbleCode({ 
   for (i in 1:N){
       theta[i] ~ dgamma(alpha,beta);
       lambda[i] <- theta[i]*t[i];

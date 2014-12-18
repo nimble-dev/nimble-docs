@@ -20,6 +20,7 @@
 \hypersetup{colorlinks=true, linkcolor=red}
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 %\SweaveOpts{concordance=TRUE}
 
 <<setup, include=FALSE, cache=FALSE>>=

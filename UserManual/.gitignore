@@ -3,6 +3,7 @@ NimbleUserManual.tex
 MCMC.tex
 
 # Latex output files
+*.aux
 *.out
 *.log
 *.toc
