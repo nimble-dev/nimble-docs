@@ -79,15 +79,23 @@ acf(samples[, 'beta'])  ## plot autocorrelation of beta  sample
 
 ## @knitr mcmcPump2
 
-pumpSpec$addSampler('RW_block', list(targetNodes = c('alpha', 'beta'),
+pump2 <- pump$newModel()
+
+pumpSpec2 <- configureMCMC(pump2)
+
+pumpSpec2$addSampler('RW_block', list(targetNodes = c('alpha', 'beta'),
                                      adaptInterval = 100))
-pumpMCMC2 <- buildMCMC(pumpSpec)
+pumpSpec2$addMonitors( c('alpha', 'beta', 'theta'))
+
+pumpMCMC2 <- buildMCMC(pumpSpec2)
+
+Cpump2 <- compileNimble(pump2)
 # need to reset the nimbleFunctions in order to add the new MCMC
-CpumpNewMCMC <- compileNimble(pumpMCMC2, project  = pump, resetFunctions = TRUE)
+CpumpMCMC2 <- compileNimble(pumpMCMC2, project = pump2)
 
 set.seed(0);
-CpumpNewMCMC$run(niter)
-samplesNew <- as.matrix(CpumpNewMCMC$mvSamples)
+CpumpMCMC2$run(niter)
+samplesNew <- as.matrix(CpumpMCMC2$mvSamples)
 
 par(mfrow = c(1, 4), mai = c(.5, .5, .1, .2))
 plot(samplesNew[ , 'alpha'], type = 'l', xlab = 'iteration',
@@ -104,13 +112,13 @@ acf(samplesNew[, 'beta'])  ## plot autocorrelation of beta  sample
 
 ## @knitr mcemPump
 
-pump2 <- pump$newModel()
+pump3 <- pump$newModel()
 
-nodes <- pump2$getNodeNames(stochOnly = TRUE)
+nodes <- pump3$getNodeNames(stochOnly = TRUE)
 
 box = list( list(c('alpha','beta'), c(0, Inf)))
 
-pumpMCEM <- buildMCEM(model = pump2, latentNodes = 'theta[1:10]',
+pumpMCEM <- buildMCEM(model = pump3, latentNodes = 'theta[1:10]',
                        boxConstraints = box)
 
 pumpMLE <- pumpMCEM()	# Note: buildMCEM returns an R function that contains a nimbleFunction
@@ -119,6 +127,9 @@ pumpMLE <- pumpMCEM()	# Note: buildMCEM returns an R function that contains a ni
 pumpMLE
 
 ## @knitr nfPump
+
+pump4 <- pump$newModel()
+Cpump4 <- compileNimble(pump4)
 
 simNodesMany <- nimbleFunction(
     setup = function(model, nodes) {
@@ -135,25 +146,25 @@ simNodesMany <- nimbleFunction(
         }
     })
 
-simNodesTheta1to5 <- simNodesMany(pump, 'theta[1:5]')
+simNodesTheta1to5 <- simNodesMany(pump4, 'theta[1:5]')
 
 ## @knitr runPumpSimsR
 set.seed(0)  ## make the calculation repeatable
-pump$alpha <- pumpMLE[1]
-pump$beta <- pumpMLE[2]
-calculate(pump, pump$getDependencies(c('alpha','beta'), determOnly = TRUE))
-saveTheta <- pump$theta
+pump4$alpha <- pumpMLE[1]
+pump4$beta <- pumpMLE[2]
+calculate(pump4, pump4$getDependencies(c('alpha','beta'), determOnly = TRUE))
+saveTheta <- pump4$theta
 simNodesTheta1to5$run(10)
 simNodesTheta1to5$mv[['theta']][1:2]
 simNodesTheta1to5$mv[['logProb_x']][1:2]
 
 ## @knitr runPumpSimsC
 CsimNodesTheta1to5 <- compileNimble(simNodesTheta1to5,
-                                    project  = pump, resetFunctions = TRUE)
-Cpump$alpha <- pumpMLE[1]
-Cpump$beta <- pumpMLE[2]
-calculate(Cpump, Cpump$getDependencies(c('alpha','beta'), determOnly = TRUE))
-Cpump$theta <- saveTheta
+                                    project  = pump4)
+Cpump4$alpha <- pumpMLE[1]
+Cpump4$beta <- pumpMLE[2]
+calculate(Cpump4, Cpump$getDependencies(c('alpha','beta'), determOnly = TRUE))
+Cpump4$theta <- saveTheta
 
 set.seed(0)
 CsimNodesTheta1to5$run(10)
