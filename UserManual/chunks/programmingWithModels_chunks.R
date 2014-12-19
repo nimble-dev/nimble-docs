@@ -100,22 +100,22 @@ runFunction = function(){
 
 ## @knitr mv-compilation-example
 ##   Simple model and modelValue for example
-targetnimbleCode <- nimbleCode({
+targetModelCode <- nimbleCode({
     x ~ dnorm(0,1)
     for(i in 1:4)
         y[i] ~ dnorm(0,1)
 })
 
 ##	Code for proposal model
-propnimbleCode <- nimbleCode({
+propModelCode <- nimbleCode({
 	x ~ dnorm(0,2)
 	for(i in 1:4)
 		y[i] ~ dnorm(0,2)
 })
 
 ##	Building R models
-targetModel = nimbleModel(targetnimbleCode)
-propModel = nimbleModel(propnimbleCode)
+targetModel = nimbleModel(targetModelCode)
+propModel = nimbleModel(propModelCode)
 cTargetModel = compileNimble(targetModel)
 cPropModel = compileNimble(propModel)
 

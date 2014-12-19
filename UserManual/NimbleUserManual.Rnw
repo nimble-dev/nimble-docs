@@ -1837,7 +1837,7 @@ set of state nodes. Once this function is compiled, parameter values to the C-mo
 <<particle_Filter_Chunk>>=
 # Building a simple linear state-space model. 
 # x is latent space, y is observed data
-timeModelCode <- nimbleCodegg({
+timeModelCode <- nimbleCode({
   x[1] ~ dnorm(mu_0, 1)
 	y[1] ~ dnorm(x[1], 1)
 	for(i in 2:t){

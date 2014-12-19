@@ -5,3 +5,7 @@
 *~
 
 UserManual/.Rapp.history
+
+UserManual/.Rhistory
+
+*.gz
