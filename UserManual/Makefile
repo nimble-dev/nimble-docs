@@ -6,5 +6,5 @@ NimbleUserManualNoEval.pdf :	NimbleUserManual.Rnw
 	Rscript makeNimbleUserManualNoEval.R 
 
 clean :
-	rm -f NimbleUserManual.pdf NimbleUserManual.tex NimbleUserManual.aux NimbleUserManual.log MCMC.tex
-# for some reason rm -f NimbleUserManual.{pdf,tex,aux,log} not removing anything on Chris' linux box...
+	rm -f NimbleUserManual.pdf NimbleUserManual.tex NimbleUserManual.aux NimbleUserManual.log NimbleUserManual.toc NimbleUserManual.out MCMC.tex
+

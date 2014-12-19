@@ -78,10 +78,11 @@ acf(samples[, 'alpha']) ## plot autocorrelation of alpha sample
 acf(samples[, 'beta'])  ## plot autocorrelation of beta  sample
 
 ## @knitr mcmcPump2
-
 pumpSpec$addSampler('RW_block', list(targetNodes = c('alpha', 'beta'),
                                      adaptInterval = 100))
+                                     
 pumpMCMC2 <- buildMCMC(pumpSpec)
+
 # need to reset the nimbleFunctions in order to add the new MCMC
 CpumpNewMCMC <- compileNimble(pumpMCMC2, project  = pump, resetFunctions = TRUE)
 

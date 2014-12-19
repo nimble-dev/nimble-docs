@@ -15,7 +15,7 @@
 
 \def\cd#1{\texttt{#1}}
 \def\nm#1{\textit{#1}}
-\newcommand{\ver}{0.1.1}
+\newcommand{\ver}{0.3.1}
 
 \hypersetup{colorlinks=true, linkcolor=red}
 
@@ -941,7 +941,7 @@ Cobj <- compileNimble(pumpMiss, pumpMissMCMC)
 
 niter <- 1000
 set.seed(0)
-Cobj$pumpMissMCMC(niter)
+Cobj$pumpMissMCMC$run(niter)
 samples <- as.matrix(nfVar(Cobj$pumpMissMCMC, 'mvSamples'))
 
 samples[1:5, 13:17]
@@ -1766,22 +1766,22 @@ cGetLogProbXDep <- compileNimble(rGetLogProbXDep,
 cSimpleModel$x
 cSimpleModel$y
 #simulating x and y
-cSimXY()
+cSimXY$run()
 cSimpleModel$x
 cSimpleModel$y
 
-cCalcXDep()
+cCalcXDep$run()
 
 #Gives correct answer because logProbs
 #updated by 'calculate' after simulation
-cGetLogProbXDep()
+cGetLogProbXDep$run()
 
-cSimXY()
+cSimXY$run()
 
 #Gives old answer because logProbs
 #not updated after 'simulate'
-cGetLogProbXDep()
-cCalcXDep()
+cGetLogProbXDep$run()
+cCalcXDep$run()
 @
 
 
@@ -1813,9 +1813,9 @@ cSimManyXY <- compileNimble(rSimManyXY, project = simpleModel)
 cCalcManyXDeps <- compileNimble(rCalcManyXDeps, project = simpleModel)
 cGetLogProbMany <- compileNimble(rGetLogProbMany, project = simpleModel)
 
-cSimManyXY(m = 5) # simulating 5 times
-cCalcManyXDeps(saveLP = TRUE) # calculating 
-cGetLogProbMany() #
+cSimManyXY$run(m = 5) # simulating 5 times
+cCalcManyXDeps$run(saveLP = TRUE) # calculating 
+cGetLogProbMany$run() #
 @
   
   
@@ -1880,7 +1880,7 @@ cTimeModel$mu_0 = 1
 
 #Run particle filter with 
 #5000 particles
-cPF(m = 5000)
+cPF$run(m = 5000)
 @
 
 \section{Monte Carlo Expectation Maximization (MCEM)}

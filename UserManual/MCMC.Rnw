@@ -525,7 +525,7 @@ mean(cSamplesMatrix[, 'mu[1]'])
 ## run the crossLevel MCMC function,
 ## and examine the mean of mu[1]
 Cmcmc_CL$run(1000)
-cSamplesMatrix_CL <- as.matrix(Cmcmc_CLmvSamples)
+cSamplesMatrix_CL <- as.matrix(Cmcmc_CL$mvSamples)
 mean(cSamplesMatrix_CL[, 'mu[1]'])
 @
 
