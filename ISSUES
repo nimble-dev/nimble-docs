@@ -3,12 +3,6 @@
 USER MANUAL
 -----------
 
-* Section 5.1.3 Extensions to BUGS.  Correct this section, to state that we do not allow expressions as arguments to multivariate distributions.
-* Describe new option for RW_block sampler: adaptScaleOnly, default value FALSE
-* Describe new option for MCMC suite: burn-in
-* Error in Roxygen documentation for MCMCsuite: description of summaryStats argument is truncated by a '%' sign
-* Need to clean-up, or really correct, the Roxygen documentation associated with getValues() and setValues() (which have been deprecated), and also for values() (where the documentation makes references to getValues() and setValues() functions)
-* Add info in user manaul about new MCMCspec option: multivariateNodesAsScalars (default=FALSE)
 
 
 DEVELOPER MANUAL

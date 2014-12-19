@@ -62,7 +62,7 @@ The particular sampling algorithm assigned to each stochastic node is determined
 \item If the node has no stochastic dependents, a predictive \nm{end} sampler is assigned.  The \nm{end} sampling algorithm merely calls \cd{simulate()} on the particular node, since this simulates identically from the conditional posterior distribution.
 \item The node is checked for presence of a conjugate relationship between its prior distribution and the distributions of its stochastic dependents.  If it is determined to be in a conjugate relationship, then the corresponding \nm{conjugate} sampler is assigned.
 \item If the node is discrete-valued, then a \nm{slice} sampler is assigned.
-\item If the node is vectorized (specified using a multivariate distribution), then a single \nm{RW_block} sampler is assigned to jointly sample all scalar components of the multivariate node.  This sampler performs multi-dimensional Metropolis-Hastings random walk sampling.
+\item If the node is vectorized (specified using a multivariate distribution), then a single \nm{RW\_block} sampler is assigned to jointly sample all scalar components of the multivariate node.  This sampler performs multi-dimensional Metropolis-Hastings random walk sampling.
 \item If none of the above criteria are satisfied, then the default, scalar random walk \nm{RW} sampler is assigned.  This algorithm performs Metropolis-Hastings sampling with a normal proposal distribution.
 \end{enumerate}
 
