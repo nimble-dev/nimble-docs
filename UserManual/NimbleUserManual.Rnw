@@ -55,8 +55,8 @@ read_chunk(file.path('chunks', 'introExample_chunks.R'))  # one can put code chu
 
 NIMBLE is a system for building and sharing analysis methods for
 statistical models, especially for hierarchical models and
-computationally-intensive methods.  This is the very first version,
-\ver (v\ver). You can do quite a bit with it, but you can also expect it to be rough
+computationally-intensive methods.  This is an early version,
+\ver. You can do quite a bit with it, but you can also expect it to be rough
 and incomplete.  If you want to analyze data, we hope you will find
 something already useful.  If you want to build algorithms, we hope
 you will program in NIMBLE and make an R package providing your
