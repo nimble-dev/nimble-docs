@@ -318,8 +318,9 @@ information specific to our model for use in the run-time code.
 \item One instance, or ``specialization'', \cd{simNodesTheta1to5}, has
   been made by calling \cd{simNodesMany} with the \cd{pump} model and
   nodes \cd{`theta[1:5]'} as arguments.  These are used as inputs to
-  the setup function.  What is returned is a function that will
-  execute the \cd{run} code.
+  the setup function.  What is returned is an object of a uniquely
+  generated reference class with a \cd{run} method (member function)
+  that will execute the \cd{run} code.
 \end{enumerate}
 
 In fact, \cd{simNodesMany} is very similar to a standard
@@ -335,7 +336,7 @@ to their MLE, and recorded the \cd{theta} values to use next.  Then we
 have requested 10 simulations from
 \cd{simNodesTheta1to5}.  Shown are the first two simulation results
 for \cd{theta} and the log probabilities of \cd{x}.  Notice that
-\cd{theta[6;10]} and the corresponding log probabilities for \cd{x[6,10]} are unchanged because the nodes being simulated are only
+\cd{theta[6:10]} and the corresponding log probabilities for \cd{x[6:10]} are unchanged because the nodes being simulated are only
 \cd{theta[1:5]}.  In R, this function runs slowly.
 
 Finally, let's compile the function and run that version.
@@ -710,7 +711,7 @@ of how this can be used and what it can contain.
 
 NIMBLE aims to be compatible with the original BUGS language and also
 the version used by the popular JAGS package, as well as to extend the
-BUGS language.  However, for this first release, there are some BUGS
+BUGS language.  However, at this point, there are some BUGS
 features not supported by NIMBLE, and there are some extensions that
 are planned but not implemented.
 
@@ -858,7 +859,7 @@ reference for this information.
 \item[dimensions] This is a named list of vectors of the sizes of
   variables that appear in the model with unfilled indices such as
   \cd{x[,]}.  For the most part, NIMBLE determines the sizes of model
-  variables automatically, but in case with blank index fields,
+  variables automatically, but in cases with blank index fields,
   dimension information is required. As described in the section below
   about indexing, NIMBLE currently requires square brackets with blank
   indices (or complete indicies such as \cd{1:N}, of course) when the full extent of a variable is needed.  The dimension
@@ -1051,11 +1052,11 @@ as an example:
   \cd{gamma}, this is (shape, scale).  
 \item The \nm{BUGS} parameterization is the one defined in the
   original BUGS language.  For \cd{gamma}, this is (shape, rate).
-\item An alternative parameterization is one that must be converted
+\item An \nm{alternative} parameterization is one that must be converted
   into the \nm{canonical} parameterization.  For example, NIMBLE
   provides a (mean, sd) parameterization and creates nodes to
   calculate (shape, scale) from (mean, sd).  In the case
-of \cd{gamma}, the \nm{BUGS} parameterization is also an alternative parameterization.
+of \cd{gamma}, the \nm{BUGS} parameterization is also an \nm{alternative} parameterization.
 
 \end{enumerate}
 
@@ -1064,7 +1065,7 @@ code, the order of parameters places the \nm{BUGS} parameterization
 first.  For example, the NIMBLE definition of a \cd{gamma}, in R
 format, is \cd{dgamma( shape, rate, scale, mean, sd)}.  Like R, if
 parameter names are not given, they are taken in order, so that (shape,
-scale) is the default. This happens to  match R's order of parameters,
+rate) is the default. This happens to  match R's order of parameters,
 but it need not.  If names are given, they can be given in any
 order.  NIMBLE knows that rate is an alternative to scale and that
 (mean, sd) are an alternative to (shape, scale or rate). 
@@ -1303,7 +1304,7 @@ Model variables can be accessed and set just as in R using \cd{\$} and
 \label{sec:access-log-prob}
 
 For each variable that contains at least one stochastic scalar node, NIMBLE generates a model variable with the
-prefix  ``logProb\_'' that matches the variable's size.  For example
+prefix  ``logProb\_'' that usually matches the variable's size.  For example
 
 <<usingModelLogProbs>>=
 @ 
@@ -1512,7 +1513,7 @@ storing values for models, although they can be used to store any type of inform
 model inputs. A modelValues object will contain \emph{rows} of
 variables. Each row represents a single value of a variable from a
 model and will be an array (i.e. scalar, vector, matrix or
-three-dimensional array) of the same dimension\footnote{In v\ver,
+three-dimensional array) from the same dimension\footnote{In v\ver,
   NIMBLE is limited to three dimensions.}. The simplest way to build a modelValues object is from a model object. This will create a modelValues object with the same variables as the model. 
   
 <<intro-mv>>=
@@ -2020,16 +2021,17 @@ To fix ideas, here is a small example to illustrate the two steps of executing a
 The call to the R function called \cd{nimbleFunction} returns a
 function, similarly to defining a function in R. That function,
 \cd{logProbCalcPlus}, takes arguments for its \cd{setup} function,
-executes it, and returns another function, \cd{logProbCalcPlusA}.  In this case, the
+executes it, and returns an object, \cd{logProbCalcPlusA}, that has a
+\nm{run} member function (method) accessed by \cd{\$run}.  In this case, the
 \cd{setup} function obtains the stochastic dependencies of the
 \cd{node} using the \cd{getDependencies} member function of the model
 (see \ref{sec:cdgetdependencies}) and stores them in
 \cd{dependentNodes}.  In this way, \cd{logProbCalcPlus} can adapt to any
 model.  It also creates a variable, \cd{valueToAdd}, that can be used by the nimbleFunction.
 
-The function \cd{logProbCalcPlusA}, returned by \cd{logProbCalcPlus},
+The object \cd{logProbCalcPlusA}, returned by \cd{logProbCalcPlus},
 is permanently bound to the results of the processed \cd{setup}
-function.  In this case, \cd{logProbCalcPlusA} takes a scalar input value, \cd{P},
+function.  In this case, \cd{logProbCalcPlusA\$run} takes a scalar input value, \cd{P},
 assigns \cd{P + valueToAdd} to
 the given node in the model, and returns the sum of the log
 probabilities of that node and its stochastic
