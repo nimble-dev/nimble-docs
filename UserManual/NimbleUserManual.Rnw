@@ -214,7 +214,7 @@ distribution for \cd{theta}.  First we show how to use the model's
 Notice that the first \cd{getDependencies} call returned dependencies
 from \cd{alpha} and \cd{beta} down to the next stochastic nodes in the
 model.  The second call requested only deterministic dependencies.
-We used this as the second argument to \cd{calculate}.  The call to \cd{calculate(pump, `theta)}
+We used this as the second argument to \cd{calculate}.  The call to \cd{calculate(pump, `theta')}
 expands \cd{`theta'} to include all nodes in \cd{theta}.  After
 simulating into \cd{`theta'}, we make sure to calculate its
 dependencies so they are kept up to date with the new \cd{theta} values.
@@ -943,7 +943,7 @@ Cobj <- compileNimble(pumpMiss, pumpMissMCMC)
 niter <- 1000
 set.seed(0)
 Cobj$pumpMissMCMC$run(niter)
-samples <- as.matrix(nfVar(Cobj$pumpMissMCMC, 'mvSamples'))
+samples <- as.matrix(Cobj$pumpMissMCMC$mvSamples)
 
 samples[1:5, 13:17]
 
@@ -1549,14 +1549,12 @@ be the types created in C++ code during compilation, so they should be specified
 
   The object returned by \cd{modelValues()} is an uncompiled
   modelValues. When a nimbleFunction is compiled, any modelValues
-  objects it uses are also compiled.  See documentation for \cd{nfVar}
-  for more about how to access setup variables in nimbleFunctions, including
-  modelValues. A NIMBLE model always contains a
+  objects it uses are also compiled. A NIMBLE model always contains a
   modelValues that it uses as a default location to store its variables.
 
   Here is an example where the \cd{customMV} created above is used as
   the setup argument for a nimbleFunction, which is then compiled.
-  Its compiled mv is then accessed with \cd{nfVar}.
+  Its compiled mv is then accessed with \cd{\$}.
 
 <<resize_MV>>=
 # Simple nimbleFunction that uses a modelValues object
@@ -1567,7 +1565,7 @@ resizeFunction_Gen <- nimbleFunction(
 
 rResize <- resizeFunction_Gen(customMV)
 cResize <- compileNimble(rResize)
-cCustomMV <- nfVar(cResize, 'mv')
+cCustomMV <- cResize$mv
 # cCustomMV is a C++ modelValues object
 @
 
@@ -2271,7 +2269,7 @@ difference in log probability (density) between the model and the
 @
 
 Once the nimbleFunction is built, the modelValues object can be accessed
-using using \cd{nfVar()}, which is introduced in more detail below.  In
+using using \cd{\$}, which is shown in more detail below.  In
 fact, since modelValues, like most NIMBLE objects, are reference class
 objects, one can get a reference to them before the function is
 executed and then use that reference afterwards.
@@ -2562,7 +2560,7 @@ status of executing when the specialized nimbleFunction object is
 used like a function.  Within a nimbleFunction, other methods are
 called just like a regular function.  When one nimbleFunction calls a
 method of another nimbleFunction other than \cd{run}, it does so via
-\cd{nfMethod}, as illustrated in the following.
+\cd{\$}, as illustrated in the following.
 
 <<usingMemberFunctions>>=
 @ 
@@ -2574,7 +2572,7 @@ One nimbleFunction can use another nimbleFunction that was passed to
 it as a setup argument or was created in the setup function.  This can
 be an effective way to program.  When a nimbleFunction needs to
 access a setup variable or method of another nimbleFunction, use
-\cd{nfVar} and \cd{nfMethod}, respectively.  These are demonstrasted next
+\cd{\$}. 
 
 <<owningMemberFunctions>>=
 @ 
