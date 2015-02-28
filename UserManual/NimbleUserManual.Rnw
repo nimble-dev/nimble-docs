@@ -613,6 +613,11 @@ available as a smaller installation, should be sufficient. This is freely availa
 Mac App Store. See \url{https://developer.apple.com/xcode/downloads/}
 and \url{https://itunes.apple.com/us/app/xcode/id497799835?ls=1&mt=12}
 
+For the compiler to work correctly for OS X, it is very important that the installed
+R be matched to the correct OS, i.e. R for snowleopard will attempt to use
+the incorrect compiler if the user has OS 10.9 or higher. 
+
+
 \subsection{Linux}
 On Linux, you can install the GNU compiler suite (\nm{gcc}/\nm{g++}). 
 You can use the package manager to install pre-built binaries.
@@ -636,6 +641,8 @@ the PATH checkbox (page 5).  This will ensure that R can locate these
 commands.
 
 
+Advanced users may wish to change their default compilers. This can be done
+by editing the Makevars file, see Writing R Externsions: 1.2.1. 
 
 \section{Customizing Compilation of the NIMBLE-generated Code}
 
