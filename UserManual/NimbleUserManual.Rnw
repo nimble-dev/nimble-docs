@@ -2761,7 +2761,7 @@ flexible, and include ``q'' and ``p'' functions, in the future.
   the current log probabilities are up to date.  If you assign new
   values to nodes, you must call \cd{calculate} on them to update the
   log probabilities. 
-\item We have tried to make NIMBLE's handling of mutlivariate objects
+\item We have tried to make NIMBLE's handling of multivariate objects
   flexible, but how you choose to set things up could affect
   computational efficiency.  We'll explore that more in the future.
 \end{itemize}
