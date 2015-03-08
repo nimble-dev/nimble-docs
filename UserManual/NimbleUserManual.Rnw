@@ -15,7 +15,7 @@
 
 \def\cd#1{\texttt{#1}}
 \def\nm#1{\textit{#1}}
-\newcommand{\ver}{0.3-1}
+\newcommand{\ver}{0.4}
 
 \hypersetup{colorlinks=true, linkcolor=red}
 
@@ -736,7 +736,9 @@ detailed explanations of each topic.
 \item Link functions
 \item Most mathematical functions
 \item ``for'' loops for iterative declarations.
-\item Arrays of nodes up to 3 dimensions.
+\item Arrays of nodes up to 4 dimensions.
+\item Truncation and censoring as in JAGS using the \cd{T()}
+  notation and \cd{dinterval()}.
 \end{enumerate}
 
 
@@ -749,9 +751,6 @@ and JAGS.  In this first release, the following are
 
 \begin{enumerate}
 \item Stochastic indices
-\item The \cd{I()} notation
-\item Aspects of the JAGS dialect of BUGS, such as the \cd{T()}
-  notation and \cd{dinterval()}.
 \item The appearance of the same node on the left-hand side of both a
   \cd{<-} and a \cd{$\sim$} declaration, allowing data assignment for
   the value of a stochastic node.
@@ -780,6 +779,7 @@ NIMBLE also extends the BUGS language in the following ways:
 \item More flexible indexing of vector nodes within larger variables,
   such as placing a multivariate normal vector arbitrarily within a
   higher-dimensional object, not just in the last index.
+\item Allowance for constraints on the nodes in the model, using the \cd{dconstraint()} syntax, which shares some similarities with \cd{dinterval()}. See Section \ref{subsec:trunc}.
 \end{enumerate}
 
 \subsubsection{Extension for handling ``data''}
@@ -1252,7 +1252,8 @@ indexed blocks.  In particular, it does not allow:
 \end{itemize}
 
 
-\subsection{Censoring and truncation}
+\subsection{Truncation, censoring, and constraints}
+\label{subsec:trunc}
 
 \cd{T()} and \cd{dinterval()} provide for truncation and censoring,
 respectively, in the JAGS dialect of BUGS. These will be enabled in a
@@ -1260,6 +1261,8 @@ release of NIMBLE in the near term.  JAGS provides \cd{I()} for
 backwards compatibility with BUGS, only for the case that the node to
 which \cd{I()} is applied has fixed parameters and we will enable this
 usage in NIMBLE as well.  For more discussion of truncation vs. censoring, please see the JAGS manual. 
+
+[add info on constraints too]
 
 \section{Compiling models}
 \label{sec:compiling-models}
