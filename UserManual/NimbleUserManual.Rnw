@@ -1255,14 +1255,98 @@ indexed blocks.  In particular, it does not allow:
 \subsection{Truncation, censoring, and constraints}
 \label{subsec:trunc}
 
-\cd{T()} and \cd{dinterval()} provide for truncation and censoring,
-respectively, in the JAGS dialect of BUGS. These will be enabled in a
-release of NIMBLE in the near term.  JAGS provides \cd{I()} for
-backwards compatibility with BUGS, only for the case that the node to
-which \cd{I()} is applied has fixed parameters and we will enable this
-usage in NIMBLE as well.  For more discussion of truncation vs. censoring, please see the JAGS manual. 
+NIMBLE follows JAGS in carefully distinguishing between truncation and censoring (see the JAGS manual for some discussion of this). In general, truncation and censoring are handled very similarly to JAGS, with limited exceptions noted below. In contrast we handle constraints very differently than JAGS.
 
-[add info on constraints too]
+\subsubsection{Truncation}
+
+NIMBLE handles truncation similarly to JAGS. We use the \cd{T(,)} syntax, e.g.,
+\cd{mu $\sim$ dnorm(1, sd = 10) T(0, )}. However, \cd{T(,)} only works when provided via BUGS code from an external file, because R cannot parse this syntax. As an alternative, we provide the following syntax, which is processed identically by NIMBLE: \cd{mu $\sim$ T(dnorm(1, sd = 10), 0, )}. As in JAGS, the truncation boundaries can be parameters or expressions, such as
+\cd{mu $\sim$ T(dnorm(1, sd = 10), a, b + 3 )}, 
+where \cd{a} and \cd{b} are also parameters in the model. Note that in NIMBLE, \cd{mu $\sim$ dfoo(theta) T(L, U)} restricts $X$ to lie in $(L,U]$ whereas in JAGS it restricts $X$ to lie in $[L,U]$.  This distinction makes no difference for continuous random variables.
+% doesn't matter for continuous and we could follow jags but for discrete we would need to add extra code to deal with X == L -- thoughts?
+
+In addition, as with JAGS, we allow the BUGS \cd{I(,)} syntax, which we treat as a synonym for \cd{T(,)}. As the JAGS manual notes, truncation and censoring are only equivalent in models in which the truncation or censoring applies to top-level nodes but we do allow use of \cd{I(,)} at other levels of the model, and this is still treated the same as  \cd{T(,)}. Note that unlike in BUGS, one cannot specify prior ordering using syntax such as
+<<prior-ordering, eval=FALSE>>=
+alpha[1] ~ dnorm(0, 1) I(, alpha[2])
+alpha[2] ~ dnorm(0, 1) I(alpha[1], alpha[3])
+alpha[3] ~ dnorm(0, 1) I(alpha[2], )
+@ 
+
+as this is does not represent a directed acyclic graph. Also, while prior ordering can be addressed in one fashion using \cd{T(,)}, this often will not produce the constraint the user actually wants. See our discussion of constraints below.
+
+ 
+
+\subsubsection{Censoring}
+
+We provide the \cd{dinterval} distribution to handle censoring, as in JAGS. For example, one can specify right-censored data, such as survival data as:
+<<dinterval-example, eval=FALSE>>=
+is.censored[i] $\sim$ dinterval(t[i], c[i])
+t[i] $\sim$ dweib(r, mu[i])
+@ 
+
+where \cd{is.censored[i]} is an indicator variable that should be specified (as data) by the user to be 1 if $t_i$ is censored ($t_i > c_i$) and 0 if it is observed. If it is censored, then $t_i$ should be set to be NA in any vector, $t$, passed as input data. 
+
+In general, \cd{x $\sim$ dinterval(t, c)} is defined such that for a vector of increasing cutpoints, $c$, the value of $x$ is the index of the interval in which $t$ falls:
+
+\begin{eqnarray}
+x = 0 & \mbox{if} & t <= c[1] \nonumber \\
+x = m & \mbox{if} & c[m] < t <= c[m+1] \mbox{ for } 1 <= m <= M \nonumber \\
+x = M & \mbox{if} & c[M] < t.\nonumber
+\end{eqnarray}
+
+The most common usage of \cd{dinterval} will be for left- and right-censored data, in which case $c$ will be a single value, and for interval-censored data, in which case $c$ will be a vector of two values. 
+
+For nodes that are censored, NIMBLE will naturally treat these as unknown parameters. As a result, these nodes will be sampled in an MCMC.
+
+In general, nodes that have the \cd{dinterval} distribution should be data nodes that are assigned a value. Otherwise, the node will be simulated into upon initialization and the resulting value will then constrain any nodes that depend on the node with the \cd{dinterval} distribution.  Also note that there is a distinction (discussed in the JAGS manual) between truncation applied to a node and censoring (in which the child of the node has a \cd{dinterval} distribution. Truncation applies as an a priori restriction while censoring is a posteriori (in particular conditional on the data). 
+
+\subsubsection{Constraints and ordering}
+\label{subsubsec:constraints}
+
+[Chris still needs to edit this]
+
+NIMBLE also provides functionality for specifying constraints via the \cd{dconstraint} syntax. While this can be used for a variety of types of constraints, one specific usage is for specifying ordered parameters. In addition one can use \cd{dconstraint} to specify priors restricted to subdomains more flexibly than using \cd{T(,)}. 
+
+The basic syntax specifies a node to follow \cd{dconstraint(binaryValue)} where \cd{binaryValue} is an indicator variable whose value indicates whether a given condition is satisfied. For example, we could specify that the sum of two parameters must be positive with:
+\newline
+\cd{mu1 $\sim$ dnorm(0, 1)} \newline
+\cd{mu2 $\sim$ dnorm(0, 1)} \newline
+\cd{ind <- mu1 + mu2 > 0} \newline
+\cd{const $\sim$ dconstraint(ind)}
+
+where one then specifies \cd{const} to be data and to have value 1. This is equivalent to a half-normal distribution on the half-plane $\mu_1 + \mu_2 > 0$.
+
+Note that at the moment one must specify the condition as a separate line. One cannot use an expression as the parameter of \cd{dconstraint}. One can use \cd{\&} and \cd{|} to construct compound comparisons in the definition of the indicator, e.g., \cd{ind <- mu1 + mu2 > 0 \& mu1 > 0}. 
+
+\paragraph{Ordering}
+
+To specify an ordering of parameters, such as $\alpha_1 < \alpha_2 < \alpha_3$ one can use \cd{dconstraint} as follows: \newline
+\cd{ind <- alpha1 < alpha2 \& alpha2 < alpha3}\newline
+\cd{const $\sim$ dconstraint(ind)}
+
+Note that this is an a posteriori ordering in that the constraint is considered to be an aspect of the data. If one is doing MCMC, this will achieve the desired ordering in the posterior. However, if one simulates from the model (i.e., sampling from the prior), then in some samples the constraint will be violated, \cd{ind} and \cd{const} will be 0 and the log probability of the model will be $-\infty$.
+
+NIMBLE does not support the JAGS \cd{dsort} syntax.
+
+\paragraph{Cautions}
+
+Note that if one uses the truncation syntax to try to specify a constraint, one will not specify the prior that one might think. 
+
+E.g., for prior ordering,\newline
+\cd{alpha1 $\sim$ dnorm(0, 1)}\newline
+\cd{alpha2 $\sim$ dnorm(0, 1) T(alpha1, )}\newline
+\cd{alpha3 $\sim$ dnorm(0, 1) T(alpha2, )}
+
+does not treat the three parameters in a symmetric fashion but instead has a marginal prior on \cd{alpha1} that is standard normal and then constraints $\alpha_2$ to have a truncated normal distribution. This is not equivalent to a symmetric prior on the three alphas that puts 0 mass on values that are not in order.
+
+Similarly, \newline
+\cd{mu1 $\sim$ dnorm(0, 1)}\newline
+\cd{mu2 $\sim$ dnorm(0, 1) T(-mu1, )}
+
+is not equivalent to the model specified above via \cd{dconstraint} and does not produce a bivariate half-normal distribution on the half-plane. 
+
+One should be cautious about constraints that would make it hard for an MCMC or optimization to move through the parameter space (such as equality constraints that involve two or more parameters). For such restrictive constraints, general purpose algorithms that are not tailed to the constraints are likely to fail. Also, one should of course always initialize a model such that the constraints are atisfied. Relying on NIMBLE's default of sampling from the prior does not ensure any constraints are satisfied.
+
 
 \section{Compiling models}
 \label{sec:compiling-models}
