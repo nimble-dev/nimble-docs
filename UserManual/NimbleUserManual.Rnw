@@ -1340,7 +1340,7 @@ alpha2 ~ dnorm(0, 1) T(alpha1, )
 alpha3 ~ dnorm(0, 1) T(alpha2, )
 @ 
 
-does not treat the three parameters in a symmetric fashion but instead has a marginal prior on $\alpha_1$ that is standard normal and then constraints $\alpha_2$ to have a truncated normal distribution. This is not equivalent to a symmetric prior on the three $\alpha$s that puts 0 probability density on values that are not in order.
+does not treat the three parameters in a symmetric fashion but instead has a marginal prior on $\alpha_1$ that is standard normal and then constrains $\alpha_2$ to have a truncated normal distribution. This is not equivalent to a symmetric prior on the three $\alpha$s that assigns 0 probability density when values are not in order.
 
 Similarly, 
 <<constraint-caution2, eval=FALSE>>=
@@ -1350,7 +1350,9 @@ mu2 ~ dnorm(0, 1) T(-mu1, )
 
 is not equivalent to the model specified above via \cd{dconstraint} and does not produce a bivariate half-normal distribution on the half-plane. 
 
-One should be cautious about constraints that would make it hard for an MCMC or optimization to move through the parameter space (such as equality constraints that involve two or more parameters). For such restrictive constraints, general purpose algorithms that are not tailored to the constraints are likely to fail. Also, one should of course always initialize a model such that the constraints are satisfied. Relying on NIMBLE's default of sampling from the prior does not ensure any constraints are satisfied. In many cases, parameterizing the model so that the constraints are automatically respected may be a better strategy than using \cd{dconstraint}.
+One should be cautious about constraints that would make it hard for an MCMC or optimization to move through the parameter space (such as equality constraints that involve two or more parameters). For such restrictive constraints, general purpose algorithms that are not tailored to the constraints are likely to fail. Also, one should of course always initialize a model such that the constraints are satisfied. Relying on NIMBLE's default of sampling from the prior does not ensure any constraints are satisfied. 
+
+In many cases, parameterizing the model so that the constraints are automatically respected may be a better strategy than using \cd{dconstraint}.
 
 
 \section{Compiling models}
