@@ -1,0 +1,207 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amsthm}
+\usepackage[pdftex]{graphicx}
+\usepackage{psfrag,epsf}
+\usepackage{enumerate}
+\usepackage{natbib}
+\usepackage{float}
+\restylefloat{table}
+
+\usepackage{amssymb}
+\usepackage{multirow}
+\usepackage{float}
+\newtheorem{thm}{Theorem}
+
+
+\addtolength{\oddsidemargin}{-.75in}%
+\addtolength{\evensidemargin}{-.75in}%
+\addtolength{\textwidth}{1.5in}%
+\addtolength{\textheight}{1.3in}%
+\addtolength{\topmargin}{-.8in}%
+
+\interfootnotelinepenalty=10000
+
+
+
+
+\newtheorem{theorem}{\bf Theorem}
+\newtheorem{proposition}{\bf Proposition}
+\newtheorem{lemma}{\bf Lemma}
+\newtheorem{corollary}{\bf Corollary}
+\numberwithin{equation}{section}
+
+\date{\textbf{Draft} \textbf{\today}}
+\begin{document}
+
+%\bibliographystyle{natbib}
+
+%\newcommand{\keywords}[1]{\par\addvspace\baselineskip
+%\noindent\keywordname\enspace\ignorespaces#1}
+
+\def\spacingset#1{\renewcommand{\baselinestretch}%
+{#1}\small\normalsize} \spacingset{1}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{center}
+    {\large\bf Overview of the MatchedCall and KeywordProcessing System for Nimble}
+\end{center}
+  \medskip
+
+
+\spacingset{1.4}
+
+
+\section{Functionality}
+
+	The KeywordProcessing system is called upon in compileNimble which runs over the \texttt{run} function code. The steps of the general KeywordProcessing can actually be broken down into two disjoint but  related steps. The first step is to organize call arguments and fill in defaults, which we will call the MatchedCall system and the second step is to alter the DSL run code such that the objects in the DSL will match the objects to appear in the generated C++ code, which we will call the core KeywordProcessing system. 
+	
+	For example of what the MatchedCall system does, the line of code
+		
+	\begin{verbatim}
+	thisDens = dnorm(val, log = FALSE, mean = mu)
+	\end{verbatim}
+	
+	will get rearranged into 	
+
+	\begin{verbatim}
+	thisDens = dnorm(x = val, mean = mu, sd = 1, log = FALSE)
+	\end{verbatim}
+		
+	
+	Note that the name of the \texttt{x} argument has been added, the default of \texttt{sd = 1} was added and the order of the arguments was matched to the call to R's \texttt{dnorm}. 
+		
+	For an example of the core KeywordProcessing system does, the line of code 
+	
+	\begin{verbatim}
+	logDens = calculate(model = myModel, nodes = myNodes, includeData = TRUE)
+	\end{verbatim}
+	
+	gets altered to
+	
+	\begin{verbatim}
+	logDens = calculate(nodeFunctionVector = myModel_myNodes_nodeFxnVector_includeData_TRUE)
+	\end{verbatim}
+	
+	which then requires the generation of the \texttt{newSetupCode} line
+ 
+ 	\begin{verbatim}
+	myModel_myNodes_nodeFxnVector_includeData_TRUE 
+	  = nodeFunctionVector(myModel, myNodes, includeData = TRUE)
+	\end{verbatim}
+
+ 	Note that the first call to calculate takes two arguments (a model and a character vector of node names), but the altered code has only one (a ``node function vector", which is a vector of pointers to node functions). This is because in R, the \texttt{calculate} function can be applied to either a model and a set of nodes OR a node function vector, while in C++, our calculate function is applied only to a node function vector. So while \texttt{logDens = calculate(model = myModel, nodes = myNodes, includeData = TRUE)} is a valid line of code to be evaluated in R, there is not a direct one-to-one valid equivalent statement in C++. For the sake of debugging, we would prefer the altered code returned from keywordProcessing should run in R, although this is not necessary for the system to work correctly. 
+	
+ 
+ 	\section{MatchedCall System}
+ 
+ 	Before being passed to the core KeywordProcessing system, all the \texttt{run} code is passed to MatchedCall System (see \texttt{matchKeywords\_all} in nimbleFunction\_compile.R). Defined in \\ nimbleFunction\_keywordProcessing.R is an environment \texttt{matchFunctions}. This contains all the functions for which the arguments will be matched and organized. The field name of the function such be the call (\emph{i.e.} \texttt{`dnorm'}) and the object should be the R function whose arguments will be matched. This can either be the real R function (\emph{i.e.} \texttt{matchFunctions[[`dnorm']] <- dnorm}) or by a dummy function (\emph{i.e.} \texttt{matchFunctions[[`dnorm']] <- function(x, mu = 1, tau = 1, log = FALSE)}). 
+	
+	The actual insertion of defaults and rearrangement of arguments is done by the function \texttt{matchAndFill.call(def, call)}, where \texttt{def} is the definition of the function for which the argument defaults will be extracted from and \text{call} is the actual code found in the \texttt{run} function. Functions in the \texttt{run} code not found in the \texttt{matchFunctions} environment will remain unchanged. 
+ 
+ 	\section{KeywordProcessing System}
+ 
+ 	After \texttt{nimbleCompile} completes \texttt{matchKeywords\_all}, it proceeds to the \texttt{processKeywords\_all} step, or the core KeywordProcessing system. The core KeywordProcessing system has two tasks; altering the run code so that the objects in the code correspond with the final C++ objects generated, and adding new lines to the \texttt{setup} function of the nimble function which will be later evaluated and the new objects will be added to the symbolTable. One of the motivations for the KeywordProcessing System was to build the new \texttt{setup} code in a structured manner such that the system would not build redundant objects in the new \texttt{setup} code, thus speeding up compiling.
+	
+	 Revisiting our earlier example, we will change
+
+	\begin{verbatim}
+	logDens = calculate(model = myModel, nodes = myNodes, includeData = TRUE)
+	\end{verbatim}
+		
+	to
+	
+	\begin{verbatim}
+	logDens = calculate(nodeFunctionVector = myModel_myNodes_nodeFxnVector_includeData_TRUE)
+	\end{verbatim}
+	
+	This means we would have to add
+	
+	\begin{verbatim}
+	myModel_myNodes_nodeFxnVector_includeData_TRUE =
+	     nodeFunctionVector(myModel, myNodes, includeData = TRUE)
+	\end{verbatim}	
+	
+	to the \texttt{setup} code for the nimbleFunction. 
+	
+	%To handle this, we use the \texttt{keywordInfoClass}. These objects contain a \texttt{keyword} field (which actually is not used) and a \texttt{processor} function. The \texttt{processor} function takes in a \emph{call} for the the first argument, and an \texttt{nfProc} object for the second argument. 
+	
+	In order to accomplish this, \texttt{processKeywords\_all} walks down each \emph{call} \footnote{the fact that a call triggers the keywordProcessing can create somewhat of a headache for the assignment call case. For example, if a line of run code appeared as \texttt{x <- values(myModel, myNodes)}, and \texttt{values} was our keyword trigger, then the only part of the code that would be processed would be \texttt{values(myModel, myNodes)}, and we would not be able to edit the code containing \texttt{x <-}. This is currently handled by the sizeProcessing system. This could be handled by the keywordProcessing system by allowing keyword \texttt{`<-'}, but this would be non-trivial } of the run function and processes it. If the function call matches the name of a field on the \texttt{keywordList} (defined in nimbleFunction\_keywordProcessing.R), then it has handed to the corresponding \texttt{keywordInfoClass} object in the \text{keywordList}. 
+	
+	\texttt{keywordInfoClass} objects contain two fields: a \texttt{keyword} field (which is not actually used) and a \texttt{processor} function. This function will always take in two arguments: \texttt{code}, which will be the code in which the call appears, and \texttt{nfProc}, the nimble function processing object. The \texttt{processor} function will always return the altered run code. In addition, within the \texttt{processor} function, new setup code will be added to the \texttt{nfProc} object. 
+	
+	Currently, altering the \texttt{run} code is done through direct manipulation of the expression class object \texttt{code}. Because the MatchedCall system will have already gone over the code, every call that appeared in the  \texttt{matchFunctions} environment will have named arguments, making manipulation of the expression class object simpler. Because of this, it is highly recommended that keywords be also placed in the MatchedCall system when applicable. 
+	
+	Inside the \texttt{processor} function, the addition of new \texttt{setup} code is added through the \texttt{addNecessarySetupCode} function. This takes four arguments: \texttt{name, argList, template} and \texttt{nfProc}. This function will use the \texttt{name} (which will be the generated ``title" of the new setup, see below) to see if the necessary object has already been added to the \texttt{newSetupCode} of the \texttt{nfProc}. If it has not, it uses the \texttt{argList} and \texttt{template} to generate the code and adds it to to the \texttt{newSetupCode} of the \texttt{nfProc}. 
+	
+	The \texttt{template} needs to be a \texttt{setupCodeTemplateClass}, which is our tool for making sure new setup code is generated in an identical manner. This template interacts with the \texttt{argList} (generated from the arguments of the processed call) to generate the identifying new code line name (via method \texttt{makeName}). This name should uniquely identify all defining aspects of the new object created in the generated setup code. In our example above, the name of the new setup code line would be 
+	
+	\texttt{myModel\_myNodes\_nodeFxnVector\_includeData\_TRUE}
+	
+	If any other line of \text{run} code in this nimble function triggered the generation of a node function vector that pointed to the same set of nodes (\emph{i.e.} the stochastic and data nodes \texttt{myNodes} of \texttt{myModel}), then this would end up generating the same setup name, addNecessarySetupCode would recognize that this setup code has already been generated and would skip the step of adding this setupcode.  
+	
+	If the \texttt{name} provided to \texttt{addNecessarySetupCode} does not exist in \texttt{nfProc\$newSetupCode}, then the function will generate the new line of code and insert it. This is done by utilizing the fields \texttt{codeTemplate} and \texttt{makeCodeSubList(resultName, argList)}. The field \texttt{codeTemplate} should contain the expression class that has the template for the new setup code, with the arguments that need to be filled in capitalized. For example, for the \texttt{nodeFunctionVector\_SetupTemplate}, the \texttt{codeTemplate} is defined as such:
+	
+	\begin{verbatim}
+	codeTemplate = quote( NODEFXNVECNAME = 
+		   	nodeFunctionVector(model = MODEL, nodeNames = NODES, excludeData = EXCLUDEDATA) ) 
+	\end{verbatim}
+	
+	The field function \texttt{makeSubCodeList} will create the list used to substitute into the \texttt{codeTemplate}. For the \texttt{nodeFunctionVector\_SetupTemplate}, the \texttt{makeCodeSubList} function is defined as such:
+	
+	\begin{verbatim}
+	
+	makeCodeSubList = function(resultName, argList){
+	         list(NODEFXNVECNAME = as.name(resultName),
+	              MODEL = argList$model,
+	              NODES = argList$nodes,
+	              EXCLUDEDATA = !argList$includeData)
+	}
+	
+	\end{verbatim}
+	
+	Finally, in some cases a single line of run code will use a template that results in many new lines of \texttt{setup} code. In such a case, we need to define the field function \texttt{makeOtherNames(name, argList)} of our \texttt{setupCodeTemplateClass}. This function should provide all the names of objects (other than the object named by \texttt{makeName}) \emph{that will be correspond to a C++ object}. For example, in the \texttt{singleModelIndexAccess\_SetupTemplate}, the \texttt{codeTemplate} is defined as 
+	
+	\begin{verbatim}
+	
+	codeTemplate = quote({
+	     VARANDINDICES <- getVarAndIndices(NODEVARNAME)
+	     NEWVARNAME <- as.character(VARANDINDICES$varName)
+	     MFLATINDEX <- varAndIndices2flatIndex(VARANDINDICES, MODELVAREXPR$getVarInfo(NEWVARNAME))
+	     VARACCESSOR <- singleVarAccess(MODELVAREXPR, NEVARNAME, useSingleIndex = TRUE)})
+	
+	\end{verbatim}
+	
+	There's quite a bit going on here, but relevant to this topic is that
+	
+	\begin{itemize}
+	
+		\item The core object being built is \texttt{VARACCESSOR}, whose name is generated by \texttt{makeName} (and thus propagates to C++ in the standard way)
+	
+		\item \texttt{MFLATINDEX} is also created by the same template and needs to propagate all the way to C++ code
+		
+		\item \texttt{VARANDINDICES} and \texttt{NEWVARNAME} are objects that are necessary as \texttt{setup} code, but do NOT propagate to C++
+	
+	\end{itemize}
+	
+	In order to get \texttt{MFLATINDEX} to propagate to C++, we define
+	
+	\begin{verbatim}
+	
+		makeOtherNames = function(name, argList){ paste0(name, `_flatIndex') }
+	
+	\end{verbatim}
+	
+	This corresponds to the same name as generated by \texttt{makeCodeSubList} for \texttt{MFLATINDEX}, which then tells the processor that \texttt{MFLATINDEX} must be propagated to C++. If no other objects are to propagate to C++ other than the object whose name is generated by \texttt{makeName}, then \texttt{makeOtherNames} should be left blank. 
+	
+\section{Special Cases: Distribution Functions}	
+
+	The inclusion of many of the \texttt{p, q, r, d} distribution functions are handled in a special way, as a large number of these functions all need to be handled in identical manner. In order include distributions into the MatchKeyword and core Keyword Processing systems, one needs to add the ``raw" distribution name (\emph{i.e.} \texttt{norm}, which will correspond to R's \texttt{pnorm}, \texttt{qnorm}, \texttt{rnorm} and \texttt{dnorm}) to the \texttt{matchDistList} found in the nimbleFunction\_keywordProcessing.R file. This will add the corresponding \texttt{p, q, r, d} functions (as defined in nimble's environment) to the MatchedCall system. It will also build \texttt{keywordInfoClass} objects for the \texttt{d, p} and \texttt{q} functions: all these processors do is change \texttt{TRUE, FALSE} arguments for \texttt{log}, \texttt{log.p} and \texttt{lower.tail} to \texttt{1, 0} to be compatible with the C++ version of the function. 
+
+	At this time, the distributions included in the \texttt{matchDistList} are \texttt{beta, binom, chisq, lnorm, norm, pois, t, unif,} and \texttt{weibull}. Distributions included in the BUGS language, but not included on this list, are \texttt{cat, dirch, logis, multi, mnorm, negbin, weib, wish} and \texttt{gamma}. Clearly, \texttt{weibull} is R's version of BUGS's \texttt{weib} and \texttt{gamma} is excluded because it is handled in a unique way. The reason the other distributions are left out is that we do not appear to have the corresponding functions declared in the R environment. 
+	
+	The \texttt{gamma} functions need to be handled in special manner due to R's multiple parameterizations of these distribution, \emph{i.e.} the user can specify either \texttt{scale} or \texttt{rate}. Thus, the \texttt{keywordInfoClass} objects corresponding to these functions must customized for these distributions. It is worth noting that system handles the \texttt{scale, rate} parameterization slightly differently than R does; in the \texttt{processor} function, if the \texttt{scale} argument is provided, it used regardless of whether \texttt{rate} is provide or not. The \texttt{rate} argument is used ONLY if \texttt{scale} is missing. In contrast, R's \texttt{gamma} functions will throw an error if the \texttt{scale} and \texttt{rate} argument are provided and \texttt{scale != 1/rate}. This luxury of evaluating \texttt{scale != 1/rate} is not available at compile time, so we needed to provide a slightly different manner of handling this. Similarly, the function provided to the \texttt{matchFunctions} list is not the standard R function: using this would insure that an argument for scale is included, regardless of whether the programmer included this or not. 
+	
+ \end{document}
+	
