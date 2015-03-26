@@ -530,9 +530,9 @@ mean(cSamplesMatrix_CL[, 'mu[1]'])
 @
 
 
-\section{Higher level usage: MCMC Suite}
+\section{MCMC Suite}
 
-This section introduces the higher level MCMC analysis capabilities of the MCMC Suite.  We re-analyze the same \nm{litters} example from Section \ref{sec:mcmc-example-litters}, using an MCMC Suite.  Subsequently, additional details of the Suite are given.
+This section introduces the higher level MCMC analysis capabilities of the MCMC Suite.  We re-analyze the same \nm{litters} example from Section \ref{sec:mcmc-example-litters}, using the MCMC Suite.  Subsequently, additional details of the Suite are given.
 
 \subsection{MCMC Suite example: \nm{litters}}
 
@@ -546,8 +546,8 @@ The following code executes the following MCMC algorithms on the \nm{litters} ex
 \end{enumerate}
 
 <<MCMCsuite, eval=FALSE>>=
-litters_suite <- MCMCsuite(
-    model = litters_code,
+output <- MCMCsuite(
+    code = litters_code,
     constants = constants,
     data = data,
     inits = inits,
@@ -562,25 +562,22 @@ litters_suite <- MCMCsuite(
         })),
     plotName = 'littersSuite'
 )
-
-output <- litters_suite$output
 @
 
 \subsection{MCMC Suite outputs}
 
-Executing the MCMC Suite generates a single \cd{output} variable, which is a named list containing three objects, as well as several plots.
+Executing the MCMC Suite returns a named list containing three elements, as well as generates and saves traceplots and posterior density plots.  The elements of this return list object are:
 
 \subsubsection{Samples}
 
-\cd{output\$samples} is a three-dimensional array, containing all MCMC samples from each algorithm.  The first dimension of the \cd{samples} array corresponds to each MCMC algorithm, and may be indexed by the name of the algorithm.  The second dimension of the \cd{samples} array corresponds to each node which was monitored, and may be indexed by the node name.  The third dimension of \cd{samples} contains the MCMC samples, and has length \cd{niter/thin}.
+\cd{samples} is a three-dimensional array, containing all MCMC samples from each algorithm.  The first dimension of the \cd{samples} array corresponds to each MCMC algorithm, and may be indexed by the name of the algorithm.  The second dimension of the \cd{samples} array corresponds to each node which was monitored, and may be indexed by the node name.  The third dimension of \cd{samples} contains the MCMC samples, and has length \cd{niter/thin - burnin}.
 
 \subsubsection{Summary}
 
-The MCMC suite output contains a variety of pre-computed summary statistics, which are stored in the \cd{output\$summary} matrix.  For each monitored node and each MCMC algorithm, the following default summary statistics are calculated: \nm{mean}, \nm{median}, \nm{sd}, the 2.5\% quantile, and the 97.5\% quantile.  These summary statistics are easily viewable, as:
-
+The MCMC suite output contains a variety of pre-computed summary statistics, which are stored in the \cd{summary} matrix.  For each monitored node and each MCMC algorithm, the following default summary statistics are calculated: \nm{mean}, \nm{median}, \nm{sd}, the 2.5\% quantile, and the 97.5\% quantile.  These summary statistics are easily viewable, as:
 
 \begin{verbatim}
-litters_suite$output$summary
+output$summary
 # , , mu[1]
 #                   mean    median         sd  quant025  quant975
 # bugs         0.8795868 0.8889000 0.04349589 0.7886775 0.9205025
@@ -600,58 +597,56 @@ litters_suite$output$summary
 
 \subsubsection{Timing}
 
-\cd{output\$timing} contains a named vector of timing information for each algorithm, and the compile time for NIMBLE (in minutes).
+\cd{timing} contains a named vector of the runtime for each MCMC algorithm, the total compile time for the NIMBLE model and MCMC algorithms, and the compile time for Stan (if specified).  All run- and compile- times are given in minutes.
 
 \subsubsection{Plots}
 
 Executing the MCMC Suite provides and saves several plots.  These include traceplots and posterior density plots for each monitored node, under each algorithm.
 
-Note that the generation of MCMC Suite plots \emph{specifically in Rstudio} may result in several warning messages from R (regarding graphics devices), but will function without any problems.
+Note that the generation of MCMC Suite plots \emph{in Rstudio} may result in several warning messages from R (regarding graphics devices), but will function without any problems.
 
-\subsection{Custom arguments to MCMC Suite}
+\subsection{Arguments to MCMC Suite}
 
-An MCMC Suite is highly customizable, in terms of all of the following:
+The following arguments to \cd{MCMCsuite} define the model on which to run each MCMC algorithm:
+
+\subsubsection{argument: \cd{code}}
+
+\subsubsection{argument: \cd{constants}}
+
+\subsubsection{argument: \cd{data}}
+
+\subsubsection{argument: \cd{inits}}
+
+An MCMC Suite is customizable in terms of all of the following:
+
 \begin{itemize}
+\item MCMC algorithms
 \item Nodes to monitor
 \item Number of MCMC iterations
 \item Thinning interval
 \item Burn-in
 \item Summary statistics
-\item MCMC algorithms
+\item Generating and saving plots
 \end{itemize}
 
-\subsubsection{argument: \cd{monitors}}
-
-Character vector specifying the nodes and/or vectors to monitor.
-
-\subsubsection{argument: \cd{niter}}
-
-Integer specifying the number of MCMC iterations to run.
-
-\subsubsection{argument: \cd{thin}}
-
-Integer specifying the thinning interval.
-
-\subsubsection{argument: \cd{burnin}}
-
-Integer specifying the number of samples to discard from all chains of MCMC samples.  Samples are discarded prior to thinning.
-
-\subsubsection{argument: \cd{summaryStats}}
-
-A character vector, providing the name of any function which operates on a numeric vector, and returns a numeric scalar.  Likewise, a character string defining such a function is admissible, for example \cd{'function(x) mean(abs(x))'}.  The default value for \cd{summaryStats} is the set: \cd{mean}, \cd{median}, \cd{sd}, the 2.5\% quantile, and the 97.5\% quantile.
+These options are controlled by the following arguments to \cd{MCMCsuite}:
 
 \subsubsection{argument: \cd{MCMCs}}
 
-A character vector, defining the MCMC algorithms to run.  The default value for \text{MCMCs} includes the following algorithms:
+A character vector, defining the MCMC algorithms to run.  The \cd{MCMCs} argument may include any of the following algorithms:
+
 \begin{description}
-\item[\cd{`bugs'}] The standard WinBUGS algorithm
-\item[\cd{`jags'}] The standard JAGS algorithm
-\item[\cd{`nimble'}] NIMBLE using the default specification
-\item[\cd{`nimble\_RW'}] NIMBLE using the default specification with \cd{onlyRW = TRUE}
-\item[\cd{`nimble\_slice'}] NIMBLE using the default MC specification with \cd{onlySlice= TRUE}
+\item[\cd{`bugs'}] WinBUGS MCMC algorithm
+\item[\cd{`jags'}] JAGS MCMC algorithm
+\item[\cd{`Stan'}] Stan MCMC algorithm
+\item[\cd{`nimble'}] NIMBLE MCMC using the default specification
+\item[\cd{`nimble\_RW'}] NIMBLE MCMC using the default specification with \cd{onlyRW = TRUE}
+\item[\cd{`nimble\_slice'}] NIMBLE MCMC using the default specification with \cd{onlySlice= TRUE}
 \end{description}
 
-The names of additional, custom, MCMC algorithms may also be provided in the \cd{MCMCs} argument, so long as these custom algorithms are defined in the \cd{MCMCdefs} argument.  An example of this usage was given with the \cd{crossLevel} algorithm in the \nm{litters} MCMC Suite example.
+The names of additional, custom, MCMC algorithms may also be provided in the \cd{MCMCs} argument, so long as these custom algorithms are defined in the \cd{MCMCdefs} argument.  An example of this usage is given with the \cd{crossLevel} algorithm in the \nm{litters} MCMC Suite example.
+
+The values for the \cd{MCMCs} argument is \cd{c(`jags', `nimble', `nimble\_RW', `nimble_slice')}.
 
 \subsubsection{argument: \cd{MCMCdefs}}
 
@@ -669,13 +664,27 @@ MCMCdefs = list(
 )
 @
 
-\subsubsection{argument: \cd{bugs\_directory}}
+\subsubsection{argument: \cd{monitors}}
 
-A character string giving the path to the directory containing the WinBUGS executable.  The default value is \cd{'C:/WinBUGS14'}.
+Character vector specifying the nodes and/or vectors to monitor.
 
-\subsubsection{argument: \cd{bugs\_program}}
+\subsubsection{argument: \cd{niter}}
 
-A character string giving the name of the WiBUGS program to execute.  This will be passed directly to the \cd{bugs()} function.  The default value is \cd{'WinBUGS'}.
+Integer specifying the number of MCMC iterations to run.
+
+\subsubsection{argument: \cd{thin}}
+
+Integer specifying the thinning interval.
+
+\subsubsection{argument: \cd{burnin}}
+
+Integer specifying the number of samples to discard from all chains of MCMC samples.  Samples are discarded subsequent to thinning.
+
+\subsubsection{argument: \cd{summaryStats}}
+
+A character vector, providing the name of any function which operates on a numeric vector, and returns a numeric scalar.  Likewise, a character string defining such a function is admissible, for example \cd{`function(x) mean(abs(x))'}.
+
+The default value for \cd{summaryStats} is the set: \cd{mean}, \cd{median}, \cd{sd}, the 2.5\% quantile, and the 97.5\% quantile.
 
 \subsubsection{argument: \cd{makePlot}}
 
@@ -687,9 +696,23 @@ A logical specifying whether to save the generated plots.  Only used if \cd{make
 
 \subsubsection{argument: \cd{plotName}}
 
-A character string giving the filename for saving plots.  Only used if \cd{savePlot = TRUE}.  Default value is \cd{'MCMCsuite'}.
+A character string giving the filename for saving plots.  Only used if \cd{savePlot = TRUE}.  Default value is \cd{`MCMCsuite'}.
 
+\subsubsection{argument: \cd{bugs\_directory}}
 
+A character string giving the path to the directory containing the WinBUGS executable.  The default value is \cd{'C:/WinBUGS14'}.
+
+\subsubsection{argument: \cd{bugs\_program}}
+
+A character string giving the name of the WiBUGS program to execute.  This will be passed directly to the \cd{bugs()} function.  The default value is \cd{'WinBUGS'}.
+
+\subsubsection{argument: \cd{stan\_model}}
+
+A character string specifying the location and name of the model file (\cd{`modelName.stan'}) for use with the Stan MCMC program.  This argument must include the ".stan" extension, and must be provided whenever the \cd{MCMCs} argument includes \cd{`stan'}.
+
+In addition, the Stan data file (\cd{`modelName.data.R'}) must also reside in the same directory as the Stan model file.
+
+Optionally, the Stan initial values file (\cd{`modelName.init.R'}) may also be in this same directory; it will be used if present.
 
 \section{Advanced topics}
 
