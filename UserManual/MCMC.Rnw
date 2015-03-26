@@ -646,7 +646,7 @@ A character vector, defining the MCMC algorithms to run.  The \cd{MCMCs} argumen
 
 The names of additional, custom, MCMC algorithms may also be provided in the \cd{MCMCs} argument, so long as these custom algorithms are defined in the \cd{MCMCdefs} argument.  An example of this usage is given with the \cd{crossLevel} algorithm in the \nm{litters} MCMC Suite example.
 
-The values for the \cd{MCMCs} argument is \cd{c(`jags', `nimble', `nimble\_RW', `nimble_slice')}.
+The values for the \cd{MCMCs} argument is \cd{c(`jags', `nimble', `nimble\_RW', `nimble\_slice')}.
 
 \subsubsection{argument: \cd{MCMCdefs}}
 
