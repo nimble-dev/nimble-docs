@@ -780,6 +780,7 @@ NIMBLE also extends the BUGS language in the following ways:
   such as placing a multivariate normal vector arbitrarily within a
   higher-dimensional object, not just in the last index.
 \item Allowance for constraints on the nodes in the model, using the \cd{dconstraint()} syntax, which shares some similarities with \cd{dinterval()}. See Section \ref{subsec:trunc}.
+  \item Users can supply their own functions and distributions as \cd{nimbleFunctions} for use in BUGS code. See Section \ref{sec:user-defined}.
 \end{enumerate}
 
 \subsubsection{Extension for handling ``data''}
@@ -821,7 +822,6 @@ left-hand side of BUGS declarations.
 
 We also plan to extend the BUGS language to support:
 \begin{enumerate}
-\item Ability to provide new functions and new distributions written NIMBLE.
 \item If-then-else syntax for one-time evaluation when the model is
   compiled, so that the same model code can generate different models
   when different conditions are met.
@@ -1380,6 +1380,108 @@ Once one has the C-model in hand one can manipulate it in exactly the
 same way one manipulates the R-model.  Both versions of the model are
 represented in R as Reference Class objects inheriting from the same
 base class.
+
+\section{Defining your own functions and distributions for use with BUGS code}
+\label{sec:user-defined}
+
+As of Version 0.4, NIMBLE now allows you to define your own functions and distributions (as \cd{nimbleFunctions} of course!) for use in BUGS code. This introduces enormous flexibility for users. Thus you are no longer limited to the functions and distributions listed in Section \ref{sec:more-details-nimble}.
+
+Further, while NIMBLE at the moment does not allow the use of random indices, such as is common in clustering contexts, you may be able to analytically integerate over the random indices, resulting in a mixture distribution that you could implement as a user-defined distribution. This also would allow you to implement the dnormmix distribution provided in JAGS.
+
+This also allows you to specify models of reduced dimension, which can ease computations in various algorithms, such as MCMC. For example, one can write a Dirichlet-multinomial distribution that allows one to avoid working directly with the underlying latent probabilities in models with multinomial likelihoods and Dirichlet prior on the multinomial probability vector.
+
+
+\subsection{User-defined distributions}
+
+To use a user-defined distribution, you need to, at a minimum, do the following:
+\begin{enumerate}
+  \item define density ('d') and simulation ('r') \cd{nimbleFunctions} without setup code.
+   \item register the distribution using the \cd{registerDistributions} function, and
+     \item use your distribution in BUGS code.
+\end{itemize}
+
+Here is an extended example of providing a univariate distribution (simply duplicating the exponential distribution already provided by NIMBLE) and a new multivariate distribution, the Dirichlet-multinomial, not provided by NIMBLE.
+
+[INSERT code]
+
+When you write your user-defined distribution-related functions, you should write them to take as input the parameters for a single parameterization, which will be the standard parameterization that NIMBLE will use. If you would like to allow for multiple parameterizations, you can do this via the Rdist element of the list provided to registerDistributions as discussed below.
+
+Given the need to make distribution-related functions operate correctly in both R and C++, we have a few requirements for the syntax of distribution-related \cd{nimbleFunctions}:
+
+\begin{itemize}
+  \item Your distribution-related functions must have names that begin with 'd', 'r', 'p', and 'q' and the name of the distribution must not be identical to any of the NIMBLE-provided distributions \footnote{If you wanted to create your own, say, \cd{dmnorm}, you just need to use a different name.}.
+    \item Your functions must have the same name as the \cd{BUGSdist} input to \cd{registerDistributions} or as the \cd{Rdist} if you allow the BUGS name to differ from the name as implemented in the \cd{nimbleFunctions}. 
+  \item All simulation ('r') functions must take \cd{n} as their first argument. Note that you may simply have your function only handle \cd{n=1} and return an warning for other values of \cd{n}.
+  \item All density functions must have as their last argument \cd{log_value} and implement return of the log probability density. NIMBLE never passes \cd{log_value = 1}, though of course we recommend you implement this simple calculation. Unfortunately, you cannot name this arguments \cd{log} as in R density functions as \cd{log} is used as the logarithm function in our generated C++ code.
+  \item All distribution and quantile functions must have their last two arguments be (in order), \cd{lower_tail} and \cd{log_p}. These functions must be able to properly do their computation for \cd{lower_tail = 1} (i.e., TRUE) and \cd{log_p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but if you do not we recommend you print a warning \footnote{Unfortunately, we do not yet have error-handling in \cd{nimbleFunctions}.}. Unfortunately, you cannot name these arguments \cd{lower.tail} or \cd{log.p} as the use of a period conflicts with object-oriented code syntax when we create and compile C++ code.
+\end{itemize}
+
+As discussed in more detail in the help information for \cd{registerDistributions}. Also note that additional examples can be seen in the R/distributions_inputList.R file for the default NIMBLE distributions in the source code for the NIMBLE package or on our Github repository. 
+\cd{BUGSdist} should specify the name of the distribution to be used in BUGS and list all of the possible parameters from all parameterizations.
+\cd{Rdist} should provide a vector of potential reparameterizations, including reordering of parameters. The distribution name should match that of the nimbleFunctions you have written. 
+\cd{altParams} is optional but is intended to allow for back-calculation of alternative parameters from default parameters. This is used in our MCMC conjugacy processing but is not yet relevant for user-supplied distributions as we don't provide for conjugacy for user-defined distributions.
+\cd{discrete} is a logical value indicating whether the distribution is that of a discrete random variable
+\cd{pqAvail} indicates if you have provided distribution and quantile functions that can be used for truncated versions of your distribution.#' }
+#' \item{\code{altParams}} {
+#' a character vector of comma-separated name = value pairs that provide the mathematical expressions relating non-default parameters to default parameters. These inverse functions are used for MCMC conjugacy calculations when a conjugate relationship is expressed in terms of non-default parameters (such as the precision for normal-normal conjugacy). If not supplied, the system will still functional but at a possible loss of efficiency in certain algorithms.
+
+You may notice the presence of a \cd{types} element in the list of NIMBLE-provided distributions that has information on type and dimension. This syntax is in flux at the moment and there is no need to provide \cd{types} as part of your input list to \cd{registerDistributions}. 
+
+If you provide CDF (distribution) (i.e., 'p') and inverse CDF (quantile) (i.e., 'q') functions, you can also make use of truncation with your distribution. In this case be sure to specify \cd{pqAvail = TRUE} when you call \cd{registerDistributions}.
+
+\subsection{User-defined functions}
+
+To use a function you define in BUGS code, simply create a \cd{nimbleFunction} (without setup code) that implements the calculation. Then use it in your BUGS code. That's it.
+
+One note of caution applies with regard to dimensionality. You can write \cd{nimbleFunctions} that take scalar input or higher-dimensional input and that produce either scalar or higher-dimensional return values. Make sure that the dimensionality specified in your \cd{nimbleFunction} matches how you use it in BUGS code. 
+
+In general if you define  scalar parameters in your BUGS code you will want to define \cd{nimbleFunctions} that take scalar arguments, e.g.,
+
+<<user-fun, eval=FALSE>>=
+dbl <- nimbleFunction(    
+    run = function(x = double(0)) {
+        returnType(double(0))
+        return(2*x)
+    }
+    )
+
+code <- BUGScode({
+                     
+                     for(i in 1:3) {
+                         mu[i] ~ dnorm(0, 1)
+                         dmu[i] <- dbl(mu[i])
+                     }
+@ 
+
+You can define vectorized functions and apply them to non-scalar variables, as shown here, regardless of whether the variable is a multivariate node or a collection of univariate nodes. 
+
+<<user-fun-vec, eval=FALSE>>=
+vdbl  <- nimbleFunction(    
+    run = function(x = double(1)) {
+        returnType(double(1))
+        return(2*x)
+    }
+    )
+code <- BUGScode({
+                     
+                     for(i in 1:3) {
+                         mu[i] ~ dnorm(0, 1)
+                     }
+                     dmu[1:3] <- vdbl(mu[1:3])
+                     theta[1:3] ~ dmnorm(mn[1:3], prec[1:3, 1:3])
+                     dtheta[1:3] <- vdbl(theta[1:3])
+                 })
+@ 
+                 
+Note that there is no computational advantage to the use of \cd{vdbl} applied to \cd{mu} as opposed to applying \cd{dbl} to \cd{mu[i]} in a loop, because ultimately all the looping will be done in compiled code anyway. 
+
+However, there is a subtle difference between the \cd{dmu} variables in the two examples.  In the first example, there are individual nodes for each \cd{dmu[i]}. In the second example, there is a single multivariate node, \cd{dmu}. Depending on the algorithms being applied to the model, either implementation may be more computationally efficient.
+
+In addition to the general comment that you must respect the dimensions of arguments to \cd{nimbleFunctions}, note that you cannot apply a \cd{nimbleFunction} that takes as input non-scalar values and use a scalar variable as the input. I.e., in the example above you cannot have this syntax, \cd{dmu[i] <- vdbl(mu[i])}. Unlike in R, scalars are not simply vectors of length 1.
+ 
+\subsection{Limitations}
+
+We do not yet allow users to define their own link functions, but we plan to implement this soon.
 
 \chapter{Using NIMBLE models from R}
 \label{cha:using-bugs-models}
