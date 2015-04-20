@@ -1400,11 +1400,108 @@ To use a user-defined distribution, you need to, at a minimum, do the following:
      \item use your distribution in BUGS code.
 \end{itemize}
 
-Here is an extended example of providing a univariate distribution (simply duplicating the exponential distribution already provided by NIMBLE) and a new multivariate distribution, the Dirichlet-multinomial, not provided by NIMBLE.
+Here is an extended example of providing a univariate distribution (simply duplicating the exponential distribution already provided by NIMBLE) and a new multivariate distribution, the Dirichlet-multinomial, not provided by NIMBLE. Note that we can use truncation with the user-provided exponential distribution because we have provided distribution and quantile functions.
 
-[INSERT code]
+<<user-dist, eval=FALSE>>=
+dmyexp <- nimbleFunction(
+    run = function(x = double(0), rate = double(0), log_value = integer(0)) {
+        returnType(double(0))
+        logProb <- log(rate) - x*rate
+        if(log_value) {
+            return(logProb)
+        } else {
+            return(exp(logProb))
+        }
+    })
+
+rmyexp <- nimbleFunction(
+    run = function(n = integer(0), rate = double(0)) {
+        returnType(double(0))
+        if(n != 1) nimPrint("rmyexp only allows n = 1; using n = 1.")
+        dev <- runif(1, 0, 1)
+        return(-log(1-dev) / rate)
+    }
+    )
+
+pmyexp <- nimbleFunction(
+    run = function(q = double(0), rate = double(0), lower_tail = integer(0), log_p = integer(0)) {
+        returnType(double(0))
+        if(!lower_tail) {
+            logp = -rate * q
+            if(log_p) {
+                return(logp)
+            } else {
+                return(exp(logp))
+            }
+        } else {
+            p = 1 - exp(-rate * q)
+            if(!log_p) {
+                return(p)
+            } else {
+               return(log(p))
+           }
+        }
+    }
+    )
+
+qmyexp <- nimbleFunction(
+    run = function(p = double(0), rate = double(0), lower_tail = integer(0), log_p = integer(0)) {
+        returnType(double(0))
+        if(log_p) {
+            p = exp(p)
+        }
+        if(!lower_tail) {
+            p = 1 - p
+        }
+        return(-log(1 - p) / rate)
+    }
+    )
+
+
+
+ddirchmulti <- nimbleFunction(
+    run = function(x = double(1), alpha = double(1), size = double(0), log_value = integer(0)) {
+        returnType(double(0))
+        logProb <- lgamma(sum(alpha)) - sum(lgamma(alpha)) + sum(lgamma(alpha + x)) - lgamma(sum(alpha) + size)
+        if(log_value) {
+            return(logProb)
+        } else {
+            return(exp(logProb))
+        }
+    })
+
+rdirchmulti <- nimbleFunction(
+    run = function(n = integer(0), alpha = double(1), size = double(0)) {
+        returnType(double(1))
+        if(n != 1) nimPrint("rdirchmulti only allows n = 1; using n = 1.")
+        p <- rdirch(1, alpha)
+        return(rmulti(1, size = size, prob = p))
+    })
+
+registerDistributions(list(
+    dmyexp = list(
+        BUGSdist = "dmyexp(rate, scale)",
+        Rdist = "dmyexp(rate = 1/scale)",
+        altParams = "scale = 1/rate",
+        pqAvail = TRUE),
+    ddirchmulti = list(
+        BUGSdist = "ddirchmulti(alpha, size)",
+        types = c('value = double(1)', 'alpha = double(1)', 'size = double(0)'))
+        )
+    )
+                      
+
+code <- BUGScode({
+     y[1:K] ~ ddirchmulti(alpha[1:K], n)
+     for(i in 1:K) {
+         alpha[i] ~ T(dmyexp(scale = 3), 0, 100)
+      }
+
+@ 
 
 When you write your user-defined distribution-related functions, you should write them to take as input the parameters for a single parameterization, which will be the standard parameterization that NIMBLE will use. If you would like to allow for multiple parameterizations, you can do this via the Rdist element of the list provided to registerDistributions as discussed below.
+
+If you provide CDF (distribution) (i.e., 'p') and inverse CDF (quantile) (i.e., 'q') functions, you can also make use of truncation with your distribution. In this case be sure to specify \cd{pqAvail = TRUE} when you call \cd{registerDistributions}.
 
 Given the need to make distribution-related functions operate correctly in both R and C++, we have a few requirements for the syntax of distribution-related \cd{nimbleFunctions}:
 
@@ -1412,22 +1509,23 @@ Given the need to make distribution-related functions operate correctly in both 
   \item Your distribution-related functions must have names that begin with 'd', 'r', 'p', and 'q' and the name of the distribution must not be identical to any of the NIMBLE-provided distributions \footnote{If you wanted to create your own, say, \cd{dmnorm}, you just need to use a different name.}.
     \item Your functions must have the same name as the \cd{BUGSdist} input to \cd{registerDistributions} or as the \cd{Rdist} if you allow the BUGS name to differ from the name as implemented in the \cd{nimbleFunctions}. 
   \item All simulation ('r') functions must take \cd{n} as their first argument. Note that you may simply have your function only handle \cd{n=1} and return an warning for other values of \cd{n}.
+  \item Your distribution-related functions must take as arguments the default parameters, starting as the second argument and in the order used in the parameterizations in the \cd{Rdist} argument to registerDistributions or the \cd{BUGSdist} argument if there are no alternative parameterizations. 
   \item All density functions must have as their last argument \cd{log_value} and implement return of the log probability density. NIMBLE never passes \cd{log_value = 1}, though of course we recommend you implement this simple calculation. Unfortunately, you cannot name this arguments \cd{log} as in R density functions as \cd{log} is used as the logarithm function in our generated C++ code.
   \item All distribution and quantile functions must have their last two arguments be (in order), \cd{lower_tail} and \cd{log_p}. These functions must be able to properly do their computation for \cd{lower_tail = 1} (i.e., TRUE) and \cd{log_p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but if you do not we recommend you print a warning \footnote{Unfortunately, we do not yet have error-handling in \cd{nimbleFunctions}.}. Unfortunately, you cannot name these arguments \cd{lower.tail} or \cd{log.p} as the use of a period conflicts with object-oriented code syntax when we create and compile C++ code.
 \end{itemize}
 
-As discussed in more detail in the help information for \cd{registerDistributions}. Also note that additional examples can be seen in the R/distributions_inputList.R file for the default NIMBLE distributions in the source code for the NIMBLE package or on our Github repository. 
-\cd{BUGSdist} should specify the name of the distribution to be used in BUGS and list all of the possible parameters from all parameterizations.
-\cd{Rdist} should provide a vector of potential reparameterizations, including reordering of parameters. The distribution name should match that of the nimbleFunctions you have written. 
-\cd{altParams} is optional but is intended to allow for back-calculation of alternative parameters from default parameters. This is used in our MCMC conjugacy processing but is not yet relevant for user-supplied distributions as we don't provide for conjugacy for user-defined distributions.
-\cd{discrete} is a logical value indicating whether the distribution is that of a discrete random variable
-\cd{pqAvail} indicates if you have provided distribution and quantile functions that can be used for truncated versions of your distribution.#' }
-#' \item{\code{altParams}} {
-#' a character vector of comma-separated name = value pairs that provide the mathematical expressions relating non-default parameters to default parameters. These inverse functions are used for MCMC conjugacy calculations when a conjugate relationship is expressed in terms of non-default parameters (such as the precision for normal-normal conjugacy). If not supplied, the system will still functional but at a possible loss of efficiency in certain algorithms.
+
+Next we provide basic information on the structure of the distribution information passed to \cd{registerDistributions}. The single argument should be a list of lists, with each element a list providing information about a single user-defined distribution. Full details are given in the help information for \cd{registerDistributions}. Also note that additional examples can be seen in the R/distributions_inputList.R file for the default NIMBLE distributions in the source code for the NIMBLE package or on our Github repository. 
+Here is a quick summary of the elements needed for each distribution:
+\begin{itemize}
+\item \cd{BUGSdist} should specify the name of the distribution to be used in BUGS and list all of the possible parameters from all parameterizations.
+\item \cd{Rdist} should provide a vector of potential reparameterizations, including reordering of parameters. The distribution name should match that of the nimbleFunctions you have written. 
+\item \cd{altParams} is optional but is intended to allow for back-calculation of alternative parameters from default parameters. This is used in our MCMC conjugacy processing but is not yet relevant for user-supplied distributions as we don't provide for conjugacy for user-defined distributions.
+\item \cd{discrete} is a logical value indicating whether the distribution is that of a discrete random variable
+\item \cd{pqAvail} indicates if you have provided distribution and quantile functions that can be used for truncated versions of your distribution.#' }
 
 You may notice the presence of a \cd{types} element in the list of NIMBLE-provided distributions that has information on type and dimension. This syntax is in flux at the moment and there is no need to provide \cd{types} as part of your input list to \cd{registerDistributions}. 
 
-If you provide CDF (distribution) (i.e., 'p') and inverse CDF (quantile) (i.e., 'q') functions, you can also make use of truncation with your distribution. In this case be sure to specify \cd{pqAvail = TRUE} when you call \cd{registerDistributions}.
 
 \subsection{User-defined functions}
 
