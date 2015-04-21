@@ -1503,29 +1503,27 @@ If you provide CDF (distribution) (i.e., ``p'') and inverse CDF (quantile) (i.e.
 
 Given the need to make distribution-related functions operate correctly in both R and C++, we have a few requirements for the syntax of distribution-related \cd{nimbleFunctions}:
 
-HERE
-
 \begin{itemize}
-  \item Your distribution-related functions must have names that begin with 'd', 'r', 'p', and 'q' and the name of the distribution must not be identical to any of the NIMBLE-provided distributions \footnote{If you wanted to create your own, say, \cd{dmnorm}, you just need to use a different name.}.
-    \item Your functions must have the same name as the \cd{BUGSdist} input to \cd{registerDistributions} or as the \cd{Rdist} if you allow the BUGS name to differ from the name as implemented in the \cd{nimbleFunctions}. 
-  \item All simulation ('r') functions must take \cd{n} as their first argument. Note that you may simply have your function only handle \cd{n=1} and return an warning for other values of \cd{n}.
-  \item Your distribution-related functions must take as arguments the default parameters, starting as the second argument and in the order used in the parameterizations in the \cd{Rdist} argument to registerDistributions or the \cd{BUGSdist} argument if there are no alternative parameterizations. 
-  \item All density functions must have as their last argument \cd{log\_value} and implement return of the log probability density. NIMBLE never passes \cd{log\_value = 1}, though of course we recommend you implement this simple calculation. Unfortunately, you cannot name this arguments \cd{log} as in R density functions as \cd{log} is used as the logarithm function in our generated C++ code.
+  \item Your distribution-related functions must have names that begin with ``d'', ``r'', ``p'' and ``q''. The name of the distribution must not be identical to any of the NIMBLE-provided distributions \footnote{If you wanted to create your own, say, \cd{dmnorm}, you just need to use a different name.}.
+    \item Your functions must have the same distribution name as the \cd{BUGSdist} input to \cd{registerDistributions} (or as the \cd{Rdist} if you allow the BUGS distribution name to differ from the name as implemented in the \cd{nimbleFunctions}). 
+  \item All simulation (``r'') functions must take \cd{n} as their first argument. Note that you may simply have your function only handle \cd{n=1} and return an warning for other values of \cd{n}.
+  \item Your distribution-related functions must take as arguments the default parameters, starting as the second argument and in the order used in the parameterizations in the \cd{Rdist} argument to \cd{registerDistributions} or the \cd{BUGSdist} argument if there are no alternative parameterizations. 
+  \item All density functions must have as their last argument \cd{log\_value} and implement return of the log probability density. NIMBLE never makes use of \cd{log\_value = 0}, though of course we recommend you implement this simple calculation. Unfortunately, you cannot name this arguments \cd{log} as in R density functions as \cd{log} is used as the logarithm function in our generated C++ code.
   \item All distribution and quantile functions must have their last two arguments be (in order), \cd{lower\_tail} and \cd{log\_p}. These functions must be able to properly do their computation for \cd{lower\_tail = 1} (i.e., TRUE) and \cd{log\_p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but if you do not we recommend you print a warning \footnote{Unfortunately, we do not yet have error-handling in \cd{nimbleFunctions}.}. Unfortunately, you cannot name these arguments \cd{lower.tail} or \cd{log.p} as the use of a period conflicts with object-oriented code syntax when we create and compile C++ code.
 \end{itemize}
 
 
-Next we provide basic information on the structure of the distribution information passed to \cd{registerDistributions}. The single argument should be a list of lists, with each element a list providing information about a single user-defined distribution. Full details are given in the help information for \cd{registerDistributions}. Also note that additional examples can be seen in the \cd{R/distributions\_inputList.R} file for the default NIMBLE distributions in the source code for the NIMBLE package or on our Github repository. 
+Next we provide basic information on the structure of the distribution information passed to \cd{registerDistributions}. The single argument should be a list of lists, with each of the sublists providing information about a single user-defined distribution. Full details are given in the help information for \cd{registerDistributions}. Also note that additional examples can be seen in the \cd{R/distributions\_inputList.R} file for the default NIMBLE distributions in the source code for the NIMBLE package or on our Github repository. 
 Here is a quick summary of the elements needed for each distribution:
 \begin{itemize}
 \item \cd{BUGSdist} should specify the name of the distribution to be used in BUGS and list all of the possible parameters from all parameterizations.
-\item \cd{Rdist} should provide a vector of potential reparameterizations, including reordering of parameters. The distribution name should match that of the nimbleFunctions you have written. 
-\item \cd{altParams} is optional but is intended to allow for back-calculation of alternative parameters from default parameters. This is used in our MCMC conjugacy processing but is not yet relevant for user-supplied distributions as we don't provide for conjugacy for user-defined distributions.
-\item \cd{discrete} is a logical value indicating whether the distribution is that of a discrete random variable
-\item \cd{pqAvail} indicates if you have provided distribution and quantile functions that can be used for truncated versions of your distribution.
+\item \cd{Rdist} (optional) should provide a vector of potential reparameterizations, including reordering of parameters. The distribution name should match that of the nimbleFunctions you have written. 
+\item \cd{altParams} (optional) should provide a character vector of expressions that express the alternative parameters as functions of the default parameters.  This is used in our MCMC conjugacy processing but is not yet relevant for user-supplied distributions as we don't provide for conjugacy for user-defined distributions.
+\item \cd{discrete} (optional; default is \cd{FALSE}) is a logical value indicating whether the distribution is that of a discrete random variable.
+\item \cd{pqAvail} (optional; default is \cd{FALSE}) indicates if you have provided distribution and quantile functions that can be used for truncated versions of your distribution.
 \end{itemize}
 
-You may notice the presence of a \cd{types} element in the list of NIMBLE-provided distributions that has information on type and dimension. This syntax is in flux at the moment and there is no need to provide \cd{types} as part of your input list to \cd{registerDistributions}. 
+You may notice the presence of a \cd{types} element in the list of NIMBLE-provided distributions in \cd{R/distributions\_inputList.R}  that has information on type and dimension. This syntax is in flux at the moment, and there is no need to provide \cd{types} as part of your input list to \cd{registerDistributions}. 
 
 
 \subsection{User-defined functions}
@@ -1562,7 +1560,6 @@ vdbl  <- nimbleFunction(
     }
     )
 code <- BUGScode({
-                     
                      for(i in 1:3) {
                          mu[i] ~ dnorm(0, 1)
                      }
