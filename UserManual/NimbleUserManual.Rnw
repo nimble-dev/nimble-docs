@@ -237,8 +237,7 @@ subsequent changes in one will not be reflected in the other.
 
 At this point we have initial values for all of the nodes in the model
 and we have both the original and compiled versions of the model. As a first algorithm
-to try on our model, let's use NIMBLE's default MCMC. Note that all
-conjugacy is detected for all nodes except for
+to try on our model, let's use NIMBLE's default MCMC. Note that conjugate relationships are detected for all nodes except for
 \cd{alpha}\footnote{This is because we haven't yet set up NIMBLE to
   detect conjugate relationships involving an exponential
   distribution, but we'll add that one soon.}, on which the default sampler is a random walk Metropolis sampler.
@@ -592,13 +591,10 @@ Please post about installation problems to the nimble-users Google group or
 email \cd{nimble.stats@gmail.com}.
 
 
-\subsection{RStudio and NIMBLE}
-\label{sec:RStudio-problem}
-
-You can use NIMBLE in RStudio, but we strongly recommend that you turn
-off the option to display the Global Environment.  Leaving it on can
-cause RStudio to freeze, apparently from trying to deal with some of
-NIMBLE's data structures.
+%% commented out by DT, April 2015
+%\subsection{RStudio and NIMBLE}   \label{sec:RStudio-problem}
+%You can use NIMBLE in RStudio, but we strongly recommend that you turn off the option to display the Global Environment.
+%Leaving it on can cause RStudio to freeze, apparently from trying to deal with some of NIMBLE's data structures.
 
 \section{Installing a C++ compiler for R to use}
 
@@ -1861,7 +1857,7 @@ pumpModelValues$x
   we set \cd{m} to be 2. As you can see, the rows are stored as
   elements of a list.
   
-  Alternatively, one can define a modelValues object manually via the \cd{ModelValuesSpec()} function. In this case, we will need to provide several arguments:
+  Alternatively, one can define a modelValues object manually via the \cd{modelValuesSpec()} function. In this case, we will need to provide several arguments:
   \begin{itemize}
  \item \cd{vars}, which is a character vector of variable names, 
    \item \cd{type}, which is a character vector of the data types for each variable (`double' for real numbers, `integer' for integers) and 
@@ -2152,18 +2148,16 @@ cGetLogProbMany$run() #
   
   
 
-\section{Particle filter}
+\section{Particle Filter}
 
   NIMBLE includes an algorithm for a basic particle filter to be used for approximating the
-  log likelihood of a state-space model. At this time, the particle
-  filter only works with scalar states.  A particle filter can be built
-  around such a model by a call to \cd{buildParticleFilter}. This nimbleFunction requires
-  setup arguments \cd{model} and \cd{orderedNodeVector}, which is the properly ordered
-set of state nodes. Once this function is compiled, parameter values to the C-model should be 
-  set and then the particle filter can be run by specifying the number of particles.
+  log likelihood of a state-space model.  A particle filter can be built
+  around such a model by a call to \cd{buildPF}. This nimbleFunction requires
+  setup arguments \cd{model} and \cd{nodes}, which is a character vector specifying latent model nodes.
+  The particle filter can be run by specifying the number of particles.
   
   Here is an example, using a linear state-space model for which we
-  can easily calculate the likelihood using the Kalman Filter to
+  can also calculate the likelihood using the Kalman Filter to
   verify if the particle filter seems to be working.
   
 <<particle_Filter_Chunk>>=
@@ -2196,11 +2190,8 @@ for(i in 2:t){
 rTimeModel <- nimbleModel(timeModelCode, constants = list(t = t), data = list(y = y) )
 cTimeModel <- compileNimble(rTimeModel)
 
-#Ordered list of hidden nodes. Equivalent to xTimeModel$expandNodeNames('x[1:t]')
-xNodes = paste0('x[', 1:t, ']')  	
-
 #Build the particle filter
-rPF <- buildParticleFilter(rTimeModel, xNodes)
+rPF <- buildPF(rTimeModel, "x")
 cPF = compileNimble(rPF,project = rTimeModel)
 
 #Set parameter values

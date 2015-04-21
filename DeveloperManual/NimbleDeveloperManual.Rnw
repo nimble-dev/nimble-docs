@@ -11,8 +11,6 @@ BUGS models are processed in a sequence of well defined steps, managed by a set 
 
 Each of these steps will be described first, with the relevant R classes and objects stated.  At the end is a summary of these classes.
 
-
-
 \subsection{Parsing and representation of the parse tree}
 \label{sec:pars-repr-parse}
 
@@ -69,7 +67,6 @@ Explain contexts.
 \subsection{Building the maps}
 \label{sec:building-maps}
 
-
 \section{Classes used for model definitions}
 \label{sec:classes-used-model}
 
@@ -78,15 +75,11 @@ Explain contexts.
 
 Summary of the processing related to model objects.
 
-
 \section{Processing nimbleFunctions}
 \label{sec:proc-nimbl}
 
 \section{Classes for processing nimbleFunctions}
 \label{sec:class-proc-nimbl}
-
-
-
 
 \section{Processing RCfunctions}
 \label{sec:proc-rcfunct}
@@ -115,11 +108,6 @@ Summary of the processing related to model objects.
 \subsection{Eigenization: Generating code for Eigen}
 \label{sec:eigen-gener-code}
 
-
-
-
-
-
 \section{Classes for C++ code}
 \label{sec:classes-c++-code}
 
@@ -130,5 +118,22 @@ Summary of the processing related to model objects.
 \subsection{Detecting conjugate relationships}
 
 \subsection{Determining default updaters for nodes}
+
+\subsection{Model initialization}
+
+The use of initializeModel() in user (nimbleFunction) algorithms to initialize mode objects.
+
+\begin{verbatim}
+myNewAlgorithm <- nimbleFunction(
+    setup = function(model, ...) {
+        my_initializeModel <- initializeModel(model)
+        ....
+    },
+    run = function(...) {
+        my_initializeModel()
+        ....
+    }
+)
+\end{verbatim}
 
 \end{document}
