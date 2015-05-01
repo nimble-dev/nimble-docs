@@ -910,9 +910,11 @@ the model and are not variables in the model.
 One can also provide variables appearing only on the right-hand side of
 BUGS declarations (e.g., covariates/predictors) via the \cd{data} argument
 to \cd{nimbleModel()} and these will
-appear as variables in the model and be flagged as data, but will not
+appear as variables in the model, but will not
 be nodes in the model. A user can change these values via direct
 assignment if desired.
+% we used to say that RHS 'data' would be flagged as data but this
+% seems not to be true so I took it out - CJP 4/30/15
 
 
 
