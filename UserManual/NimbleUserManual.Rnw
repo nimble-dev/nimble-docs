@@ -2368,7 +2368,7 @@ information without redundantly recomputing it.  A nimbleFunction can
 be called repeatedly, each time returning a specialized nimbleFunction.
   
 Readers familiar with object-oriented programming may find it useful
-to think in terms of class definitions and objects.  nimbleFunction
+to think in terms of class definitions and objects.  \cd{nimbleFunction}
 creates a class definition.  Each specialized nimbleFunction is one object
 in the class.  The setup arguments are used to define member data in
 the object.
@@ -2747,6 +2747,15 @@ won't usually include that because it is the default if no
 should use R's \cd{c} function if \cd{nDim} $>1$.  If sizes
 are omitted, they will either be set when the entire object is
 assigned to, or an explicit call to \cd{setSize} is needed.
+
+\subsection{Naming arguments and variables}
+\label{sec:naming-in-DSL}
+
+Because the names of arguments to nimbleFunctions and those of variables in \cd{run} code are 
+used directly in C++, one cannot use a period in the names of arguments or run-time variables because C++ interprets the period as the dot operator for class membership access.
+
+Similarly, do not name an argument or run-time variable with the same name as a function that
+is used in the \cd{run} code, as this will cause a conflict in the C++ code.
 
 \subsection{Querying and changing sizes}
 \label{sec:query-chang-sizes}
