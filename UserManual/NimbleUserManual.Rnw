@@ -1402,10 +1402,10 @@ Here is an extended example of providing a univariate distribution (simply dupli
 
 <<user-dist, eval=FALSE>>=
 dmyexp <- nimbleFunction(
-    run = function(x = double(0), rate = double(0), log_value = integer(0)) {
+    run = function(x = double(0), rate = double(0), log = integer(0)) {
         returnType(double(0))
         logProb <- log(rate) - x*rate
-        if(log_value) {
+        if(log) {
             return(logProb)
         } else {
             return(exp(logProb))
@@ -1422,19 +1422,19 @@ rmyexp <- nimbleFunction(
     )
 
 pmyexp <- nimbleFunction(
-    run = function(q = double(0), rate = double(0), lower_tail = integer(0), 
-        log_p = integer(0)) {
+    run = function(q = double(0), rate = double(0), lower.tail = integer(0), 
+        log.p = integer(0)) {
         returnType(double(0))
-        if(!lower_tail) {
+        if(!lower.tail) {
             logp = -rate * q
-            if(log_p) {
+            if(log.p) {
                 return(logp)
             } else {
                 return(exp(logp))
             }
         } else {
             p = 1 - exp(-rate * q)
-            if(!log_p) {
+            if(!log.p) {
                 return(p)
             } else {
                return(log(p))
@@ -1444,13 +1444,13 @@ pmyexp <- nimbleFunction(
     )
 
 qmyexp <- nimbleFunction(
-    run = function(p = double(0), rate = double(0), lower_tail = integer(0), 
-        log_p = integer(0)) {
+    run = function(p = double(0), rate = double(0), lower.tail = integer(0), 
+        log.p = integer(0)) {
         returnType(double(0))
-        if(log_p) {
+        if(log.p) {
             p = exp(p)
         }
-        if(!lower_tail) {
+        if(!lower.tail) {
             p = 1 - p
         }
         return(-log(1 - p) / rate)
@@ -1461,11 +1461,11 @@ qmyexp <- nimbleFunction(
 
 ddirchmulti <- nimbleFunction(
     run = function(x = double(1), alpha = double(1), size = double(0), 
-        log_value = integer(0)) {
+        log = integer(0)) {
         returnType(double(0))
         logProb <- lgamma(sum(alpha)) - sum(lgamma(alpha)) + sum(lgamma(alpha + x)) 
         - lgamma(sum(alpha) + size)
-        if(log_value) {
+        if(log) {
             return(logProb)
         } else {
             return(exp(logProb))
@@ -1510,8 +1510,8 @@ Given the need to make distribution-related functions operate correctly in both 
     \item Your functions must have the same distribution name as the \cd{BUGSdist} input to \cd{registerDistributions} (or as the \cd{Rdist} if you allow the BUGS distribution name to differ from the name as implemented in the \cd{nimbleFunctions}). 
   \item All simulation (``r'') functions must take \cd{n} as their first argument. Note that you may simply have your function only handle \cd{n=1} and return an warning for other values of \cd{n}.
   \item Your distribution-related functions must take as arguments the default parameters, starting as the second argument and in the order used in the parameterizations in the \cd{Rdist} argument to \cd{registerDistributions} or the \cd{BUGSdist} argument if there are no alternative parameterizations. 
-  \item All density functions must have as their last argument \cd{log\_value} and implement return of the log probability density. NIMBLE never makes use of \cd{log\_value = 0}, though of course we recommend you implement this simple calculation. Unfortunately, you cannot name this arguments \cd{log} as in R density functions as \cd{log} is used as the logarithm function in our generated C++ code.
-  \item All distribution and quantile functions must have their last two arguments be (in order), \cd{lower\_tail} and \cd{log\_p}. These functions must be able to properly do their computation for \cd{lower\_tail = 1} (i.e., TRUE) and \cd{log\_p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but if you do not we recommend you print a warning \footnote{Unfortunately, we do not yet have error-handling in \cd{nimbleFunctions}.}. Unfortunately, you cannot name these arguments \cd{lower.tail} or \cd{log.p} as the use of a period conflicts with object-oriented code syntax when we create and compile C++ code.
+  \item All density functions must have as their last argument \cd{log} and implement return of the log probability density. NIMBLE never makes use of \cd{log = 0}, though of course we recommend you implement this simple calculation. 
+  \item All distribution and quantile functions must have their last two arguments be (in order), \cd{lower.tail} and \cd{log.p}. These functions must be able to properly do their computation for \cd{lower.tail = 1} (i.e., TRUE) and \cd{log.p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but if you do not we recommend you print a warning \footnote{Unfortunately, we do not yet have error-handling in \cd{nimbleFunctions}.}. 
 \end{itemize}
 
 
