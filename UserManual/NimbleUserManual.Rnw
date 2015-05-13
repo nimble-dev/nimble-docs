@@ -1484,7 +1484,7 @@ registerDistributions(list(
     dmyexp = list(
         BUGSdist = "dmyexp(rate, scale)",
         Rdist = "dmyexp(rate = 1/scale)",
-        altParams = "scale = 1/rate",
+        altParams = c("scale = 1/rate", "mean = 1/rate"),
         pqAvail = TRUE),
     ddirchmulti = list(
         BUGSdist = "ddirchmulti(alpha, size)"
@@ -1520,7 +1520,7 @@ Here is a quick summary of the elements needed for each distribution:
 \begin{itemize}
 \item \cd{BUGSdist} should specify the name of the distribution to be used in BUGS and list all of the possible parameters from all parameterizations.
 \item \cd{Rdist} (optional) should provide a vector of potential reparameterizations, including reordering of parameters. The distribution name should match that of the nimbleFunctions you have written. 
-\item \cd{altParams} (optional) should provide a character vector of expressions that express the alternative parameters as functions of the default parameters.  This is used in our MCMC conjugacy processing but is not yet relevant for user-supplied distributions as we don't provide for conjugacy for user-defined distributions.
+\item \cd{altParams} (optional) should provide a character vector of expressions that express any alternative parameters as functions of the default parameters.  This is used in our MCMC conjugacy processing but is not yet relevant for user-supplied distributions as we don't provide for conjugacy for user-defined distributions. We envision this functionality also might be used in the future to provide functionals of parameters for other algorithms, e.g., if an algorithm needs the expected value or variance of the distribution, these could be obtained if 'mean' and 'var' are given in \cd{altParams}, as illustrated with 'mean' in the \cd{dmyexp} example above.
 \item \cd{discrete} (optional; default is \cd{FALSE}) is a logical value indicating whether the distribution is that of a discrete random variable.
 \item \cd{pqAvail} (optional; default is \cd{FALSE}) indicates if you have provided distribution and quantile functions that can be used for truncated versions of your distribution.
 \end{itemize}
