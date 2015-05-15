@@ -1307,20 +1307,16 @@ The basic syntax specifies a node to follow \cd{dconstraint(binaryValue)} where 
 <<dconstraint-example, eval=FALSE>>=
 mu1 ~ dnorm(0, 1) 
 mu2 ~ dnorm(0, 1) 
-ind <- mu1 + mu2 > 0
-const ~ dconstraint(ind)
+const ~ dconstraint( mu1 + mu2 > 0 )
 @ 
 
 One would then specifies \cd{const} to be data and to have value 1. This is equivalent to a half-normal distribution on the half-plane $\mu_1 + \mu_2 > 0$. However, note that this equivalence only holds when conditioning on \cd{const}. If one simulates from the model using the \cd{simulate} functions, \cd{ind} will merely indicate whether the condition  $\mu_1 + \mu_2 > 0$ is satisfied given the current values of \cd{mu1} and \cd{mu2}. If the condition is not satisfied, then \cd{ind} and \cd{const} will be 0 and the log probability of \cd{const} (and therefore of the model as whole) will be $-\infty$.
-
-Note that in the current version of NIMBLE one must specify the condition as a separate line. One cannot use an expression as the parameter of \cd{dconstraint}. One can use \cd{\&} and \cd{|} to construct compound comparisons in the definition of the indicator, e.g., \cd{ind <- mu1 + mu2 > 0 \& mu1 > 0}. 
 
 \paragraph{Ordering}
 
 To specify an ordering of parameters, such as $\alpha_1 <= \alpha_2 <= \alpha_3$ one can use \cd{dconstraint} as follows: 
 <<ordering-example, eval=FALSE>>=
-ind <- alpha1 <= alpha2 & alpha2 <= alpha3
-const ~ dconstraint(ind)
+const ~ dconstraint( alpha1 <= alpha2 & alpha2 <= alpha3 )
 @ 
 
 As mentioned above, the constraint is an aspect of the data and will only be forced to be true when conditioning on the data.
