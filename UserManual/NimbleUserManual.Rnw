@@ -1577,6 +1577,8 @@ In addition to the general comment that you must respect the dimensions of argum
  
 \subsection{Limitations}
 
+As is generally the case for nimbleFunctions and BUGS models, you should create any user-defined functions or distributions in R's global environment (or use \cd{assign} to copy them there). NIMBLE does not have a scoping system set up, in part because we use Reference Classes to implement nimbleFunctions and R's Reference Classes don't use the usual scoping rules in R.
+
 We do not yet allow users to define their own link functions, but we plan to implement this soon.
 
 \chapter{Using NIMBLE models from R}
@@ -3060,6 +3062,7 @@ flexible, and include ``q'' and ``p'' functions, in the future.
 \item We have tried to make NIMBLE's handling of multivariate objects
   flexible, but how you choose to set things up could affect
   computational efficiency.  We'll explore that more in the future.
+\item Any nimbleFunctions or BUGS models should be created in R's global environment. Otherwise NIMBLE will have trouble finding such objects and using them with each other during compilation and running of nimbleFunctions. This is in part a result of how R's Reference Classes do not use the usual R scoping rules.
 \end{itemize}
 \section{Parallel processing}
 
