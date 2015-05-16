@@ -3004,10 +3004,10 @@ uncompiled case.
   provided it as a setup argument to illustrate that option.
 \end{itemize}
 
-\subsection{distribution functions}
+\subsection{Distribution functions}
 \label{sec:nimble-dist-funs}
 
-Distribution ``d'' and ``r'' functions can be used from
+Distribution ``d'', ``r'', ``p'', and ``q'' functions can all be used from
 nimbleFunctions, although at the moment they are neither as flexible
 nor as standard as in NIMBLE's processing of BUGS models.  In
 particular, only one parameterization is used, and it is the canonical
@@ -3037,10 +3037,11 @@ prec\_param indicates whether the Cholesky is of a precision matrix or covarianc
 matrix; and scale\_param indicates whether the Cholesky is of a scale
 matrix or an inverse scale matrix.
 
-To call a ``d'' function, the variable (usually ``x'' in R) must be
-included as the first argument.  To call the ``r'' function, a 1 must
-be included as the first argument.  We'll make these more standard and
-flexible, and include ``q'' and ``p'' functions, in the future.
+In addition, user-defined distributions can also be used in nimbleFunctions.
+
+Arguments to the distributions will be matched by either position, or if named, by name. If omitted, default argument values based on the standard R distribution functions will be used. 
+
+Note that when calling the ``r'' function, \cd{n} must be 1 and must be included.
 
 \chapter{Additional and advanced topics}
 \label{cha:topics}
