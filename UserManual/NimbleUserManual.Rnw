@@ -420,7 +420,7 @@ NIMBLE.
   values and probabilities.  In fact, the calculations of the model
   are themselves constructed as functions in the NIMBLE language, as
   are the algorithms provided in NIMBLE's algorithm library.  This
-  will make it possible in the future to extend BUGS with new
+  means that you can BUGS with new
   distributions and new functions written in NIMBLE.
   
   Like the models themselves, functions in
@@ -777,7 +777,8 @@ NIMBLE also extends the BUGS language in the following ways:
   higher-dimensional object, not just in the last index.
 \item Allowance for constraints on the nodes in the model, using the \cd{dconstraint()} syntax, which shares some similarities with \cd{dinterval()}. See Section \ref{subsec:trunc}.
   \item Users can supply their own functions and distributions as \cd{nimbleFunctions} for use in BUGS code. See Section \ref{sec:user-defined}.
-\end{enumerate}
+ \item Use of link functions in stochastic, as well as deterministic, declarations.\footnote{But beware of the possibility of needing to set values for nodes that NIMBLE creates behind the scenes.}
+  \end{enumerate}
 
 \subsubsection{Extension for handling ``data''}
 \label{sec:diff-handl-data}
@@ -910,9 +911,11 @@ the model and are not variables in the model.
 One can also provide variables appearing only on the right-hand side of
 BUGS declarations (e.g., covariates/predictors) via the \cd{data} argument
 to \cd{nimbleModel()} and these will
-appear as variables in the model and be flagged as data, but will not
+appear as variables in the model, but will not
 be nodes in the model. A user can change these values via direct
 assignment if desired.
+% we used to say that RHS 'data' would be flagged as data but this
+% seems not to be true so I took it out - CJP 4/30/15
 
 
 
@@ -1045,7 +1048,7 @@ generated.  These include:
   given parameter. The node is then a direct descendant of the new
   deterministic node.  This is an optional feature, but it is
   currently enabled in all cases.
-\item As discussed in \ref{subsec:BUGS-link} the use of link functions causes new nodes to be introduced.
+\item As discussed in \ref{subsec:BUGS-link} the use of link functions causes new nodes to be introduced. In particular, this can cause headaches in terms of initializing values in stochastic declarations with link functions.
 \item Use of alternative parameterizations of distributions. For
   example when a user provides the precision of a normal distribution
   as \cd{tau}, NIMBLE creates a new node \cd{sd <- 1/sqrt(tau)} and
@@ -1183,6 +1186,8 @@ to the follow two declarations:
 \end{itemize}
 where \cd{expit} is the inverse of \cd{logit}.  When the BUGS expression defines a deterministic node, such as \cd{logit(p) <- b0 + b1*x}, the same operations are performed except that \cd{logit\_p} is a deterministic node. 
 
+Note that we currently have no automatic way of initializing the additional node(\cd{logit\_p} in this case), which is a parent node of the explicit node (\cd{p[i]}), without explicitly referring to the additional node by the name that NIMBLE generates. For deterministic declarations, this is of little import, but for stochastic declarations, it is a bit awkward. 
+
 \subsection{Indexing}
 \label{sec:indexing} 
 
@@ -1305,20 +1310,16 @@ The basic syntax specifies a node to follow \cd{dconstraint(binaryValue)} where 
 <<dconstraint-example, eval=FALSE>>=
 mu1 ~ dnorm(0, 1) 
 mu2 ~ dnorm(0, 1) 
-ind <- mu1 + mu2 > 0
-const ~ dconstraint(ind)
+const ~ dconstraint( mu1 + mu2 > 0 )
 @ 
 
 One would then specifies \cd{const} to be data and to have value 1. This is equivalent to a half-normal distribution on the half-plane $\mu_1 + \mu_2 > 0$. However, note that this equivalence only holds when conditioning on \cd{const}. If one simulates from the model using the \cd{simulate} functions, \cd{ind} will merely indicate whether the condition  $\mu_1 + \mu_2 > 0$ is satisfied given the current values of \cd{mu1} and \cd{mu2}. If the condition is not satisfied, then \cd{ind} and \cd{const} will be 0 and the log probability of \cd{const} (and therefore of the model as whole) will be $-\infty$.
-
-Note that in the current version of NIMBLE one must specify the condition as a separate line. One cannot use an expression as the parameter of \cd{dconstraint}. One can use \cd{\&} and \cd{|} to construct compound comparisons in the definition of the indicator, e.g., \cd{ind <- mu1 + mu2 > 0 \& mu1 > 0}. 
 
 \paragraph{Ordering}
 
 To specify an ordering of parameters, such as $\alpha_1 <= \alpha_2 <= \alpha_3$ one can use \cd{dconstraint} as follows: 
 <<ordering-example, eval=FALSE>>=
-ind <- alpha1 <= alpha2 & alpha2 <= alpha3
-const ~ dconstraint(ind)
+const ~ dconstraint( alpha1 <= alpha2 & alpha2 <= alpha3 )
 @ 
 
 As mentioned above, the constraint is an aspect of the data and will only be forced to be true when conditioning on the data.
@@ -1400,10 +1401,11 @@ Here is an extended example of providing a univariate distribution (simply dupli
 
 <<user-dist, eval=FALSE>>=
 dmyexp <- nimbleFunction(
-    run = function(x = double(0), rate = double(0), log_value = integer(0)) {
+    run = function(x = double(0), rate = double(0, default = 1), 
+        log = integer(0, default = 0)) {
         returnType(double(0))
         logProb <- log(rate) - x*rate
-        if(log_value) {
+        if(log) {
             return(logProb)
         } else {
             return(exp(logProb))
@@ -1411,7 +1413,7 @@ dmyexp <- nimbleFunction(
     })
 
 rmyexp <- nimbleFunction(
-    run = function(n = integer(0), rate = double(0)) {
+    run = function(n = integer(0), rate = double(0, default = 1)) {
         returnType(double(0))
         if(n != 1) nimPrint("rmyexp only allows n = 1; using n = 1.")
         dev <- runif(1, 0, 1)
@@ -1420,19 +1422,20 @@ rmyexp <- nimbleFunction(
     )
 
 pmyexp <- nimbleFunction(
-    run = function(q = double(0), rate = double(0), lower_tail = integer(0), 
-        log_p = integer(0)) {
+    run = function(q = double(0), rate = double(0, default = 1), 
+        lower.tail = integer(0, default = 1), 
+        log.p = integer(0, default = 0)) {
         returnType(double(0))
-        if(!lower_tail) {
+        if(!lower.tail) {
             logp = -rate * q
-            if(log_p) {
+            if(log.p) {
                 return(logp)
             } else {
                 return(exp(logp))
             }
         } else {
             p = 1 - exp(-rate * q)
-            if(!log_p) {
+            if(!log.p) {
                 return(p)
             } else {
                return(log(p))
@@ -1442,13 +1445,14 @@ pmyexp <- nimbleFunction(
     )
 
 qmyexp <- nimbleFunction(
-    run = function(p = double(0), rate = double(0), lower_tail = integer(0), 
-        log_p = integer(0)) {
+    run = function(p = double(0), rate = double(0, default = 1), 
+        lower.tail = integer(0, default = 1), 
+        log.p = integer(0, default = 0)) {
         returnType(double(0))
-        if(log_p) {
+        if(log.p) {
             p = exp(p)
         }
-        if(!lower_tail) {
+        if(!lower.tail) {
             p = 1 - p
         }
         return(-log(1 - p) / rate)
@@ -1459,11 +1463,11 @@ qmyexp <- nimbleFunction(
 
 ddirchmulti <- nimbleFunction(
     run = function(x = double(1), alpha = double(1), size = double(0), 
-        log_value = integer(0)) {
+        log = integer(0)) {
         returnType(double(0))
         logProb <- lgamma(sum(alpha)) - sum(lgamma(alpha)) + sum(lgamma(alpha + x)) 
         - lgamma(sum(alpha) + size)
-        if(log_value) {
+        if(log) {
             return(logProb)
         } else {
             return(exp(logProb))
@@ -1482,10 +1486,11 @@ registerDistributions(list(
     dmyexp = list(
         BUGSdist = "dmyexp(rate, scale)",
         Rdist = "dmyexp(rate = 1/scale)",
-        altParams = "scale = 1/rate",
+        altParams = c("scale = 1/rate", "mean = 1/rate"),
         pqAvail = TRUE),
     ddirchmulti = list(
-        BUGSdist = "ddirchmulti(alpha, size)"
+        BUGSdist = "ddirchmulti(alpha, size)",
+        types = c('value = double(1)', 'alpha = double(1)'),
         )
     ))
 
@@ -1507,9 +1512,9 @@ Given the need to make distribution-related functions operate correctly in both 
   \item Your distribution-related functions must have names that begin with ``d'', ``r'', ``p'' and ``q''. The name of the distribution must not be identical to any of the NIMBLE-provided distributions \footnote{If you wanted to create your own, say, \cd{dmnorm}, you just need to use a different name.}.
     \item Your functions must have the same distribution name as the \cd{BUGSdist} input to \cd{registerDistributions} (or as the \cd{Rdist} if you allow the BUGS distribution name to differ from the name as implemented in the \cd{nimbleFunctions}). 
   \item All simulation (``r'') functions must take \cd{n} as their first argument. Note that you may simply have your function only handle \cd{n=1} and return an warning for other values of \cd{n}.
-  \item Your distribution-related functions must take as arguments the default parameters, starting as the second argument and in the order used in the parameterizations in the \cd{Rdist} argument to \cd{registerDistributions} or the \cd{BUGSdist} argument if there are no alternative parameterizations. 
-  \item All density functions must have as their last argument \cd{log\_value} and implement return of the log probability density. NIMBLE never makes use of \cd{log\_value = 0}, though of course we recommend you implement this simple calculation. Unfortunately, you cannot name this arguments \cd{log} as in R density functions as \cd{log} is used as the logarithm function in our generated C++ code.
-  \item All distribution and quantile functions must have their last two arguments be (in order), \cd{lower\_tail} and \cd{log\_p}. These functions must be able to properly do their computation for \cd{lower\_tail = 1} (i.e., TRUE) and \cd{log\_p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but if you do not we recommend you print a warning \footnote{Unfortunately, we do not yet have error-handling in \cd{nimbleFunctions}.}. Unfortunately, you cannot name these arguments \cd{lower.tail} or \cd{log.p} as the use of a period conflicts with object-oriented code syntax when we create and compile C++ code.
+  \item Your distribution-related functions must take as arguments the default parameters, starting as the second argument and in the order used in the parameterizations in the \cd{Rdist} argument to \cd{registerDistributions} or the \cd{BUGSdist} argument if there are no alternative parameterizations. NIMBLE uses doubles for numerical calculations, so we suggest simply using doubles in general, even for integer-valued parameters or values of random variables.
+  \item All density functions must have as their last argument \cd{log} and implement return of the log probability density. NIMBLE never makes use of \cd{log = 0}, though of course we recommend you implement this simple calculation. 
+  \item All distribution and quantile functions must have their last two arguments be (in order), \cd{lower.tail} and \cd{log.p}. These functions must be able to properly do their computation for \cd{lower.tail = 1} (i.e., TRUE) and \cd{log.p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but if you do not we recommend you print a warning \footnote{Unfortunately, we do not yet have error-handling in \cd{nimbleFunctions}.}. 
 \end{itemize}
 
 
@@ -1518,12 +1523,13 @@ Here is a quick summary of the elements needed for each distribution:
 \begin{itemize}
 \item \cd{BUGSdist} should specify the name of the distribution to be used in BUGS and list all of the possible parameters from all parameterizations.
 \item \cd{Rdist} (optional) should provide a vector of potential reparameterizations, including reordering of parameters. The distribution name should match that of the nimbleFunctions you have written. 
-\item \cd{altParams} (optional) should provide a character vector of expressions that express the alternative parameters as functions of the default parameters.  This is used in our MCMC conjugacy processing but is not yet relevant for user-supplied distributions as we don't provide for conjugacy for user-defined distributions.
+\item \cd{types} (optional) should provide a character vector indicating the dimensions of any non-scalar parameters or value of the random variable. Since NIMBLE uses doubles for numerical calculations and the default type of any parameter or value of the random variable is \cd{double(0)}, one should generally use 'double' and one need only specify the type for non-scalars. For multivariate densities, one should use syntax such as \cd{value = double(1)} for vectors and \cd{value = double(2)} for matrices. 
+\item \cd{altParams} (optional) should provide a character vector of expressions that express any alternative parameters as functions of the default parameters.  This is used in our MCMC conjugacy processing but is not yet relevant for user-supplied distributions as we don't provide for conjugacy for user-defined distributions. We envision this functionality also might be used in the future to provide functionals of parameters for other algorithms, e.g., if an algorithm needs the expected value or variance of the distribution, these could be obtained if 'mean' and 'var' are given in \cd{altParams}, as illustrated with 'mean' in the \cd{dmyexp} example above.
 \item \cd{discrete} (optional; default is \cd{FALSE}) is a logical value indicating whether the distribution is that of a discrete random variable.
 \item \cd{pqAvail} (optional; default is \cd{FALSE}) indicates if you have provided distribution and quantile functions that can be used for truncated versions of your distribution.
 \end{itemize}
 
-You may notice the presence of a \cd{types} element in the list of NIMBLE-provided distributions in \cd{R/distributions\_inputList.R}  that has information on type and dimension. This syntax is in flux at the moment, and there is no need to provide \cd{types} as part of your input list to \cd{registerDistributions}. 
+% You may notice the presence of a \cd{types} element in the list of NIMBLE-provided distributions in \cd{R/distributions\_inputList.R}  that has information on type and dimension. This syntax is in flux at the moment, and there is no need to provide \cd{types} as part of your input list to \cd{registerDistributions}. 
 
 
 \subsection{User-defined functions}
@@ -1576,6 +1582,8 @@ However, there is a subtle difference between the \cd{dmu} variables in the two 
 In addition to the general comment that you must respect the dimensions of arguments to \cd{nimbleFunctions}, note that you cannot apply a \cd{nimbleFunction} that takes as input non-scalar values and use a scalar variable as the input. I.e., in the example above you cannot have this syntax, \cd{dmu[i] <- vdbl(mu[i])}. Unlike in R, scalars are not simply vectors of length 1.
  
 \subsection{Limitations}
+
+As is generally the case for nimbleFunctions and BUGS models, you should create any user-defined functions or distributions in R's global environment (or use \cd{assign} to copy them there). NIMBLE does not have a scoping system set up, in part because we use Reference Classes to implement nimbleFunctions and R's Reference Classes don't use the usual scoping rules in R.
 
 We do not yet allow users to define their own link functions, but we plan to implement this soon.
 
@@ -2366,7 +2374,7 @@ information without redundantly recomputing it.  A nimbleFunction can
 be called repeatedly, each time returning a specialized nimbleFunction.
   
 Readers familiar with object-oriented programming may find it useful
-to think in terms of class definitions and objects.  nimbleFunction
+to think in terms of class definitions and objects.  \cd{nimbleFunction}
 creates a class definition.  Each specialized nimbleFunction is one object
 in the class.  The setup arguments are used to define member data in
 the object.
@@ -2746,6 +2754,15 @@ should use R's \cd{c} function if \cd{nDim} $>1$.  If sizes
 are omitted, they will either be set when the entire object is
 assigned to, or an explicit call to \cd{setSize} is needed.
 
+\subsection{Naming arguments and variables}
+\label{sec:naming-in-DSL}
+
+Because the names of arguments to nimbleFunctions and those of variables in \cd{run} code are 
+used directly in C++, one cannot use a period in the names of arguments or run-time variables because C++ interprets the period as the dot operator for class membership access.
+
+Similarly, do not name an argument or run-time variable with the same name as a function that
+is used in the \cd{run} code, as this will cause a conflict in the C++ code.
+
 \subsection{Querying and changing sizes}
 \label{sec:query-chang-sizes}
 
@@ -2993,10 +3010,10 @@ uncompiled case.
   provided it as a setup argument to illustrate that option.
 \end{itemize}
 
-\subsection{distribution functions}
+\subsection{Distribution functions}
 \label{sec:nimble-dist-funs}
 
-Distribution ``d'' and ``r'' functions can be used from
+Distribution ``d'', ``r'', ``p'', and ``q'' functions can all be used from
 nimbleFunctions, although at the moment they are neither as flexible
 nor as standard as in NIMBLE's processing of BUGS models.  In
 particular, only one parameterization is used, and it is the canonical
@@ -3026,10 +3043,11 @@ prec\_param indicates whether the Cholesky is of a precision matrix or covarianc
 matrix; and scale\_param indicates whether the Cholesky is of a scale
 matrix or an inverse scale matrix.
 
-To call a ``d'' function, the variable (usually ``x'' in R) must be
-included as the first argument.  To call the ``r'' function, a 1 must
-be included as the first argument.  We'll make these more standard and
-flexible, and include ``q'' and ``p'' functions, in the future.
+In addition, user-defined distributions can also be used in nimbleFunctions.
+
+Arguments to the distributions will be matched by either position, or if named, by name. If omitted, default argument values based on the standard R distribution functions will be used. User-supplied distributions are handled analogously with regard to matching by position and  use of defaults (when provided via the nimbleFunction run-time arguments) (Section \ref{sec:user-defined}).
+
+Note that when calling the ``r'' function, \cd{n} must be 1 and must be included.
 
 \chapter{Additional and advanced topics}
 \label{cha:topics}
@@ -3051,6 +3069,7 @@ flexible, and include ``q'' and ``p'' functions, in the future.
 \item We have tried to make NIMBLE's handling of multivariate objects
   flexible, but how you choose to set things up could affect
   computational efficiency.  We'll explore that more in the future.
+\item Any nimbleFunctions or BUGS models should be created in R's global environment. Otherwise NIMBLE will have trouble finding such objects and using them with each other during compilation and running of nimbleFunctions. This is in part a result of how R's Reference Classes do not use the usual R scoping rules.
 \end{itemize}
 \section{Parallel processing}
 
