@@ -120,11 +120,11 @@ mcmcspec <- configureMCMC(Rmodel, control = list(scale = 3, adaptive = FALSE))
 
 \subsubsection{Subsequent addition of samplers for particular nodes}
 
-Once an \cd{MCMCspec} object has been created, additional samplers may be added to the specification, by calling the \cd{addSampler} method on the \cd{MCMCspec} object.
+Once an \cd{MCMCspec} object has been created, additional samplers may be added to the specification, by calling the \cd{addSampler()} method on the \cd{MCMCspec} object.
 
-The mandatory \cd{type} argument to \cd{addSampler()} may be a character string, specifying the name of the sampler to be added.  For example, \cd{type = `RW'} specifies the Metropolis-Hastings random walk sampler, and \cd{type = `slice'} specifies a slice sampler.  Alternatively, the \cd{type} argument may also be provided with a (non-specialized) nimbleFunction object.  This function object must be a valid sampling algorithm, which has been generated as the result of \cd{nimbleFunction()}.  In this usage, the \cd{name} argument may be provided to \cd{addSampler()}, to specify a character string name for the sampler being added.  This may be useful for the programmatic generation of MCMC algorithms.
-
-The mandatory \cd{target} argument to \cd{addSampler()} is a character string (or vector) specifying one or more model nodes.  The sampler function will operate on (sample) this ``target" node (or nodes).  For example, a \cd{slice} sampler can only sample a single \cd{target} node, but the RW block sampler (\cd{RW\_block}) can sample multiple model nodes. 
+The frst argument to \cd{addSampler()}, which is compulsory, is the \cd{target} argument.   This must be a character string (or vector) specifying one or more model nodes or variables.  The sampler function will operate on (sample) this ``target" node or set of model nodes.
+ 
+The second argument to \cd{addSampler()} is the sampler \cd{type}.  This may be a character string, specifying the name of the sampler to be added.  For example, \cd{type = `RW'} specifies the Metropolis-Hastings random walk sampler, and \cd{type = `slice'} specifies a slice sampler.  Alternatively, the \cd{type} argument may also be provided with a (non-specialized) nimbleFunction object.  This function object must be a valid sampling algorithm, which has been generated as the result of \cd{nimbleFunction()}.  In this usage, the \cd{name} argument may be provided to \cd{addSampler()}, to specify a character string name for the sampler being added.  This may be useful for the programmatic generation of MCMC algorithms.  The default value for the \cd{type} argument is \cd{``RW''} which specifies adaptive scalar random walk (Metropolis-Hastings) sampling.  It is worth nothing that this default value will result in an error if the \cd{target} argument specifies more than one target node.
 
 The optional \cd{control} argument may be used to provide a list of additional control list elements for the sampler.  When the \cd{control} argument is provided in a call to \cd{addSampler()}, the \cd{control} list elements specified will have the highest priority.  The hierarchy of precedence for control list elements for samplers is:
 
@@ -315,7 +315,7 @@ The \nm{end} sampler accepts no control list arguments.
 
 Example usage:
 <<terminal-sampler, eval=FALSE>>=
-mcmcspec$addSampler(type = 'end', target = 'y[1]')
+mcmcspec$addSampler(target = 'y[1]', type = 'end')
 @
 
 \subsection{Scalar Metropolis-Hastings random walk \nm{RW} sampler}
@@ -330,10 +330,10 @@ The \nm{RW} sampler accepts the following control list elements:
 
 Example usage:
 <<RW-sampler, eval=FALSE>>=
-mcmcspec$addSampler(type = 'RW', target = 'a',
+mcmcspec$addSampler(target = 'a', type = 'RW',
      control = list(adaptive = FALSE, scale = 3))
 
-mcmcspec$addSampler(type = 'RW', target = 'b',
+mcmcspec$addSampler(target = 'b', type = 'RW',
      control = list(adaptive = TRUE, adaptInterval = 200))
 @
 
@@ -353,7 +353,7 @@ The \nm{RW\_block} sampler accepts the following control list elements:
 
 Example usage:
 <<block-sampler, eval=FALSE>>=
-mcmcspec$addSampler(type = 'RW_block', target = c('a', 'b', 'c'))
+mcmcspec$addSampler(target = c('a', 'b', 'c'), type = 'RW_block')
 @
 
 \subsection{Slice sampler}
@@ -369,10 +369,10 @@ The \nm{slice} sampler accepts the following control list elements:
 
 Example usage:
 <<slice-sampler, eval=FALSE>>=
-mcmcspec$addSampler(type = 'slice', target = 'y[1]',
+mcmcspec$addSampler(target = 'y[1]', type = 'slice',
      control = list(adaptive = FALSE, sliceWidth = 3))
 
-mcmcspec$addSampler(type = 'slice', target = 'y[2]', 
+mcmcspec$addSampler(target = 'y[2]', type = 'slice',
      control = list(adaptive = TRUE, sliceMaxSteps = 1))
 @
 
@@ -389,7 +389,7 @@ The \nm{crossLevel} sampler accepts the following control list elements:
 
 Example usage:
 <<crossLevel-sampler, eval=FALSE>>=
-mcmcspec$addSampler(type = 'crossLevel', target = c('a', 'b', 'c'))
+mcmcspec$addSampler(target = c('a', 'b', 'c'), type = 'crossLevel')
 @
 
 All stochastic dependents of the \cd{target} nodes must appear in conjugate relationships.  This requirement will be checked when the MCMC algorithm is built, and otherwise will produce an error.  Note that this sampler amounts to sampling from the marginal posterior distribution of the top-level nodes, having integrated over the lower-level nodes, without having to analytically integrate over those nodes. This sampler is useful when there is strong dependence across the levels of a model that causes problems with convergence or mixing.
@@ -408,7 +408,7 @@ All stochastic dependents of the \cd{target} nodes must appear in conjugate rela
 
 Example usage:
  <<RW_ll, eval=FALSE>>=
- mcmcspec$addSampler(type = 'RW_llFunction', target = 'p',
+ mcmcspec$addSampler(target = 'p', type = 'RW_llFunction',
      control = list(llFunction = logLiky1y2, includesTarget = FALSE))
  @
 
@@ -493,9 +493,9 @@ Rmodel2 <- Rmodel$newModel()
 mcmcspec_CL <- configureMCMC(Rmodel2, nodes = NULL, monitors = 'mu')
 
 ## add two crossLevel samplers
-mcmcspec_CL$addSampler(type = 'crossLevel', target = c('a[1]', 'b[1]'))
+mcmcspec_CL$addSampler(target = c('a[1]', 'b[1]'), type = 'crossLevel')
 
-mcmcspec_CL$addSampler(type = 'crossLevel', target = c('a[2]', 'b[2]'))
+mcmcspec_CL$addSampler(target = c('a[2]', 'b[2]'), type = 'crossLevel')
 
 ## let's check the samplers
 mcmcspec_CL$getSamplers()
@@ -559,8 +559,8 @@ output <- MCMCsuite(
     MCMCdefs = list(
         nimble_CL = quote({
             mcmcspec <- configureMCMC(Rmodel, nodes = NULL)
-            mcmcspec$addSampler(type = 'crossLevel', target = c('a[1]', 'b[1]'))
-            mcmcspec$addSampler(type = 'crossLevel', target = c('a[2]', 'b[2]'))
+            mcmcspec$addSampler(target = c('a[1]', 'b[1]'), type = 'crossLevel')
+            mcmcspec$addSampler(target = c('a[2]', 'b[2]'), type = 'crossLevel')
             mcmcspec
         })),
     plotName = 'littersSuite'
@@ -816,8 +816,8 @@ mcmcspec <- configureMCMC(Rmodel, nodes = NULL)
 
 ## add our custom-built random walk sampler on node 'x',
 ## with a fixed proposal standard deviation = 0.1
-mcmcspec$addSampler(type = 'my_RW',
-     target = 'x', control = list(scale = 0.1))
+mcmcspec$addSampler(target = 'x', type = 'my_RW',
+    control = list(scale = 0.1))
 
 Rmcmc <- buildMCMC(mcmcspec)   ## etc...
 @
