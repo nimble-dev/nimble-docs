@@ -1313,7 +1313,7 @@ mu2 ~ dnorm(0, 1)
 const ~ dconstraint( mu1 + mu2 > 0 )
 @ 
 
-One would then specifies \cd{const} to be data and to have value 1. This is equivalent to a half-normal distribution on the half-plane $\mu_1 + \mu_2 > 0$. However, note that this equivalence only holds when conditioning on \cd{const}. If one simulates from the model using the \cd{simulate} functions, \cd{ind} will merely indicate whether the condition  $\mu_1 + \mu_2 > 0$ is satisfied given the current values of \cd{mu1} and \cd{mu2}. If the condition is not satisfied, then \cd{ind} and \cd{const} will be 0 and the log probability of \cd{const} (and therefore of the model as whole) will be $-\infty$.
+One would then specifies \cd{const} to be data and to have value 1. This is equivalent to a half-normal distribution on the half-plane $\mu_1 + \mu_2 > 0$. However, note that this equivalence only holds when conditioning on \cd{const}. If one simulates from the model using the \cd{simulate} functions and the condition is not satisfied, then \cd{const} will be 0 and the log probability of \cd{const} (and therefore of the model as whole) will be $-\infty$.
 
 \paragraph{Ordering}
 
@@ -1427,14 +1427,14 @@ pmyexp <- nimbleFunction(
         log.p = integer(0, default = 0)) {
         returnType(double(0))
         if(!lower.tail) {
-            logp = -rate * q
+            logp <- -rate * q
             if(log.p) {
                 return(logp)
             } else {
                 return(exp(logp))
             }
         } else {
-            p = 1 - exp(-rate * q)
+            p <- 1 - exp(-rate * q)
             if(!log.p) {
                 return(p)
             } else {
@@ -1450,10 +1450,10 @@ qmyexp <- nimbleFunction(
         log.p = integer(0, default = 0)) {
         returnType(double(0))
         if(log.p) {
-            p = exp(p)
+            p <- exp(p)
         }
         if(!lower.tail) {
-            p = 1 - p
+            p <- 1 - p
         }
         return(-log(1 - p) / rate)
     }
@@ -1487,7 +1487,9 @@ registerDistributions(list(
         BUGSdist = "dmyexp(rate, scale)",
         Rdist = "dmyexp(rate = 1/scale)",
         altParams = c("scale = 1/rate", "mean = 1/rate"),
-        pqAvail = TRUE),
+        pqAvail = TRUE, 
+        range = c(0, Inf)
+        ),
     ddirchmulti = list(
         BUGSdist = "ddirchmulti(alpha, size)",
         types = c('value = double(1)', 'alpha = double(1)'),
@@ -1523,10 +1525,11 @@ Here is a quick summary of the elements needed for each distribution:
 \begin{itemize}
 \item \cd{BUGSdist} should specify the name of the distribution to be used in BUGS and list all of the possible parameters from all parameterizations.
 \item \cd{Rdist} (optional) should provide a vector of potential reparameterizations, including reordering of parameters. The distribution name should match that of the nimbleFunctions you have written. 
-\item \cd{types} (optional) should provide a character vector indicating the dimensions of any non-scalar parameters or value of the random variable. Since NIMBLE uses doubles for numerical calculations and the default type of any parameter or value of the random variable is \cd{double(0)}, one should generally use 'double' and one need only specify the type for non-scalars. For multivariate densities, one should use syntax such as \cd{value = double(1)} for vectors and \cd{value = double(2)} for matrices. 
+\item \cd{types} should provide a character vector indicating the dimensions of any non-scalar parameters or value of the random variable. Since NIMBLE uses doubles for numerical calculations and the default type of any parameter or value of the random variable is \cd{double(0)}, one should generally use 'double' and one need only specify the type for non-scalars. For multivariate densities, one should use syntax such as \cd{value = double(1)} for vectors and \cd{value = double(2)} for matrices. 
 \item \cd{altParams} (optional) should provide a character vector of expressions that express any alternative parameters as functions of the default parameters.  This is used in our MCMC conjugacy processing but is not yet relevant for user-supplied distributions as we don't provide for conjugacy for user-defined distributions. We envision this functionality also might be used in the future to provide functionals of parameters for other algorithms, e.g., if an algorithm needs the expected value or variance of the distribution, these could be obtained if 'mean' and 'var' are given in \cd{altParams}, as illustrated with 'mean' in the \cd{dmyexp} example above.
 \item \cd{discrete} (optional; default is \cd{FALSE}) is a logical value indicating whether the distribution is that of a discrete random variable.
 \item \cd{pqAvail} (optional; default is \cd{FALSE}) indicates if you have provided distribution and quantile functions that can be used for truncated versions of your distribution.
+\item \cd{range} (optional; default is \cd{(-Inf, Inf)}) indicates the range of the distribution as vector of two values for possible use in future algorithms (not used currently). When the lower or upper limit involves a strict inequality (e.g., $x>0$), you should simply treat it as a non-strict inequality ($x>=0$, and set the lower value to 0). Also we do not handle ranges that are functions of parameters, so simply use the smallest/largest possible values given the possible parameter values.
 \end{itemize}
 
 % You may notice the presence of a \cd{types} element in the list of NIMBLE-provided distributions in \cd{R/distributions\_inputList.R}  that has information on type and dimension. This syntax is in flux at the moment, and there is no need to provide \cd{types} as part of your input list to \cd{registerDistributions}. 
@@ -2419,7 +2422,7 @@ when no model or modelValues is needed.
 
 This example shows the textbook calculation of a least squares
 solution for regression of 100 data points on 4 explanatory variables,
-all generated randomly.  Such functions can be called from other nimbleFunctions.
+all generated randomly\footnote{Of course in general, explicitly calculating the inverse is not the recommended numerical recipe for least squares.}.  Such functions can be called from other nimbleFunctions.
 In the near future, they will be able to be used in BUGS
 code.\footnote{On the machine this is being written on, the compiled
   version runs a few times faster than the uncompiled version.
