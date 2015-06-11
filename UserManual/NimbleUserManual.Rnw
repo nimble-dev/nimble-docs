@@ -3049,6 +3049,23 @@ Arguments to the distributions will be matched by either position, or if named, 
 
 Note that when calling the ``r'' function, \cd{n} must be 1 and must be included.
 
+\subsection{rankSample}
+\label{sec:ranksample}
+
+Need to write.
+
+\subsection{DSL vectors and arrays}
+\label{sec:vectors-and-arrays}
+
+DSL functions: nimVector(), nimArray().
+
+Can use in run function:
+
+nimVector(value, length)
+
+nimArray(value, nrow, ncol)
+
+
 \chapter{Additional and advanced topics}
 \label{cha:topics}
 
