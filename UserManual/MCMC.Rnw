@@ -645,11 +645,12 @@ A character vector, defining the MCMC algorithms to run.  The \cd{MCMCs} argumen
 \item[\cd{`nimble'}] NIMBLE MCMC using the default specification
 \item[\cd{`nimble\_RW'}] NIMBLE MCMC using the default specification with \cd{onlyRW = TRUE}
 \item[\cd{`nimble\_slice'}] NIMBLE MCMC using the default specification with \cd{onlySlice= TRUE}
+\item[\cd{`autoBlock'}] NIMBLE MCMC algorithm with block sampling of dynamically determined parameter groups attempting to maximize sampling efficiency
 \end{description}
 
 The names of additional, custom, MCMC algorithms may also be provided in the \cd{MCMCs} argument, so long as these custom algorithms are defined in the \cd{MCMCdefs} argument.  An example of this usage is given with the \cd{crossLevel} algorithm in the \nm{litters} MCMC Suite example.
 
-The values for the \cd{MCMCs} argument is \cd{c(`jags', `nimble', `nimble\_RW', `nimble\_slice')}.
+The values for the \cd{MCMCs} argument is \cd{c(`jags',`nimble', `nimble\_RW', `nimble\_slice', `autoBlock')}.
 
 \subsubsection{argument: \cd{MCMCdefs}}
 
@@ -700,6 +701,10 @@ A logical specifying whether to save the generated plots.  Only used if \cd{make
 \subsubsection{argument: \cd{plotName}}
 
 A character string giving the filename for saving plots.  Only used if \cd{savePlot = TRUE}.  Default value is \cd{`MCMCsuite'}.
+
+\subsubsection{argument: \cd{setSeed}}
+
+A logical argument, specifying whether to set.seed(0) prior to MCMC sampling.  Default value is \cd{TRUE}.
 
 \subsubsection{argument: \cd{bugs\_directory}}
 
