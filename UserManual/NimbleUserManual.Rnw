@@ -1324,7 +1324,7 @@ const ~ dconstraint( alpha1 <= alpha2 & alpha2 <= alpha3 )
 
 As mentioned above, the constraint is an aspect of the data and will only be forced to be true when conditioning on the data.
 
-NIMBLE does not support the JAGS \cd{dsort} syntax.
+NIMBLE does not support the JAGS \cd{sort} syntax.
 
 \paragraph{Cautions}
 
