@@ -1096,12 +1096,10 @@ but it need not.  If names are given, they can be given in any
 order.  NIMBLE knows that rate is an alternative to scale and that
 (mean, sd) are an alternative to (shape, scale or rate). 
 
-The file \file{distsDefs\_table.R} in the R directory of the source
+The file \file{distributions\_inputList.R} in the R directory of the source
 package is the definitive source for the NIMBLE's distributions and parameterizations.
 
 We plan to, but do not currently, handle the following distributions: double exponential (Laplace), beta-binomial, Dirichlet-multinomial, F, Pareto, inverse Wishart, and various forms of multivariate t. 
-
-We will shortly add the distribution aliases allowed in JAGS: \cd{dbinom}, \cd{dnbinom}, \cd{dweibull}, \cd{ddirich}.
 
 % Note that for certain multivariate distributions, such as the multivariate normal and the Wishart, we parameterize the distributions internally in terms of Cholesky decompositions, and which matrix is decomposed depends on which matrix is provided by the user. For example if the user provides a variance matrix, we parameterize in terms of the Cholesky of the variance and if the precision is provided we parameterize in terms of the Cholesky of the precision. This helps to avoid doing unneeded matrix inverses in computing with a model.
 
@@ -1110,6 +1108,10 @@ We will shortly add the distribution aliases allowed in JAGS: \cd{dbinom}, \cd{d
 \input{densityTable.tex}
 
 % CJP still not satisfied with this table as we don't show how some of the parameterizations relate to the densities in the previous table - e.g. we don't say how weibuill(shape,scale) relates to shape,lambda in previous table
+
+We also provide alternative names, which we call aliases (following JAGS), which can be used in the model definition in place of the canonical name. For a listing of these aliases see Table \ref{table:distributions-aliases}. This is so users can use the distribution names as used in other software, particularly the distribution names in R.
+\input{densityAliasesTable.tex}
+
 
 \subsection{List of parameterizations}
 
