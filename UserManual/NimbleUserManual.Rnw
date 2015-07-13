@@ -44,104 +44,106 @@ require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
 read_chunk(file.path('chunks', 'introExample_chunks.R'))  # one can put code chunks here if one wants
 @ 
 
-\begingroup
-\hypersetup{linkcolor=blue}
-%\hypersetup{linkcolor=green,pdfborderstyle={/S/U/W 1}}
-\tableofcontents
-\endgroup
+%% \begingroup
+%% \hypersetup{linkcolor=blue}
+%% %\hypersetup{linkcolor=green,pdfborderstyle={/S/U/W 1}}
+%% \tableofcontents
+%% \endgroup
 
-\chapter{Welcome to NIMBLE}
-\label{sec:welcome-nimble}
+\Sexpr{knit_child('chapter_WelcomeToNimble.Rnw')}
 
-NIMBLE is a system for building and sharing analysis methods for
-statistical models, especially for hierarchical models and
-computationally-intensive methods.  This is an early version,
-\ver. You can do quite a bit with it, but you can also expect it to be rough
-and incomplete.  If you want to analyze data, we hope you will find
-something already useful.  If you want to build algorithms, we hope
-you will program in NIMBLE and make an R package providing your
-method.  We also hope you will join the mailing lists
-(\href{http://R-nimble.org}{R-nimble.org}) and help improve NIMBLE by
-telling us what you want to do with it, what you like, and what could
-be better.  We have a lot of ideas for how to improve it, but we want
-your help and ideas too.
+%% \chapter{Welcome to NIMBLE}
+%% \label{sec:welcome-nimble}
 
-\section{Why something new?}
-\label{sec:why-something-new}
+%% NIMBLE is a system for building and sharing analysis methods for
+%% statistical models, especially for hierarchical models and
+%% computationally-intensive methods.  This is an early version,
+%% \ver. You can do quite a bit with it, but you can also expect it to be rough
+%% and incomplete.  If you want to analyze data, we hope you will find
+%% something already useful.  If you want to build algorithms, we hope
+%% you will program in NIMBLE and make an R package providing your
+%% method.  We also hope you will join the mailing lists
+%% (\href{http://R-nimble.org}{R-nimble.org}) and help improve NIMBLE by
+%% telling us what you want to do with it, what you like, and what could
+%% be better.  We have a lot of ideas for how to improve it, but we want
+%% your help and ideas too.
 
-There is a lot of statistical software out there.  Why did we build
-something new?  More and more, statistical models are being customized
-to the details of each project.  That means it is often difficult to
-find a package whose set of available models and methods includes what
-you need.  And more and more, statistical models are hierarchical,
-meaning they have some unobserved random variables between the
-parameters and the data.  These may be random effects, shared
-frailties, latent states, or other such things.  Or a model may be
-hierarchical simply due to putting Bayesian priors on parameters.
-Except for simple cases, hierarchical statistical models are often
-analyzed with computationally-intensive algorithms, the best known of
-which is Markov chain Monte Carlo (MCMC).
+%% \section{Why something new?}
+%% \label{sec:why-something-new}
 
-Several existing software systems have become widely used by
-providing a flexible way to say what the model is and then
-automatically providing an algorithm such as MCMC.  When these work,
-and when MCMC is what you want, that's great.  Unfortunately, there
-are a lot of hard models out there for which default MCMCs don't work
-very well.  And there are also a lot of useful new and old algorithms that
-are not MCMC.  That's why we wanted to create a system that combines a
-flexible system for model specification -- the BUGS language -- with
-the ability to program with those models.  That's the goal of NIMBLE.
+%% There is a lot of statistical software out there.  Why did we build
+%% something new?  More and more, statistical models are being customized
+%% to the details of each project.  That means it is often difficult to
+%% find a package whose set of available models and methods includes what
+%% you need.  And more and more, statistical models are hierarchical,
+%% meaning they have some unobserved random variables between the
+%% parameters and the data.  These may be random effects, shared
+%% frailties, latent states, or other such things.  Or a model may be
+%% hierarchical simply due to putting Bayesian priors on parameters.
+%% Except for simple cases, hierarchical statistical models are often
+%% analyzed with computationally-intensive algorithms, the best known of
+%% which is Markov chain Monte Carlo (MCMC).
 
-\section{What does NIMBLE do?}
-\label{sec:what-is-nimble}
+%% Several existing software systems have become widely used by
+%% providing a flexible way to say what the model is and then
+%% automatically providing an algorithm such as MCMC.  When these work,
+%% and when MCMC is what you want, that's great.  Unfortunately, there
+%% are a lot of hard models out there for which default MCMCs don't work
+%% very well.  And there are also a lot of useful new and old algorithms that
+%% are not MCMC.  That's why we wanted to create a system that combines a
+%% flexible system for model specification -- the BUGS language -- with
+%% the ability to program with those models.  That's the goal of NIMBLE.
 
-NIMBLE stands for Numerical Inference of statistical Models for Bayesian and
-Likelihood Estimation.  Although NIMBLE was motivated by algorithms
-for hierarchical
-statistical models, you could use it for
-simpler models too.
+%% \section{What does NIMBLE do?}
+%% \label{sec:what-is-nimble}
 
-You can think of NIMBLE as comprising three pieces:
+%% NIMBLE stands for Numerical Inference of statistical Models for Bayesian and
+%% Likelihood Estimation.  Although NIMBLE was motivated by algorithms
+%% for hierarchical
+%% statistical models, you could use it for
+%% simpler models too.
 
-\begin{enumerate}
-\item A system for writing statistical models flexibly, which is an
-  extension of the BUGS language\footnote{But see Section
-    \ref{sec:not-yet-supported} for information about limitations and
-    extensions to how NIMBLE handles BUGS right now.}.
-\item A library of algorithms such as MCMC.
-\item A language, called NIMBLE, embedded within and similar in style
-  to R, for writing algorithms that operate on BUGS models.
-\end{enumerate}
+%% You can think of NIMBLE as comprising three pieces:
 
-Both BUGS models and NIMBLE algorithms are automatically processed
-into C++ code, compiled, and loaded back into R with seamless
-interfaces.  
+%% \begin{enumerate}
+%% \item A system for writing statistical models flexibly, which is an
+%%   extension of the BUGS language\footnote{But see Section
+%%     \ref{sec:not-yet-supported} for information about limitations and
+%%     extensions to how NIMBLE handles BUGS right now.}.
+%% \item A library of algorithms such as MCMC.
+%% \item A language, called NIMBLE, embedded within and similar in style
+%%   to R, for writing algorithms that operate on BUGS models.
+%% \end{enumerate}
 
-Since NIMBLE can compile R-like functions into C++ that use the Eigen
-library for fast linear algebra, it can be useful for making fast
-numerical functions with or without BUGS models involved\footnote{The
- packages Rcpp and RcppEigen provide different ways of
-  connecting C++, the Eigen library and R.  In those packages you
-  program directly in C++, while in NIMBLE you program in an R-like
-  fashion and the NIMBLE compiler turns it into C++.  Programming
-  directly in C++ allows full access to C++, while programming in
-  NIMBLE allows simpler code.}
+%% Both BUGS models and NIMBLE algorithms are automatically processed
+%% into C++ code, compiled, and loaded back into R with seamless
+%% interfaces.  
 
-One of the beauties of R is that many of the high-level analysis
-functions are themselves written in R, so it is easy to see their code and modify
-them.  The same is true for NIMBLE: the algorithms are themselves
-written in the NIMBLE language.
+%% Since NIMBLE can compile R-like functions into C++ that use the Eigen
+%% library for fast linear algebra, it can be useful for making fast
+%% numerical functions with or without BUGS models involved\footnote{The
+%%  packages Rcpp and RcppEigen provide different ways of
+%%   connecting C++, the Eigen library and R.  In those packages you
+%%   program directly in C++, while in NIMBLE you program in an R-like
+%%   fashion and the NIMBLE compiler turns it into C++.  Programming
+%%   directly in C++ allows full access to C++, while programming in
+%%   NIMBLE allows simpler code.}
 
-\section{How to use this manual}
-We emphasize that you can use NIMBLE for data analysis with the
-algorithms provided by NIMBLE without ever using the NIMBLE language
-to write algorithms. So as you get started, feel free to focus on
-Chapters \ref{cha:intro}-\ref{cha:algos-provided}.  The algorithm
-library in v\ver\ is just a start, so we hope you'll let us know what
-you want to see and consider writing it in NIMBLE.  More about NIMBLE
-programming comes in \ref{cha:progr-with-models}.
+%% One of the beauties of R is that many of the high-level analysis
+%% functions are themselves written in R, so it is easy to see their code and modify
+%% them.  The same is true for NIMBLE: the algorithms are themselves
+%% written in the NIMBLE language.
 
+%% \section{How to use this manual}
+%% We emphasize that you can use NIMBLE for data analysis with the
+%% algorithms provided by NIMBLE without ever using the NIMBLE language
+%% to write algorithms. So as you get started, feel free to focus on
+%% Chapters \ref{cha:intro}-\ref{cha:algos-provided}.  The algorithm
+%% library in v\ver\ is just a start, so we hope you'll let us know what
+%% you want to see and consider writing it in NIMBLE.  More about NIMBLE
+%% programming comes in \ref{cha:progr-with-models}.
 
+\end{document}
 \chapter{Lightning introduction}
 \label{cha:intro}
 
@@ -403,7 +405,7 @@ NIMBLE.
     loading it into R.
   \end{enumerate}
  
-  You'll learn more about specifying and manipulating models in Chapter \ref{cha:building-models}-\ref{cha:using-bugs-models}.
+  More about specifying and manipulating models is in Chapter \ref{cha:building-models}-\ref{cha:using-bugs-models}.
   
   
   \section{The NIMBLE language for writing algorithms}
@@ -457,7 +459,7 @@ with a BUGS model:
   between the two versions.
 \end{enumerate}
 
-  You'll learn more about writing algorithms in Chapter \ref{cha:progr-with-models}.
+  More about writing algorithms is in Chapter \ref{cha:progr-with-models}.
   
 \section{The NIMBLE algorithm library}
 \label{sec:nimble-algor-libr}
@@ -494,7 +496,7 @@ In v\ver, the NIMBLE algorithm library is fairly limited.  It includes:
     access to R's optimizers from within \cd{nimbleFunction}s}.
 \end{enumerate}
   
-You'll learn more about the NIMBLE algorithm library in Chapter \ref{cha:algos-provided}.
+More about the NIMBLE algorithm library is in Chapter \ref{cha:algos-provided}.
 
 \chapter{Getting started}
 \label{cha:getting-started}
@@ -539,8 +541,7 @@ However, there are some options that some users may want to utilize.
 
 \subsection{Using your own copy of Eigen}
 %\subsection{Finding the Eigen Header Files}
-NIMBLE uses the Eigen C++ template library for linear algebra
-(\url{http://eigen.tuxfamily.org/index.php?title=Main\_Page)}).  Version 3.2.1
+NIMBLE uses the Eigen C++ template library for linear algebra.  Version 3.2.1
 of Eigen is included in the NIMBLE package and that version will be
 used unless the package's configuration script finds another version
 on the machine.  This works well, and the following is only relevant
@@ -606,8 +607,9 @@ code that NIMBLE generates for a user's models and algorithms.
 \subsection{OS X}
 On OS X, you should install Xcode.  The command-line tools, which are
 available as a smaller installation, should be sufficient. This is freely available from the
-Mac App Store. See \url{https://developer.apple.com/xcode/downloads/}
-and \url{https://itunes.apple.com/us/app/xcode/id497799835?ls=1&mt=12}
+\href{https://developer.apple.com/xcode/downloads/}{Apple developer
+  site} and the
+\href{https://itunes.apple.com/us/app/xcode/id497799835?ls=1&mt=12}{App Store}.
 
 For the compiler to work correctly for OS X, it is very important that the installed
 R be matched to the correct OS, i.e. R for snowleopard will attempt to use
@@ -765,7 +767,7 @@ NIMBLE also extends the BUGS language in the following ways:
 
 \begin{enumerate}
 \item Distribution parameters can be expressions, as in JAGS but not
-  in WinBUGS\footnote{e.g., \cd{y ~ dnorm(5 + mu, 3 *
+  in WinBUGS\footnote{e.g., \cd{y $\sim$ dnorm(5 + mu, 3 *
       exp(tau))}}.  Caveat: parameters to \emph{multivariate}
   distributions (\emph{e.g.,} \cd{dmnorm()}) may not be expressions, but
   must be [appropriately indexed] model nodes.
@@ -1252,9 +1254,81 @@ indexed blocks.  In particular, it does not allow:
 \item Logical sub-indexing such as \cd{c(TRUE, FALSE, TRUE)} 
 \end{itemize}
 
-
 \subsection{Truncation, censoring, and constraints}
 \label{subsec:trunc}
+
+NIMBLE provides three ways to declare boundaries on the value of a
+variable, each for different situations.  We introduce these and
+comment on their relationships to JAGS' related features.
+
+The three methods are:
+\subsubsection{Truncation}
+\cd{x $\sim$ dnorm(0, sd = 10) T(0, a)} or,  equivalently, \cd{x $\sim$ T(dnorm(0, sd = 10), 0, a)} declares that \cd{x} follows a normal distribution between 0 and \cd{a}.  Either boundary may be omitted or may be another node, such as \cd{a} in this example.  The first syntax follows JAGS, but in NIMBLE it can only be used when reading model code from a text file.  When writing model code in R, the second version must be used.  
+
+Truncation means the probability density of \cd{x} is normalized.  In this example it would be the normal probability density divided by its integral from 0 to cd{a}\footnote{If you have a model object {model}, you can see exactly the calculation used by typing \cd{model\$nodes[['x']]\$calculate}}.  Like JAGS, NIMBLE also provides \cd{I} as a synonym for \cd{T} to accommodate older BUGS code, but \cd{T} is preferred because it disambiguates multiple usages of \cd{I} in WinBUGS.
+
+Note that in NIMBLE, \cd{mu $\sim$ dfoo(theta) T(L, U)} restricts $X$ to lie in $(L,U]$ whereas in JAGS it restricts $X$ to lie in $[L,U]$.  This distinction makes no difference for continuous random variables.
+% doesn't matter for continuous and we could follow jags but for discrete we would need to add extra code to deal with X == L -- thoughts?
+
+NEED TO DISCUSS THIS.
+
+\subsubsection{Censoring} Censoring refers to the situation where a datum represents a lower or upper bound on a value.  This is common in survival time studies, when we may know at least how long some patients lived (right-censoring) but not their ages of death, so their age of death is ``censored''.  NIMBLE adopts JAGS syntax for censoring, as follows (using right-censoring as an example):
+ <<dinterval-example, eval=FALSE>>=
+is.censored[i] ~ dinterval(t[i], c[i])
+t[i] ~ dweib(r, mu[i])
+@ 
+where \cd{is.censored[i]} should be given as data with a value of 1 if \cd{t[i]} is right-censored (\cd{t[i] $\gt$ c[i]) and 0 if it is observed.  The data vector for \cd{t} should have \cd{NA} (indicating missing data) for any censored \cd{t[i]} entries. As a result, these nodes will be sampled in an MCMC.  The data vector for \cd{c} should give the censoring times (lower bound data in this case) corresponding to censored entries and \cd{0} (or anything less than the corresponding \cd{t[i]}) for uncensored entries.
+  
+Censoring differs from truncation because in censoring an observation gives an upper or lower bound on a random variable that could have taken any value, while in truncation an observation gives an observed value that, a priori, could not have occurred outside the truncation range.  In this example, the probability density for \cd{t[i]} is simply the Weibull. 
+
+The \cd{dinterval} is not really a distribution but rather a trick: in the above example it gives a ``probability'' of 1 if \cd{t[i] $\gt$ c[i]} and 0 otherwise.  This means that \cd{t[i] $\le$ c[i]} is treated as impossible.  More generally, \cd{x[i] $\sim$ dinterval(t[i], c[i,])} is defined such that for a vector of increasing cutpoints, \cd{c[i,]}, \cd{t[i]} is enforced to fall within the cutpoint interval \cd{x[i]}.  This is done by setting data \cd{x[i]} as follows:
+\begin{eqnarray}
+x[i] = 0 & \mbox{if} & t[i] <= c[i, 1] \nonumber \\
+x[i] = m & \mbox{if} & c[i, m] < t[i] <= c[i, m+1] \mbox{ for } 1 <= m <= M \nonumber \\
+x[i] = M & \mbox{if} & c[i, M] < t[i].\nonumber
+\end{eqnarray}
+(The \cd{i} index is provided only for consistency with the previous example.)  The most common usage of \cd{dinterval} will be for left- and right-censored data, in which case $c[i,]$ will be a single value (and typically given as simply \cd{c[i]}), and for interval-censored data, in which case $c[i,]$ will be a vector of two values.  For left-censoring, one can use \cd{x[i] $\sim$ dinterval(t[i], c[i])} with \cd{x[i]} set to 0 or \cd{x[i] $\sim$ dinterval(c[i], t[i])} with \cd{x[i]} set to 1.
+
+Nodes following a \cd{dinterval} distribution should normally be set as data with known values. Otherwise, the node may simulated during some algorithm's (e.g. MCMC's) initialization and thereby establish a permanent, perhaps unintended, constraint.  
+
+\subsubsection{Constraints and ordering}
+
+NIMBLE provides a more general way to enforce constraints using \cd{dconstraint(condition)}.  For example, we could specify that the sum of \cd{mu1} and \cd{mu2} must be positive like this:
+<<dconstraint-example, eval=FALSE>>=
+mu1 ~ dnorm(0, 1) 
+mu2 ~ dnorm(0, 1) 
+constraint.data ~ dconstraint( mu1 + mu2 > 0 )
+@ 
+with data \cd{constraint.data} set to 1.  Formally, \cd{dconstraint(condition)} is a probability distribution on $\left{ 0, 1 \right}$ such that $P(1) = 1$ if \cd{constraint} is \cd{TRUE} and $P(0) = 1$ if \cd{constraint} is \cd{FALSE}. Like \cd{dinterval}, \cd{dconstraint} results in distributions that are not normalized, which makes most sense if the constraint is observed rather than established a priori.  Nodes following \cd{dconstraint} should be provided as data for reasons described above for \cd{dinterval}.
+
+\paragraph{Ordering}
+
+To specify an ordering of parameters, such as $\alpha_1 <= \alpha_2 <= \alpha_3$ one can use \cd{dconstraint} as follows: 
+<<ordering-example, eval=FALSE>>=
+const ~ dconstraint( alpha1 <= alpha2 & alpha2 <= alpha3 )
+@ 
+
+Note that unlike in BUGS, one cannot specify prior ordering using syntax such as
+\begin{verbatim}
+alpha[1] ~ dnorm(0, 1) I(, alpha[2])
+alpha[2] ~ dnorm(0, 1) I(alpha[1], alpha[3])
+alpha[3] ~ dnorm(0, 1) I(alpha[2], )
+\end{verbatim}
+as this is does not represent a directed acyclic graph.  CHRIS, WOULDN'T THIS WORK WITH \cd{alpha[1] $\sim$ dnorm(0, 1)}?  DOES BUGS REALLY ALLOW THIS NON-DAG?
+
+\end{document}
+
+Also note that specifying prior ordering using \cd{T(,)} can result in possibly unexpected results.  For example:
+\begin{verbatim}
+alpha1 ~ dnorm(0, 1)
+alpha2 ~ dnorm(0, 1) T(alpha1, )
+alpha3 ~ dnorm(0, 1) T(alpha2, )
+\end{verbatim}
+will enforce \cd{alpha1 \le \alpha2 \le alpha3}, but it does not treat the three parameters symmetrically.  Instead it puts a marginal prior on \cd{alpha1} that is standard normal and then constrains \cd{alpha2} and \cd{alpha3} to follow truncated normal distributions. This is not equivalent to a symmetric prior on the three \cd{alpha}s that assigns 0 probability density when values are not in order.
+
+Of course, in many cases, parameterizing the model so that the constraints are automatically respected may be a better strategy than using \cd{dconstraint}.  If constraints are used, it will generally be wise to ensure the model is initialized with values that satisfy them.
+
+\textbf{Old draft below of ``Truncation, censoring and constraints'' below:}
 
 NIMBLE follows JAGS in carefully distinguishing between truncation and censoring (see the JAGS manual for some discussion of this). In general, truncation and censoring are handled very similarly to JAGS, with limited exceptions noted below. In contrast we handle constraints very differently than JAGS.
 
@@ -1267,11 +1341,11 @@ where \cd{a} and \cd{b} are also parameters in the model. Note that in NIMBLE, \
 % doesn't matter for continuous and we could follow jags but for discrete we would need to add extra code to deal with X == L -- thoughts?
 
 In addition, as with JAGS, we allow the BUGS \cd{I(,)} syntax, which we treat as a synonym for \cd{T(,)}. As the JAGS manual notes, truncation and censoring are only equivalent in models in which the truncation or censoring applies to top-level nodes but we do allow use of \cd{I(,)} at other levels of the model, and this is still treated the same as  \cd{T(,)}. Note that unlike in BUGS, one cannot specify prior ordering using syntax such as
-<<prior-ordering, eval=FALSE>>=
+\begin{verbatim}
 alpha[1] ~ dnorm(0, 1) I(, alpha[2])
 alpha[2] ~ dnorm(0, 1) I(alpha[1], alpha[3])
 alpha[3] ~ dnorm(0, 1) I(alpha[2], )
-@ 
+\end{verbatim}
 
 as this is does not represent a directed acyclic graph. Also, while prior ordering can be addressed in one fashion using \cd{T(,)}, this often will not produce the constraint the user actually wants. See our discussion of constraints below.
 
@@ -1280,7 +1354,7 @@ as this is does not represent a directed acyclic graph. Also, while prior orderi
 \subsubsection{Censoring}
 
 We provide the \cd{dinterval} distribution to handle censoring, as in JAGS. For example, one can specify right-censored data, such as survival data as:
-<<dinterval-example, eval=FALSE>>=
+<<dinterval-example-old, eval=FALSE>>=
 is.censored[i] ~ dinterval(t[i], c[i])
 t[i] ~ dweib(r, mu[i])
 @ 
@@ -1307,7 +1381,7 @@ In general, nodes that have the \cd{dinterval} distribution should be data nodes
 NIMBLE also provides functionality for specifying constraints via the \cd{dconstraint} syntax. While this can be used for a variety of types of constraints, one specific usage is for specifying ordered parameters. In addition one can use \cd{dconstraint} to specify constraints on parameters more flexibly than using \cd{T(,)}. 
 
 The basic syntax specifies a node to follow \cd{dconstraint(binaryValue)} where \cd{binaryValue} is an indicator variable whose value indicates whether a given condition is satisfied. For example, we could specify that the sum of two parameters must be positive using the last two lines of this BUGS code snippet:
-<<dconstraint-example, eval=FALSE>>=
+<<dconstraint-example-old, eval=FALSE>>=
 mu1 ~ dnorm(0, 1) 
 mu2 ~ dnorm(0, 1) 
 const ~ dconstraint( mu1 + mu2 > 0 )
@@ -1318,7 +1392,7 @@ One would then specifies \cd{const} to be data and to have value 1. This is equi
 \paragraph{Ordering}
 
 To specify an ordering of parameters, such as $\alpha_1 <= \alpha_2 <= \alpha_3$ one can use \cd{dconstraint} as follows: 
-<<ordering-example, eval=FALSE>>=
+<<ordering-example-old, eval=FALSE>>=
 const ~ dconstraint( alpha1 <= alpha2 & alpha2 <= alpha3 )
 @ 
 
@@ -1331,26 +1405,25 @@ NIMBLE does not support the JAGS \cd{dsort} syntax.
 Note that if one uses the truncation syntax, \cd{T( , )} to try to specify a constraint, one will not specify the prior that one might think. 
 
 For example, for prior ordering,
-<<constraint-caution1, eval=FALSE>>=
+\begin{verbatim}
 alpha1 ~ dnorm(0, 1)
 alpha2 ~ dnorm(0, 1) T(alpha1, )
 alpha3 ~ dnorm(0, 1) T(alpha2, )
-@ 
+\end{verbatim}
 
 does not treat the three parameters in a symmetric fashion but instead has a marginal prior on $\alpha_1$ that is standard normal and then constrains $\alpha_2$ to have a truncated normal distribution. This is not equivalent to a symmetric prior on the three $\alpha$s that assigns 0 probability density when values are not in order.
 
 Similarly, 
-<<constraint-caution2, eval=FALSE>>=
+\begin{verbatim}
 mu1 ~ dnorm(0, 1)
 mu2 ~ dnorm(0, 1) T(-mu1, )
-@ 
+\end{verbatim}
 
 is not equivalent to the model specified above via \cd{dconstraint} and does not produce a bivariate half-normal distribution on the half-plane. 
 
 One should be cautious about constraints that would make it hard for an MCMC or optimization to move through the parameter space (such as equality constraints that involve two or more parameters). For such restrictive constraints, general purpose algorithms that are not tailored to the constraints are likely to fail. Also, one should of course always initialize a model such that the constraints are satisfied. Relying on NIMBLE's default of sampling from the prior does not ensure any constraints are satisfied. 
 
 In many cases, parameterizing the model so that the constraints are automatically respected may be a better strategy than using \cd{dconstraint}.
-
 
 \section{Compiling models}
 \label{sec:compiling-models}
@@ -3016,10 +3089,14 @@ uncompiled case.
 \label{sec:nimble-dist-funs}
 
 Distribution ``d'', ``r'', ``p'', and ``q'' functions can all be used from
-nimbleFunctions, although at the moment they are neither as flexible
-nor as standard as in NIMBLE's processing of BUGS models.  In
-particular, only one parameterization is used, and it is the canonical
-one used ultimately for compiling.  These are listed next:
+nimbleFunctions, but the care is needed with the order of arguments.
+For distributions available in R, nimbleFunction parameterizations
+match those of R, \textit{which may differ in default order
+  from the same-named BUGS distributions}.  For distributions
+available in BUGS but not R, nimbleFunctions currently support the default BUGS
+parameterization but not alternatives.
+
+Supported distributions include (THIS NEEDS REVIEW):
 \begin{itemize}
 \item \cd{dbinom(size, prob)}
 \item \cd{dcat(prob)}

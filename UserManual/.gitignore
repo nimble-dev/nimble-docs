@@ -1,6 +1,8 @@
 # tex file versions of Rnw files
 NimbleUserManual.tex
 MCMC.tex
+chapter_*.tex
+.Rhistory
 
 # testing files for MCMC chapter
 includesMCMConly*
