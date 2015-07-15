@@ -7,6 +7,7 @@ mc <- nimbleCode({
         for(j in 1:3)
             z[i,j] ~ dnorm(y[i], sd = 0.1)
     }
+    y.squared[1:5] <- y[1:5]^2
 })
 
 model <- nimbleModel(mc, data = list(z = matrix(rnorm(15), nrow = 5)))

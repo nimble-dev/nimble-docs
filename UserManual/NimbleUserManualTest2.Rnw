@@ -51,8 +51,6 @@ require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
 \endgroup
 
 \Sexpr{knit_child('chapter_WelcomeToNimble.Rnw')}
-%%  <<chWelcome, child='chapter_WelcomeToNimble.Rnw'>>=
-%%  @ 
 
 \Sexpr{knit_child('chapter_LightningIntroduction.Rnw')}
 
@@ -61,6 +59,10 @@ require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
 \Sexpr{knit_child('chapter_GettingStarted.Rnw')}
 
 \Sexpr{knit_child('chapter_BuildingModels.Rnw')}
+
+\Sexpr{knit_child('chapter_UsingModels.Rnw')}
+
+\Sexpr{knit_child('chapter_MCMC.Rnw')}
 
 
 
