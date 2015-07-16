@@ -191,11 +191,7 @@ vector
   it depends on.
 \item The data nodes \cd{z} were not simulated into until
   \cd{includeData = TRUE} was used.
-\item In v\ver\ it is not allowed to leave an index blank. For example
-  \cd{simulate(model, `z[1,]')} is an error.
 \end{enumerate}
-
-TODO: CHECK IF THAT LAST POINT IS STILL TRUE
 
 Use of \cd{calculate}, \cd{calculateDiff} and \cd{getLogProb} is simliar to \cd{simulate},
 except that they return the sum of the log probabilities (densities)
@@ -266,18 +262,13 @@ pump$isData('x[1]')
 pump$isData(c('x[1]', 'x[2]', 'alpha'))
 @ 
 
-TODO: CHECK IF FOLLOWING IS STILL TRUE
-
-At the moment the \cd{isData} method requires that each node be supplied
-as an individual element of the character vector, so
-\cd{pump\$isData(`x[1:3]')} would throw an error.  
-
 TODO: IT LOOKS LIKE WE DON'T EXPLAIN expandNodeNames anywhere?
 
 You can also query variables to determine if the nodes that are part of a variable are data nodes.
 
 <<isData2>>=
 pump$isData('x')
+pump$isData('x[1:3]')
 @ 
 
 

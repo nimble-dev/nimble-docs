@@ -177,12 +177,6 @@ This code does not show a complete model and includes some arbitrary indices (e.
 \subsubsection{More about indexing}
 \label{sec:indexing} 
 
-TODO: REDUCE LINE SPACING HERE.
-
-% try this later
-%\usepackage{enumitem}
-%\setlist{nolistsep}
-
 Examples of allowed indexing include:
 \begin{itemize}
 \item \verb|x[i]|
@@ -285,13 +279,15 @@ We plan to, but do not currently, handle the following distributions: double exp
 We will shortly add the distribution aliases allowed in JAGS: \cd{dbinom}, \cd{dnbinom}, \cd{dweibull}, \cd{ddirich}.
 
 TODO: SHOULD WE COMMENT ON MULTIVARIATE NORMAL USE OF CHOLESKY?
+E.G. PROVIDE IT EXPLICITLY FOR USERS WHO WANT TO PROVIDE CHOLESKY
+MATRIX DIRECTLY?
 % Note that for certain multivariate distributions, such as the multivariate normal and the Wishart, we parameterize the distributions internally in terms of Cholesky decompositions, and which matrix is decomposed depends on which matrix is provided by the user. For example if the user provides a variance matrix, we parameterize in terms of the Cholesky of the variance and if the precision is provided we parameterize in terms of the Cholesky of the precision. This helps to avoid doing unneeded matrix inverses in computing with a model.
 
 % [F is easy to add as it has R functions]
 
 % CJP still not satisfied with this table as we don't show how some of the parameterizations relate to the densities in the previous table - e.g. we don't say how weibuill(shape,scale) relates to shape,lambda in previous table
 
-\input{parameterizationTable.tex}
+\input{parameterizationTableLong.tex}
 
 \subsection{Available BUGS language functions}
 \label{subsec:BUGS-lang-fxns}
@@ -306,8 +302,6 @@ and operators available for \cd{nimbleFunction}s are also available
 for the model declarations.
 
 TODO: CHECK ALL OF THE FOLLOWING STATEMENTS.
-
-TODO: FIX ALL TABLE FORMATS
 
 For the most part NIMBLE supports the functions used in BUGS and JAGS,
 with exceptions indicated in the table.  Additional functions provided
@@ -327,7 +321,7 @@ alternative parameterizations with named parameters to
 \cd{nimbleFunctions}.
 
 \input{functionTableLong.tex}
-\input{functionTableMatrix.tex}
+\input{functionTableMatrixLong.tex}
 
 % note to us: not worknig now as Eigen expects 5 input arguments (e.g. to dnorm) not what the user would expect
 
@@ -338,21 +332,22 @@ alternative parameterizations with named parameters to
 
 NIMBLE allows the link functions listed in Table \ref{table:links}.
 
-\begin{table}[!h]
+%\begin{table}[!h]
 \begin{center}
-\begin{tabular}{llll}
-\hline
+\begin{longtable}{llll}
+\caption{Link functions \label{table:links}} \\
+ \hline
 Link function         & Description & Range & Inverse \\
-\hline
+\hline \hline
+  \endhead
 \verb+cloglog(y) <- x+ & Complementary log log & $0 < y < 1$ & \verb+y <- icloglog(x)+ \\
 \verb+log(y) <- x+    & Log           & $0 < y$ &  \verb+y <- exp(x)+ \\
 \verb+logit(y) <- x+  & Logit         & $0 < y < 1$ &  \verb+y <- expit(x)+ \\
 \verb+probit(y) <- x+ & Probit        & $0 < y < 1$ &  \verb+y <- iprobit(x)+\\
 \hline
-\end{tabular}
-\caption{Link functions \label{table:links}}
+\end{longtable}
 \end{center}
-\end{table}
+%\end{table}
       
 Link functions are specified as functions applied to a variable on the
 left hand side of a BUGS expression. To handle link functions, NIMBLE
