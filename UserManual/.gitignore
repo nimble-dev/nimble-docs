@@ -6,7 +6,6 @@ chapter_*.tex
 
 # testing files for MCMC chapter
 includesMCMConly*
-scriptBuildMCMCchapter.R
 
 # Latex output files
 *.aux
