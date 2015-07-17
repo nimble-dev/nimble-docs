@@ -455,10 +455,8 @@ In this release, conjugacies involving multivariate distributions as well as som
 
 Conjugate sampler functions may (optionally) dynamically check that their own posterior likelihood calculations are correct.  If incorrect, a warning is issued.  However, this functionality will roughly double the run-time required for conjugate sampling.  By default, this option is disabled in NIMBLE.  This option may be enabled by executing the following:
 
-TODO: remove the nimble::: in the next code block, if we decide to export setNimbleOption().  Check with Chris about that.
-
 <<enable-conjugate-checking, eval=FALSE>>=
-nimble:::setNimbleOption('verifyConjugatePosteriors', TRUE)
+nimbleOptions(verifyConjugatePosteriors = TRUE)
 
 buildConjugateSamplerFunctions()
 @
