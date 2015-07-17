@@ -447,9 +447,9 @@ Gibbs samplers can be provided for nodes in conjugate relationships, as specifie
 
 A model may be checked for conjugate relationships using \cd{model\$checkConjugacy()}.  This returns a named list describing all conjugate nodes.  \cd{checkConjugacy} can also accept a character vector argument specifying a subset of model node names to check for conjugacy.
 
-TODO: CHECK THE FOLLOWING STATEMENT
+The current release of NIMBLE supports conjugate sampling of the conjugate relationships listed in Table~\ref{table:conjugaciesSupported}.
 
-In this release, conjugacies involving multivariate distributions as well as some additional conjugate relationships are not detected.
+\input{conjugacyTable.tex}
 
 Conjugate sampler functions may (optionally) dynamically check that their own posterior likelihood calculations are correct.  If incorrect, a warning is issued.  However, this functionality will roughly double the run-time required for conjugate sampling.  By default, this option is disabled in NIMBLE.  This option may be enabled by executing the following:
 
@@ -653,119 +653,110 @@ Executing the MCMC Suite provides and saves several plots.  These include trace 
 
 Note that the generation of MCMC Suite plots \emph{in Rstudio} may result in several warning messages from R (regarding graphics devices), but will function without any problems.
 
-\subsection{Arguments to MCMC Suite}
+\subsection{Customizing MCMC Suite}
 
-The following arguments to \cd{MCMCsuite} define the model on which to run each MCMC algorithm:
-
-\subsubsection{argument: \cd{code}}
-
-\subsubsection{argument: \cd{constants}}
-
-\subsubsection{argument: \cd{data}}
-
-\subsubsection{argument: \cd{inits}}
-
-An MCMC Suite is customizable in terms of all of the following:
+An MCMC Suite is customizable in terms of all of the following: \\
 
 \begin{itemize}
-\item MCMC algorithms
+\item MCMC algorithms to execute, optionally including WinBUGS, JAGS, Stan, and various flavours of NIMBLE's MCMC
+\item Custom-specified NIMBLE MCMC algorithms
+\item Automated parameter blocking for efficienct MCMC sampling
 \item Nodes to monitor
 \item Number of MCMC iterations
 \item Thinning interval
 \item Burn-in
-\item Summary statistics
+\item Summary statistics to report
 \item Generating and saving plots
 \end{itemize}
+\ \\  % to fix spacing 
 
-These options are controlled by the following arguments to \cd{MCMCsuite}:
-
-\subsubsection{argument: \cd{MCMCs}}
-
-A character vector, defining the MCMC algorithms to run.  The \cd{MCMCs} argument may include any of the following algorithms:
+NIMBLE MCMC algorithms may be specified using the \cd{MCMCs} argument to \cd{MCMCsuite()}, which is character vector defining the MCMC algorithms to run.  The \cd{MCMCs} argument may include any of the following algorithms: \\
 
 \begin{description}
-\item[\cd{`bugs'}] WinBUGS MCMC algorithm
-\item[\cd{`jags'}] JAGS MCMC algorithm
-\item[\cd{`Stan'}] Stan MCMC algorithm
-\item[\cd{`nimble'}] NIMBLE MCMC using the default configuration
+\item[\cd{`bugs'}] WinBUGS MCMC algorithm 
+\item[\cd{`jags'}] JAGS MCMC algorithm 
+\item[\cd{`Stan'}] Stan MCMC algorithm 
+\item[\cd{`nimble'}] NIMBLE MCMC using the default configuration 
 \item[\cd{`nimble\_RW'}] NIMBLE MCMC using the default configuration with \cd{onlyRW = TRUE}
 \item[\cd{`nimble\_slice'}] NIMBLE MCMC using the default configuration with \cd{onlySlice= TRUE}
-\item[\cd{`autoBlock'}] NIMBLE MCMC algorithm with block sampling of dynamically determined parameter groups attempting to maximize sampling efficiency
+\item[\cd{`autoBlock'}] NIMBLE MCMC algorithm with block sampling of dynamically determined parameter groups attempting to maximize sampling efficiency 
 \end{description}
+\ \\  % to fix spacing 
 
+The default value for the \cd{MCMCs} argument is \cd{c(`jags',`nimble', `nimble\_RW', `nimble\_slice', `autoBlock')}.  
+ 
 The names of additional, custom, MCMC algorithms may also be provided in the \cd{MCMCs} argument, so long as these custom algorithms are defined in the \cd{MCMCdefs} argument.  An example of this usage is given with the \cd{crossLevel} algorithm in the \cd{litters} MCMC Suite example.
 
-The values for the \cd{MCMCs} argument is \cd{c(`jags',`nimble', `nimble\_RW', `nimble\_slice', `autoBlock')}.
-
-\subsubsection{argument: \cd{MCMCdefs}}
-
-A named list of definitions, for any custom MCMC algorithms specified in the \cd{MCMCs} argument.  If \cd{MCMCs} specified an algorithm called \cd{`myMCMC'}, then \cd{MCMCdefs} must contain an element named \cd{`myMCMC'}.  The contents of this element must be a block of code that, when executed, returns the desired MCMC configuration object.  This block of code may assume the existence of the R model object, \cd{Rmodel}.  Further, this block of code need not worry about adding monitors to the MCMC configuration; it need only specify the samplers.
-
+The \cd{MCMCdefs} may be provided as named list of definitions, for any custom MCMC algorithms specified in the \cd{MCMCs} argument.  If \cd{MCMCs} specified an algorithm called \cd{`myMCMC'}, then \cd{MCMCdefs} must contain an element named \cd{`myMCMC'}.  The contents of this element must be a block of code that, when executed, returns the desired MCMC configuration object.  This block of code may assume the existence of the R model object, \cd{Rmodel}.  Further, this block of code need not worry about adding monitors to the MCMC configuration; it need only specify the samplers.  
+ 
 As a final important point, execution of this block of code must \emph{return} the MCMC configuration object.  Therefore, elements supplied in the \cd{MCMCdefs} argument should usually take the form:
 
 <<MCMCdefs, eval=FALSE>>=
 MCMCdefs = list(
      myMCMC = quote({
-          mcmcspec <- configureMCMC(Rmodel, ....)
+          mcmcspec <- configureMCMC(Rmodel, ....)  
           mcmcspec$addSampler(.....)
-          mcmcspec     ## returns the MCMC configuration object
-     })
-)
+          mcmcspec     ## returns the MCMC configuration object  
+     })  
+)  
 @
+ 
+Full details of the arguments and customization of the MCMC Suite is available through the R help using \cd{help(MCMCsuite)}.
 
-\subsubsection{argument: \cd{monitors}}
 
-Character vector specifying the nodes and/or vectors to monitor.
-
-\subsubsection{argument: \cd{niter}}
-
-Integer specifying the number of MCMC iterations to run.
-
-\subsubsection{argument: \cd{thin}}
-
-Integer specifying the thinning interval.
-
-\subsubsection{argument: \cd{burnin}}
-
-Integer specifying the number of samples to discard from all chains of MCMC samples.  Samples are discarded subsequent to thinning.
-
-\subsubsection{argument: \cd{summaryStats}}
-
-A character vector, providing the name of any function which operates on a numeric vector, and returns a numeric scalar.  Likewise, a character string defining such a function is admissible, for example \cd{`function(x) mean(abs(x))'}.
-
-The default value for \cd{summaryStats} is the set: \cd{mean}, \cd{median}, \cd{sd}, the 2.5\% quantile, and the 97.5\% quantile.
-
-\subsubsection{argument: \cd{makePlot}}
-
-A logical specifying whether to generate the trace plots and posterior density plots.  Default value is \cd{TRUE}.
-
-\subsubsection{argument: \cd{savePlot}}
-
-A logical specifying whether to save the generated plots.  Only used if \cd{makePlot = TRUE}.  Default value is \cd{TRUE}.
-
-\subsubsection{argument: \cd{plotName}}
-
-A character string giving the filename for saving plots.  Only used if \cd{savePlot = TRUE}.  Default value is \cd{`MCMCsuite'}.
-
-\subsubsection{argument: \cd{setSeed}}
-
-A logical argument, specifying whether to set.seed(0) prior to MCMC sampling.  Default value is \cd{TRUE}.
-
-\subsubsection{argument: \cd{bugs\_directory}}
-
-A character string giving the path to the directory containing the WinBUGS executable.  The default value is \cd{'C:/WinBUGS14'}.
-
-\subsubsection{argument: \cd{bugs\_program}}
-
-A character string giving the name of the WiBUGS program to execute.  This will be passed directly to the \cd{bugs()} function.  The default value is \cd{'WinBUGS'}.
-
-\subsubsection{argument: \cd{stan\_model}}
-
-A character string specifying the location and name of the model file (\cd{`modelName.stan'}) for use with the Stan MCMC program.  This argument must include the ".stan" extension, and must be provided whenever the \cd{MCMCs} argument includes \cd{`stan'}.
-
-In addition, the Stan data file (\cd{`modelName.data.R'}) must also reside in the same directory as the Stan model file.
-
-Optionally, the Stan initial values file (\cd{`modelName.init.R'}) may also be in this same directory; it will be used if present.
+%\subsubsection{argument: \cd{monitors}}
+% 
+%Character vector specifying the nodes and/or vectors to monitor.
+% 
+%\subsubsection{argument: \cd{niter}}
+% 
+%Integer specifying the number of MCMC iterations to run.
+% 
+%\subsubsection{argument: \cd{thin}}
+% 
+%Integer specifying the thinning interval.
+% 
+%\subsubsection{argument: \cd{burnin}}
+% 
+%Integer specifying the number of samples to discard from all chains of MCMC samples.  Samples are discarded subsequent to thinning.
+% 
+%\subsubsection{argument: \cd{summaryStats}}
+% 
+%A character vector, providing the name of any function which operates on a numeric vector, and returns a numeric scalar.  Likewise, a character string defining such a function is admissible, for example \cd{`function(x) mean(abs(x))'}.
+% 
+%The default value for \cd{summaryStats} is the set: \cd{mean}, \cd{median}, \cd{sd}, the 2.5\% quantile, and the 97.5\% quantile.
+% 
+%\subsubsection{argument: \cd{makePlot}}
+% 
+%A logical specifying whether to generate the trace plots and posterior density plots.  Default value is \cd{TRUE}.
+% 
+%\subsubsection{argument: \cd{savePlot}}
+% 
+%A logical specifying whether to save the generated plots.  Only used if \cd{makePlot = TRUE}.  Default value is \cd{TRUE}.
+% 
+%\subsubsection{argument: \cd{plotName}}
+% 
+%A character string giving the filename for saving plots.  Only used if \cd{savePlot = TRUE}.  Default value is \cd{`MCMCsuite'}.
+% 
+%\subsubsection{argument: \cd{setSeed}}
+% 
+%A logical argument, specifying whether to set.seed(0) prior to MCMC sampling.  Default value is \cd{TRUE}.
+% 
+%\subsubsection{argument: \cd{bugs\_directory}}
+% 
+%A character string giving the path to the directory containing the WinBUGS executable.  The default value is \cd{'C:/WinBUGS14'}.
+% 
+%\subsubsection{argument: \cd{bugs\_program}}
+% 
+%A character string giving the name of the WiBUGS program to execute.  This will be passed directly to the \cd{bugs()} function.  The default value is \cd{'WinBUGS'}.
+% 
+%\subsubsection{argument: \cd{stan\_model}}
+% 
+%A character string specifying the location and name of the model file (\cd{`modelName.stan'}) for use with the Stan MCMC program.  This argument must include the ".stan" extension, and must be provided whenever the \cd{MCMCs} argument includes \cd{`stan'}.
+% 
+%In addition, the Stan data file (\cd{`modelName.data.R'}) must also reside in the same directory as the Stan model file.
+% 
+%Optionally, the Stan initial values file (\cd{`modelName.init.R'}) may also be in this same directory; it will be used if present.
 
 \section{Advanced topics}
 
