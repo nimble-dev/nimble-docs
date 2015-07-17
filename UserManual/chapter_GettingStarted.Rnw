@@ -1,6 +1,6 @@
 %% See http://yihui.name/knitr/demo/child/ for documentation on the parent/child document system of knitr
 
-\Sexpr{set_parent('NimbleUserManualTest2.Rnw')}
+\Sexpr{set_parent('NimbleUserManual.Rnw')}
 
 \chapter{Getting started}
 \label{cha:getting-started}

@@ -1,8 +1,6 @@
 %% NOTE -- to build and view MCMC chapter only, execute from R:
 %% > library(knitr);   knit2pdf('includesMCMConly.Rnw');   system('open includesMCMConly.pdf')
 
-
-%% \Sexpr{set_parent('NimbleUserManualTest2.Rnw')}
 \Sexpr{set_parent('NimbleUserManual.Rnw')}
 
 <<echo=FALSE>>=
