@@ -73,7 +73,7 @@ The default sampling algorithm assigned to each stochastic node is determined by
 \item If none of the above criteria are satisfied, then a \nm{RW} sampler is assigned.  This is a Metropolis-Hastings adaptive random-walk sampler with a univariate normal proposal distribution CITE(Metropolis1953).
 \end{enumerate}
 
-The control parameters governing each of the default sampling algorithms are NIMBLE system options (with names prefixed by \cd{MCMCcontrolDefault\_}).  These default values are described in Section \ref{sec:samplers-provided}, along with the related sampling algorithms.
+The control parameters governing each of the default sampling algorithms are defined in the NIMBLE system option \cd{MCMCcontrolDefaultList}.  These default values are described in Section \ref{sec:samplers-provided}, along with the related sampling algorithms.
 
 \paragraph{Modifying the default sampler assignments}
 \cd{configureMCMC} accepts control arguments \cd{useConjugacy}, \cd{onlyRW}, \cd{onlySlice}, and \cd{multivariateNodesAsScalars} to modify default sampler assignments.  See \cd{help(configureMCMC)} for usage details.
@@ -135,7 +135,7 @@ When a \cd{control} argument is provided in a call to \cd{addSampler()}, the \cd
 \begin{enumerate}
 \item Those supplied in the \cd{control} list argument to \cd{addSampler()}
 \item Those supplied in the \cd{control} list argument in the preceding preceding call to \cd{configureMCMC()}
-\item Those in the NIMBLE system options (with names prefixed by \cd{MCMCcontrolDefault\_})
+\item Those supplied in the NIMBLE system option \cd{MCMCcontrolDefaultList}
 \end{enumerate}
 
 A call to \cd{addSampler()} results in a single instance of the specified sampler, which will be specialized to the specified \cd{target} model node or nodes, being added at end of the current sampler ordering.
@@ -790,8 +790,7 @@ my_RW <- nimbleFunction(
         ## all named elements extracted from the control list.
         ## these will become the required elements for any 
         ## control list argument to this sampler, unless they also
-        ## exist as NIMBLE system options (with names prefixed 
-        ## by 'MCMCcontrolDefault_')
+        ## exist in the NIMBLE system option 'MCMCcontrolDefaultList'.
         
         ## the random walk proposal standard deviation
         scale <- control$scale
