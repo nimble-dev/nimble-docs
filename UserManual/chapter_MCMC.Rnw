@@ -556,27 +556,27 @@ mcmc_CL <- buildMCMC(mcmcspec_CL)
 ###################################
 
 ## compile the two copies of the model
-#Cmodel <- compileNimble(Rmodel)      ## TODO    comment these 2 2 2 2 2 lines back in!!!!
-#Cmodel2 <- compileNimble(Rmodel2)
+Cmodel <- compileNimble(Rmodel)
+Cmodel2 <- compileNimble(Rmodel2)
 
 ## compile both MCMC algorithms, in the same
 ## project as the R model object
 ## NOTE: at this time, we recommend compiling ALL
 ## executable MCMC functions together
-#Cmcmc <- compileNimble(mcmc, project = Rmodel)       ## TODO comment these next 8 8 8 8 8 lines back in!!!
-#Cmcmc_CL <- compileNimble(mcmc_CL, project = Rmodel2)
+Cmcmc <- compileNimble(mcmc, project = Rmodel)
+Cmcmc_CL <- compileNimble(mcmc_CL, project = Rmodel2)
 
 ## run the default MCMC function,
 ## and example the mean of mu[1]
-#Cmcmc$run(1000)
-#cSamplesMatrix <- as.matrix(Cmcmc$mvSamples)
-#mean(cSamplesMatrix[, 'mu[1]'])
+Cmcmc$run(1000)
+cSamplesMatrix <- as.matrix(Cmcmc$mvSamples)
+mean(cSamplesMatrix[, 'mu[1]'])
 
 ## run the crossLevel MCMC function,
 ## and examine the mean of mu[1]
-#Cmcmc_CL$run(1000)
-#cSamplesMatrix_CL <- as.matrix(Cmcmc_CL$mvSamples)
-#mean(cSamplesMatrix_CL[, 'mu[1]'])
+Cmcmc_CL$run(1000)
+cSamplesMatrix_CL <- as.matrix(Cmcmc_CL$mvSamples)
+mean(cSamplesMatrix_CL[, 'mu[1]'])
 @
 
 
