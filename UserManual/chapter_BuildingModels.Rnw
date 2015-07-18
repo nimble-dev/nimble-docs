@@ -269,14 +269,16 @@ but it need not.  If names are given, they can be given in any
 order.  NIMBLE knows that rate is an alternative to scale and that
 (mean, sd) are an alternative to (shape, scale or rate). 
 
-The file \file{distsDefs\_table.R} in the R directory of the source
+In addition, we provide the following aliases, as in JAGS: \cd{dbinom} for \cd{dbin}, \cd{dnbinom} for \cd
+The file \file{distributions_inputList.R} in the R directory of the source
 package is the definitive source for the NIMBLE's distributions and parameterizations.
 
-TODO: WHAT IS THE STATUS OF THE NEXT TWO STATEMENTS?: 
+TODO: WHAT IS THE STATUS OF THE NEXT STATEMENT?: CJP - I will not get to this for 0.4 but it is still on my to-do list.  
 
-We plan to, but do not currently, handle the following distributions: double exponential (Laplace), beta-binomial, Dirichlet-multinomial, F, Pareto, inverse Wishart, and various forms of multivariate t. 
+We plan to, but do not currently, handle the following distributions: double exponential (Laplace), beta-binomial, Dirichlet-multinomial, F, inverse gamma, Pareto, inverse Wishart, and various forms of multivariate t. 
 
-We will shortly add the distribution aliases allowed in JAGS: \cd{dbinom}, \cd{dnbinom}, \cd{dweibull}, \cd{ddirich}.
+% Chris: the aliases dbinom,dnbinom,dchisqr,dweibuill,ddirich are in devel and I will hopefully clean up the code so that we use an aliases object and do  direct substitution to the canonical BUGS names rather than having repeated info in distributions_inputList
+% before perryEdits1 existed I had made a table of aliases - hpoefully that will get pulled in when we merge to master branch
 
 TODO: SHOULD WE COMMENT ON MULTIVARIATE NORMAL USE OF CHOLESKY?
 E.G. PROVIDE IT EXPLICITLY FOR USERS WHO WANT TO PROVIDE CHOLESKY
