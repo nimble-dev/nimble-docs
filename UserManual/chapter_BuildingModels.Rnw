@@ -270,7 +270,7 @@ order.  NIMBLE knows that rate is an alternative to scale and that
 (mean, sd) are an alternative to (shape, scale or rate). 
 
 In addition, we provide the following aliases, as in JAGS: \cd{dbinom} for \cd{dbin}, \cd{dnbinom} for \cd
-The file \file{distributions_inputList.R} in the R directory of the source
+The file \file{distributions\_inputList.R} in the R directory of the source
 package is the definitive source for the NIMBLE's distributions and parameterizations.
 
 TODO: WHAT IS THE STATUS OF THE NEXT STATEMENT?: CJP - I will not get to this for 0.4 but it is still on my to-do list.  
