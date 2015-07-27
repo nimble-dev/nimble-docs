@@ -376,7 +376,7 @@ mcmcspec$addSampler(target = c('a', 'b', 'c'), type = 'crossLevel')
 
 The requirement that all stochastic descendents of the \cd{target} nodes must themselves have only conjugate descendents will be checked when the MCMC algorithm is built.  This sampler is useful when there is strong dependence across the levels of a model that causes problems with convergence or mixing.
 
- \subsection{Customized log likelihood evaluations using the \cd{RW\_llFunction} sampler}
+\subsection{Customized log likelihood evaluations using the \cd{RW\_llFunction} sampler}
  
 Sometimes it is useful to control the log likelihood calculations used for an MCMC updater instead of simply using the model.  For example, one could use a sampler with a log likelihood that analytically (or numerically) integrates over latent model nodes.  Or one could use a sampler with a log likelihood that comes from a stochastic approximation such as a particle filter (see below), allowing composition of a particle MCMC (PMCMC) algorithm CITE(Andrieu2010).  The \cd{RW\_llFunction} sampler handles this by using a Metropolis-Hastings algorithm with a normal proposal distribution and a user-provided log-likelihood function.  To allow compiled execution, the log-likelihood function must be provided as a specialized instance of a \cd{nimbleFunction}.  The log-likelihood function may use the same model as the MCMC as a setup argument (as does the example below), but if so the state of the model should be unchanged during execution of the function (or you must understand the implications otherwise).
 
