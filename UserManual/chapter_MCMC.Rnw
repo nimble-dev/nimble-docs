@@ -75,8 +75,12 @@ The default sampling algorithm assigned to each stochastic node is determined by
 
 The control parameters governing each of the default sampling algorithms are defined in the NIMBLE system option \cd{MCMCcontrolDefaultList}.  These default values are described in Section \ref{sec:samplers-provided}, along with the related sampling algorithms.
 
-\paragraph{Modifying the default sampler assignments}
-\cd{configureMCMC} accepts control arguments \cd{useConjugacy}, \cd{onlyRW}, \cd{onlySlice}, and \cd{multivariateNodesAsScalars} to modify default sampler assignments.  See \cd{help(configureMCMC)} for usage details.
+\subsubsection{Modifying the default sampler assignments}
+
+\cd{configureMCMC} accepts control arguments \cd{useConjugacy}, \cd{onlyRW}, \cd{onlySlice}, and \\
+\cd{multivariateNodesAsScalars} to modify default sampler assignments.
+
+See \cd{help(configureMCMC)} for usage details.
 
 %% The following optional control arguments to \cd{configureMCMC()} may be used to override the default assignment of sampler algorithms:
 
@@ -128,7 +132,7 @@ Note that when adding individual samplers (next), the default control list can b
 
 \subsubsection{Adding samplers to the configuration}
 
-Samplers may be added to a configuration using the \cd{addSampler()} method of the \cd{MCMCspec} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object.   Valid character strings include `RW', `RW\_block', `slice', `end', and `crossLevel', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{getSamplers}.
+Samplers may be added to a configuration using the \cd{addSampler()} method of the \cd{MCMCspec} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object.   Valid character strings include `end', `RW', `RW\_block', `slice', `crossLevel', and `RW\_llFunction', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{getSamplers}.
 
 When a \cd{control} argument is provided in a call to \cd{addSampler()}, the \cd{control} list elements specified will have the highest priority.  The hierarchy of precedence for control list elements for samplers is:
 
@@ -308,7 +312,7 @@ code <- nimbleCode({
 })
 @
 
-\subsection{Terminal node \nm{end} Sampler}
+\subsection{Terminal node \cd{end} sampler}
 The \cd{end} sampler is only appropriate for use on terminal stochastic nodes (that is, those having no stochastic dependencies).  Note that such nodes play no role in inference but have often been included in BUGS models to accomplish posterior predictive checks.  NIMBLE allows posterior predictive values to be simulated independently of running MCMC, for example by writing a \cd{nimbleFunction} to do so.  This means that in many cases where terminal stochastic nodes have been included in BUGS models, they are not needed when using NIMBLE.
 
 The \cd{end} sampler functions by calling the \cd{simulate()} method of relevant node, then updating model probabilities and deterministic dependent nodes.  The application of an \cd{end} sampler to any non-terminal node will result in invalid posterior inferences.  The \cd{end} sampler will automatically be assigned to all terminal, non-data stochastic nodes in a model by the default MCMC configuration, so it is uncommon to manually assign this sampler.  The \cd{end} sampler accepts no control list arguments.
@@ -320,14 +324,9 @@ mcmcspec$addSampler(target = 'y[1]', type = 'end')
 
 \subsection{Scalar Metropolis-Hastings random walk \cd{RW} sampler}
 
-The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution CITE(Metropolis1953), implementing the adaptation routine given in CITE(ShabyAndWells2011).  This sampler can be applied to any scalar continuous-valued stochastic node.  
+The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution CITE(Metropolis1953), implementing the adaptation routine given in CITE(ShabyAndWells2011).  This sampler can be applied to any scalar continuous-valued stochastic node.
 
-The \cd{RW} sampler accepts the following control list elements:
-\begin{description}
-\item[adaptive (default = \cd{TRUE})] A logical argument, specifying whether the sampler should adapt the \cd{scale} (proposal standard deviation) throughout the course of MCMC execution to achieve a theoretically desirable acceptance rate.
-\item[adaptInterval (default = 200)] The interval on which to perform adaptation.  Every \cd{adaptInterval} MCMC iterations (prior to thinning), the \cd{RW} sampler will perform its adaptation procedure.  This updates the \cd{scale} variable, based upon the sampler's achieved acceptance rate over the past \cd{adaptInterval} iterations.  
-\item[scale (default = 1)] The initial value of the normal proposal standard deviation.  If \cd{adaptive = FALSE}, \cd{scale} will never change.
-\end{description}
+The \cd{RW} sampler can be customized using the \cd{control} list argument to set the initial proposal distribution scale, and the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
 
 Example usage:
 <<RW-sampler, eval=FALSE>>=
@@ -344,30 +343,17 @@ Note that because we use a simple normal proposal distribution on all nodes, neg
 
 The \cd{RW\_block} sampler performs a simultaneous update of one or more model nodes, using an adaptive Metropolis-Hastings algorithm with a multivariate normal proposal distribution CITE(RobertsAndSahu1997), implementing the adaptation routine given in CITE(ShabyAndWells2011).  This sampler may be applied to any set of continuous-valued model nodes, to any single continuous-valued multivariate model node, or to any combination thereof.
 
-The \cd{RW\_block} sampler accepts the following control list elements:
-\begin{description}
-\item[adaptive (default = \cd{TRUE})] A logical argument, specifying whether the sampler should adapt the \cd{scale} (a coefficient for the entire proposal covariance matrix) and \cd{propCov} (the multivariate normal proposal covariance matrix) throughout the course of MCMC execution.  If only the \cd{scale} should undergo adaptation, this argument should be specified as \cd{TRUE}.
-\item[adaptScaleOnly (default = \cd{FALSE})] A logical argument, specifying whether adaption should be done only for \cd{scale} (TRUE) or also for \cd{provCov} (FALSE).  This argument is only relevant when \cd{adaptive = TRUE}.  When \cd{adaptScaleOnly = FALSE}, both \cd{scale} and \cd{propCov} undergo adaptation; the sampler tunes the scaling to achieve a theoretically good acceptance rate, and the proposal covariance to mimic that of the empirical samples.  When \cd{adaptScaleOnly = FALSE}, only the proposal \cd{scale} is adapted.  
-\item[adaptInterval (default = 200)] The interval on which to perform adaptation.  Every \cd{adaptInterval} MCMC iterations (prior to thinning), the \cd{RW\_block} sampler will perform its adaptation procedure, based on the past \cd{adaptInterval} iterations.
-\item[scale (default = 1)] The initial value of the scalar multiplier for \cd{propCov}.  If \cd{adaptive = FALSE}, \cd{scale} will never change.
-\item[propCov (default = ``identity'')] The initial covariance matrix for the multivariate normal proposal distribution.  This element may be equal to the character string \cd{``identity''}, in which case the identity matrix of the appropriate dimension will be used for the initial proposal covariance matrix.  
-\end{description}
+The \cd{RW\_block} sampler can be customized using the \cd{control} list argument to set the initial proposal covariance, and the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
 
 Example usage:
 <<block-sampler, eval=FALSE>>=
 mcmcspec$addSampler(target = c('a', 'b', 'c'), type = 'RW_block')
 @
 
-\subsection{Slice sampler}
-The \cd{slice} sampler performs slice sampling of the scalar node to which it is applied CITE(Neal2003).  This sampler can operate on either continuous-valued or discrete-valued scalar nodes.  The slice sampler performs a ``stepping out'' procedure, in which the slice is iteratively expanded to the left or right by an amount \cd{sliceWidth}.  This sampler is optionally adaptive, governed by a control list element, whereby the value of \cd{sliceWidth} is adapted towards the observed absolute difference between successive samples.
+\subsection{\cd{slice} sampler}
+The \cd{slice} sampler performs slice sampling of the scalar node to which it is applied CITE(Neal2003).  This sampler can operate on either continuous-valued or discrete-valued scalar nodes.  The slice sampler performs a ``stepping out'' procedure, in which the slice is iteratively expanded to the left or right by an amount \cd{sliceWidth}.  This sampler is optionally adaptive, whereby the value of \cd{sliceWidth} is adapted towards the observed absolute difference between successive samples.
 
-The \cd{slice} sampler accepts the following control list elements:
-\begin{description}
-\item[adaptive (default = \cd{TRUE})] A logical argument, specifying whether the sampler will adapt the value of \cd{sliceWidth} throughout the course of MCMC execution.
-\item[adaptInterval (default = 200)] The interval on which to perform adaptation.
-\item[sliceWidth (default = 1)] The initial value of the width of each slice, and also the width of the expansion during the iterative ``stepping out'' procedure.
-\item[sliceMaxSteps (default = 100)] The maximum number of expansions which may occur during the ``stepping out'' procedure.
-\end{description}
+The \cd{slice} sampler can be customized using the \cd{control} list argument to set the initial slice width, and the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
 
 Example usage:
 <<slice-sampler, eval=FALSE>>=
@@ -381,13 +367,7 @@ mcmcspec$addSampler(target = 'y[2]', type = 'slice',
 \subsection{Hierarchical \cd{crossLevel} sampler}
 This sampler is constructed to perform simultaneous updates across two levels of stochastic dependence in the model structure.  This is possible when all stochastic descendents of node(s) at one level have conjugate relationships with their own stochastic descendents.  In this situation, a Metropolis-Hastings algorithm may be used, in which a multivariate normal proposal distribution is used for the higher-level nodes, and the corresponding proposals for the lower-level nodes undergo Gibbs (conjugate) sampling.  The joint proposal is either accepted or rejected for all nodes involved based upon the Metropolis-Hastings ratio.
 
-The \cd{crossLevel} sampler accepts the following control list elements:
-\begin{description}
-\item[adaptive (default = \cd{TRUE})] Logical argument, specifying whether the multivariate normal proposal distribution for the \cd{target} nodes should be adaptived.
-\item[adaptInterval (default = 200)] As for \cd{RW\_block}, the interval on which to perform adaptation.
-\item[scale (default = 1)] As for \cd{RW\_block}, the initial value of the scalar multiplier for \cd{propCov}.
-\item[propCov (default = ``identity'')] As for \cd{RW\_block}, the initial covariance matrix for the multivariate normal proposal distribution.  This element may be equal to the character string \cd{``identity''} or any positive definite matrix of the appropriate dimensions.
-\end{description}
+The \cd{crossLevel} sampler can be customized using the \cd{control} list argument to set the initial proposal covariance and the adaptive properties for the Metropolis-Hastings sampling of the higher-level nodes.  See \cd{help(samplers)} for details. 
 
 Example usage:
 <<crossLevel-sampler, eval=FALSE>>=
@@ -396,18 +376,11 @@ mcmcspec$addSampler(target = c('a', 'b', 'c'), type = 'crossLevel')
 
 The requirement that all stochastic descendents of the \cd{target} nodes must themselves have only conjugate descendents will be checked when the MCMC algorithm is built.  This sampler is useful when there is strong dependence across the levels of a model that causes problems with convergence or mixing.
 
- \subsection{Using customized log likelihood evaluations via the \cd{RW\_llFunction} sampler}
+ \subsection{Customized log likelihood evaluations using the \cd{RW\_llFunction} sampler}
  
- Sometimes it is useful to control the log likelihood calculations used for an MCMC updater instead of simply using the model.  For example, one could use a sampler with a log likelihood that analytically (or numerically) integrates over latent model nodes.  Or one could use a sampler with a log likelihood that comes from a stochastic approximation such as a particle filter (see below), allowing composition of a particle MCMC (PMCMC) algorithm CITE(Andrieu2010).  The \cd{RW\_llFunction} sampler handles this by using a Metropolis-Hastings algorithm with a normal proposal distribution and a user-provided log-likelihood function.  To allow compiled execution, the log-likelihood function must be provided as a specialized instance of a \cd{nimbleFunction}.  The log-likelihood function may use the same model as the MCMC as a setup argument (as does the example below), but if so the state of the model should be unchanged during execution of the function (or you must understand the implications otherwise).
+Sometimes it is useful to control the log likelihood calculations used for an MCMC updater instead of simply using the model.  For example, one could use a sampler with a log likelihood that analytically (or numerically) integrates over latent model nodes.  Or one could use a sampler with a log likelihood that comes from a stochastic approximation such as a particle filter (see below), allowing composition of a particle MCMC (PMCMC) algorithm CITE(Andrieu2010).  The \cd{RW\_llFunction} sampler handles this by using a Metropolis-Hastings algorithm with a normal proposal distribution and a user-provided log-likelihood function.  To allow compiled execution, the log-likelihood function must be provided as a specialized instance of a \cd{nimbleFunction}.  The log-likelihood function may use the same model as the MCMC as a setup argument (as does the example below), but if so the state of the model should be unchanged during execution of the function (or you must understand the implications otherwise).
 
- Options for the \cd{RW\_llFunction} sampler include:
- \begin{description}
-\item[adaptive (default = \cd{TRUE})] A logical argument, specifying whether the sampler should adapt the \cd{scale} (proposal standard deviation) throughout the course of MCMC execution.
-\item[adaptInterval (default = 200)] The interval on which to perform adaptation.
-\item[scale (default = 1)] The initial value of the normal proposal standard deviation.
- \item[llFunction] A specialized nimbleFunction that accepts no arguments and returns a scalar double number.  The return value must be the total log-likelihood of all stochastic dependents of the \cd{target} nodes -- and, if \cd{includesTarget = TRUE}, of the target node(s) themselves --  or whatever surrogate is being used for the total log-likelihood.  This is a required element with no default.
- \item[includesTarget] Logical variable indicating whether the return value of \cd{llFunction} includes the log-likelihood associated with \cd{target}.  This is a required element with no default.
- \end{description}
+The \cd{RW\_llFunction} sampler can be customized using the \cd{control} list argument to set the initial proposal distribution scale and the adaptive properties for the Metropolis-Hastings sampling.  In addition, the \cd{control} list argument must contain a named \cd{llFunction} element, which is specialized nimbleFunction that accepts no arguments and returns a scalar double number.  The return value must be the total log-likelihood of all stochastic dependents of the \cd{target} nodes -- and, if \cd{includesTarget = TRUE}, of the target node(s) themselves --  or whatever surrogate is being used for the total log-likelihood.  This is a required \cd{control} list element with no default.  See \cd{help(samplers)} for details. 
 
 Complete example of correct usage:
 
