@@ -1,0 +1,28 @@
+\begin{table}[!h]
+\begin{tabular}[c]{lll}
+  Prior Distribution & Sampling Distribution & Parameter \\
+  \hline \hline
+Beta & Bernoulli & \cd{prob} \\
+& Binomial & \cd{prob}\\
+& Negative Binomial & \cd{prob} \\
+\hline
+Dirichlet & Multinomial & \cd{prob} \\
+\hline  
+Gamma & Poisson & \cd{lambda} \\ 
+& Normal & \cd{tau} \\
+& Lognormal & \cd{taulog} \\
+& Gamma & \cd{rate} \\
+& Exponential & \cd{rate} \\
+\hline 
+Normal & Normal & \cd{mean} \\
+& Lognormal & \cd{meanlog} \\
+\hline 
+Multivariate Normal & Multivariate Normal & \cd{mean} \\
+\hline 
+Wishart & Multivariate Normal & \cd{prec}
+\end{tabular}
+ \caption{Conjugate relationships supported by NIMBLE's MCMC engine.}
+    \label{table:conjugaciesSupported}
+
+\end{table}
+

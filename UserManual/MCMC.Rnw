@@ -1,3 +1,5 @@
+%% Replaced by chapter_MCMC.Rnw
+
 <<chunk0, echo = FALSE>>=
 ## source the code
 if(!require(nimble, warn.conflicts = FALSE, quietly = TRUE)) {

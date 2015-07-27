@@ -18,7 +18,8 @@ code <- nimbleCode({
 testModel <- nimbleModel(code)
 logProbCalcPlusA <- logProbCalcPlus(testModel, 'a')
 testModel$b <- 1.5
-logProbCalcPlusA$run(0.5)
+logProbCalcPlusA$run(0.25) ## should match
+                      ## dnorm(1.25,0,1,TRUE)+dnorm(1.5,1.25,1,TRUE) 
 testModel$a  ## a was set to 0.5 + valueToAdd
 
 
@@ -41,9 +42,9 @@ testModel$a        ## the uncompiled model was not modified
 
 ## @knitr nf-modifyValueToAdd
 
-logProbCalcPlusA$valueToAdd  ## uncompiled
+logProbCalcPlusA$valueToAdd  ## in the uncompiled version
 logProbCalcPlusA$valueToAdd <- 2
-ClogProbCalcPlusA$valueToAdd  ## or compiled
+ClogProbCalcPlusA$valueToAdd  ## or in the compiled version
 ClogProbCalcPlusA$valueToAdd <- 3
 ClogProbCalcPlusA$run(1.5)
 CtestModel$a     ## a == 1.5 + 3

@@ -9,5 +9,5 @@ NimbleUserManualNoEval.pdf :	NimbleUserManual.Rnw
 # change all chunks to have eval=FALSE and then run knit/knit2pdf
 
 clean :
-	rm -f NimbleUserManual.pdf NimbleUserManual.tex NimbleUserManual.aux NimbleUserManual.log NimbleUserManual.toc NimbleUserManual.out MCMC.tex
+	rm -f *.aux *.log *.toc *.out chapter_*.tex NimbleUserManual.tex
 

@@ -1,0 +1,872 @@
+%% NOTE -- to build and view MCMC chapter only, execute from R:
+%% > library(knitr);   knit2pdf('includesMCMConly.Rnw');   system('open includesMCMConly.pdf')
+
+\Sexpr{set_parent('NimbleUserManual.Rnw')}
+
+<<echo=FALSE>>=
+require(nimble)
+@ 
+
+\chapter{MCMC}
+
+<<MCMCchunk0, echo = FALSE>>=
+## source the code
+if(!require(nimble, warn.conflicts = FALSE, quietly = TRUE)) {
+#source(file.path('..', '..', 'examples', 'demos', 'loadAllCode.R'))
+}
+require(methods, warn.conflicts = FALSE, quietly = TRUE)  # seems to be needed, but why?
+require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
+@ 
+
+Using the MCMC engine provided with NIMBLE consists of several steps:
+\begin{itemize}
+\item Building an MCMC configuration and an MCMC function from it.  These can be done in one step, but when a user wants to customize the MCMC, they can be done by: 
+\begin{itemize}
+\item Creating a configuration for the MCMC algorithm for a specific model
+\item Customizing the choices of samplers or ordering, including new samplers 
+\item Building the MCMC function from the configuration
+\end{itemize}
+\item Compiling and running the MCMC function
+\item Extracting the posterior samples
+\end{itemize}
+
+This chapter also discusses:
+
+\begin{itemize}
+\item Sampling algorithms provided with NIMBLE
+\item Default sampler assignments in an MCMC configuration
+\item Writing new samplers that conform to NIMBLE's MCMC system.
+\item Using \cd{MCMCsuite} to automatically run WinBUGS, OpenBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model.
+\item Using NIMBLE's algorithm to search blocks of nodes for efficient joint (block) sampling.
+\end{itemize}
+
+\section{The MCMC configuration}
+
+The MCMC configuration contains information needed for building an MCMC.  We will show how to create this information as a first step so it can be customized before moving ahead, but when no customization is needed one can jump directly to the \cd{buildMCMC} step below.  An MCMC configuration includes:
+
+\begin{itemize}
+    \item The model on which the MCMC will operate
+    \item The model nodes which will be sampled (updated) during execution of the MCMC
+    \item The particular sampling algorithms for each of these nodes, including any control parameters required by each sampling algorithm
+    \item Two sets of variables that will be monitored (recorded) during execution of the MCMC and thinning intervals for how often each set will be recorded. Two sets are allowed because it can be useful to monitor different variables at different intervals.
+\end{itemize}
+
+\subsection{Default MCMC configuration}
+\label{sec:default-mcmc-spec}
+
+Assuming we have a model named \cd{Rmodel}, the following will generate a default MCMC configuration:
+<<mcmcspec, eval=FALSE>>=
+mcmcspec <- configureMCMC(Rmodel)
+@
+
+The default configuration will contain a single sampler for each node in the model, and the default ordering follows the topological ordering of the model.  \cd{configureMCMC()} creates an \nm{MCMCspec} reference class object. The \nm{MCMCspec} reference class has a number of methods, such as \cd{addSampler()} that are described later.
+
+\subsubsection{Default assignment of sampler algorithms}
+
+The default sampling algorithm assigned to each stochastic node is determined by the following, in order of precedence:
+
+\begin{enumerate}
+\item If the node has no stochastic dependents, a predictive \nm{end} sampler is assigned.  The \nm{end} sampling algorithm merely calls \cd{simulate()} on the particular node.
+\item The node is checked for presence of a conjugate relationship between its prior distribution and the distributions of its stochastic dependents.  If it is determined to be in a conjugate relationship, then the corresponding \nm{conjugate} (Gibbs) sampler is assigned.
+\item If the node is discrete-valued, then a \nm{slice} sampler is assigned CITE(Neal2003).
+\item If the node follows a multivariate distribution, then a \nm{RW\_block} sampler is assigned for all elements.  This is a Metropolis-Hastings adaptive random-walk sampler with a multivariate normal proposal CITE(RobertsAndSahu1997).
+\item If none of the above criteria are satisfied, then a \nm{RW} sampler is assigned.  This is a Metropolis-Hastings adaptive random-walk sampler with a univariate normal proposal distribution CITE(Metropolis1953).
+\end{enumerate}
+
+The control parameters governing each of the default sampling algorithms are defined in the NIMBLE system option \cd{MCMCcontrolDefaultList}.  These default values are described in Section \ref{sec:samplers-provided}, along with the related sampling algorithms.
+
+\paragraph{Modifying the default sampler assignments}
+\cd{configureMCMC} accepts control arguments \cd{useConjugacy}, \cd{onlyRW}, \cd{onlySlice}, and \cd{multivariateNodesAsScalars} to modify default sampler assignments.  See \cd{help(configureMCMC)} for usage details.
+
+%% The following optional control arguments to \cd{configureMCMC()} may be used to override the default assignment of sampler algorithms:
+
+%% \begin{description}
+%% \item[useConjugacy (default \cd{TRUE})] If \cd{TRUE}, conjugate samplers will be assigned to nodes determined to be in conjugate relationships.  If \cd{FALSE}, no conjugate samplers will be assigned.
+%% \item[onlyRW (default \cd{FALSE})]  If \cd{TRUE}, \cd{RW} samplers will be assigned to all non-terminal, continuous-valued stochastic nodes.  Terminal stochastic nodes are still assigned \cd{end} samplers.
+%% \item[onlySlice (default \cd{FALSE})]  If \cd{TRUE}, \cd{slice} samplers will be assigned to all non-terminal stochastic nodes.  Terminal stochastic nodes are still assigned \nm{end} samplers.
+%% \item[multivariateNodesAsScalars (default \cd{FALSE})]  If \cd{TRUE}, then independent scalar random walk Metropolis-Hastings samplers (\cd{RW}) will be assigned to all scalar components comprising multivariate nodes.  This contrasts the default behavior of a single block sampler being assigned to multivariate nodes.  Regardless of the value of this argument, conjugate samplers will be assigned to conjugate (scalar and multivariate nodes), provided \cd{useConjugacy = TRUE}.
+%% \end{description}
+
+\subsubsection{Default monitors}
+
+The default MCMC configuration includes monitors on all top-level stochastic nodes of the model. 
+
+\subsubsection{Automated parameter blocking}
+
+The default configuration may be replaced by that generated from an automated parameter blocking algorithm.  This algorithm determines groupings of model nodes that, when jointly sampled with a \cd{RW\_block} sampler, increase overall MCMC efficiency.  Overall efficiency is defined as the effective sample size of the slowest-mixing node divided by computation time.  This is done by:
+
+<<mcmcspec5, eval=FALSE>>=
+autoBlockSpec <- configureMCMC(Rmodel, autoBlock = TRUE)
+@
+
+In this usage, the additional control argument \cd{autoIt} may also be provided to indicate the number of MCMC samples to be used in the automated blocking procedure (default 20,000).
+
+
+
+\subsection{Customizing the MCMC configuration}
+
+The MCMC configuration may be customized in a variety of ways, either through additional named arguments to \cd{configureMCMC()} or by calling member methods of an existing \cd{MCMCspec} object.
+
+\subsubsection{Default samplers for particular nodes}
+
+One can create an MCMC configuration with default samplers on just a particular set of nodes using the \cd{nodes} argument to \cd{configureMCMC()}. The value for the \cd{nodes} argument may be a character vector containing node and/or variable names.  In the case of a variable name, a default sampler will be added for all stochastic nodes in the variable.  
+
+If the \cd{nodes} argument is provided, default samplers are created only for the \emph{stochastic} nodes specified by this argument (possibly including data nodes), and the ordering of these sampling algorithms matches the ordering within the \cd{nodes} argument.  It is worthwhile to note this is the \emph{only} way in which a sampler may be placed on a data node, which upon execution of the MCMC will overwrite any value stored in the data node.
+
+\subsubsection{Creating a configuration with no samplers} 
+If you plan to customize the choice of all samplers, it can be useful to obtain a configuration with no sampler assignments at all.  This can be done by providing the \cd{nodes} argument with the value \cd{NULL}, \cd{character()}, or \cd{list()}. 
+
+\subsubsection{Overriding the default sampler control list values}
+The default values of control list elements for all sampling algorithms may be overridden through use of the \cd{control} argument to \cd{configureMCMC()}, which should be a named list. 
+Named elements in the \cd{control} argument will be used for all default samplers added.  In addition, they are retained in the \cd{MCMCspec} object, and will be used as defaults for any subsequent samplers added to this same \cd{MCMCspec} object.  For example, the following will create the default MCMC configuration, except all \cd{RW} samplers will have their initial \cd{scale} set to 3, and none of the samplers (\nm{RW}, or otherwise) will be adaptive.
+
+<<mcmcspec6, eval=FALSE>>=
+mcmcspec <- configureMCMC(Rmodel, control = list(scale = 3, adaptive = FALSE))
+@
+
+Note that when adding individual samplers (next), the default control list can be over-ridden.
+
+\subsubsection{Adding samplers to the configuration}
+
+Samplers may be added to a configuration using the \cd{addSampler()} method of the \cd{MCMCspec} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object.   Valid character strings include `RW', `RW\_block', `slice', `end', and `crossLevel', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{getSamplers}.
+
+When a \cd{control} argument is provided in a call to \cd{addSampler()}, the \cd{control} list elements specified will have the highest priority.  The hierarchy of precedence for control list elements for samplers is:
+
+\begin{enumerate}
+\item Those supplied in the \cd{control} list argument to \cd{addSampler()}
+\item Those supplied in the \cd{control} list argument in the preceding preceding call to \cd{configureMCMC()}
+\item Those supplied in the NIMBLE system option \cd{MCMCcontrolDefaultList}
+\end{enumerate}
+
+A call to \cd{addSampler()} results in a single instance of the specified sampler, which will be specialized to the specified \cd{target} model node or nodes, being added at end of the current sampler ordering.
+
+\subsubsection{Printing, re-ordering, and removing samplers}
+
+The current, ordered, list of all samplers in the MCMC configuration may be printed by calling the \cd{getSamplers()} method. When you want to see only samplers acting on specific model nodes or variables, provide those names as an argument to \cd{getSamplers()}.
+
+The existing samplers may be re-ordered using the \cd{setSamplers()} method. The \cd{ind} argument is a vector of sampler indices, or a character vector of model node or variable names.  The samplers in the MCMC configuration will be replaced by the samplers corresponding to the indices provided, or those samplers acting on the target nodes specified.  Here are a few examples. Each example assumes the \cd{MCMCspec} object initially contains 10 samplers, and each example is independent of the others.
+<<setSamplers2, eval=FALSE>>=
+## Truncate the current list of samplers to the first 5
+mcmcspec$setSamplers(ind = 1:5)
+
+## Retain only the third sampler, which will subsequently 
+## become the first sampler
+mcmcspec$setSamplers(ind = 3)
+
+## Reverse the ordering of the samplers
+mcmcspec$setSamplers(ind = 10:1)
+
+## The new set of samplers becomes the 
+## {first, first, first, second, third} from the current list.
+## Upon each iteration of the MCMC, the 'first' sampler will 
+## be executed 3 times, however each instance of the sampler 
+## will be independent in terms of scale, adaptation, etc.
+mcmcspec$setSamplers(ind = c(1, 1, 1, 2, 3))
+
+## Set the list of samplers to only those acting on model node 'alpha'
+mcmcspec$setSamplers('alpha')
+
+## Set the list of samplers to those acting on any components of the
+## model variables 'x', 'y', or 'z'.
+mcmcspec$setSamplers(c('x', 'y', 'z'))
+@
+
+Samplers may be removed from the current sampler ordering with the \cd{removeSamplers()} method.  The following examples demonstrate this usage, where again each example assumes that \cd{mcmcspec} initially contains 10 samplers, and each example is independent of the others.  \cd{removeSamplers()} may also accept a character vector argument, and will remove all samplers acting on these target model nodes.
+<<removeSamplers, eval=FALSE>>=
+## Remove the first sampler
+mcmcspec$removeSamplers(ind = 1)
+
+## Remove the last five samplers
+mcmcspec$removeSamplers(ind = 6:10)
+
+## Remove all samplers,
+## resulting in an empty MCMC configuration, containing no samplers
+mcmcspec$removeSamplers(ind = 1:10)
+
+## Remove all samplers acting on 'x' or any component of it
+mcmcspec$removeSamplers('x')
+
+## Default: providing no argument removes all samplers
+mcmcspec$removeSamplers()
+@
+
+\subsubsection{Monitors and thinning intervals}
+
+An \cd{MCMCspec} object contains two independent lists of variables to monitor, which correspond to two independent thinning intervals: \cd{thin} corresponding to \cd{monitors}, and \cd{thin2} corresponding to \cd{monitors2}.  Monitors operate at the \textit{variable} level.  Only entire model variables may be monitored.  Specifying a monitor on a \textit{node}, e.g., \cd{x[1]}, will result in the entire variable \cd{x} being monitored.
+
+The variables specified in \cd{monitors}  and \cd{monitors2} will be recorded (with thinning interval \cd{thin}) into the \cd{mvSamples} and \cd{mvSamples2} -- both \nm{modelValues} objects -- of the MCMC, respectively.  See Section \ref{sec:extracting-samples} for information about extracting these \nm{modelValues} objects from the MCMC algorithm object.
+
+Monitors may be added to the MCMC configuration either in the original call to \cd{configureMCMC()} or using the \cd{addMonitors()} method:
+<<addMonitors, eval=FALSE>>=
+## Using an arguments to configureMCMC()
+mcmcspec <- configureMCMC(Rmodel, monitors = c('alpha', 'beta'), monitors2 = 'x')
+
+## Calling a member method of the mcmcspec object
+## This results in the same monitors as above
+mcmcspec$addMonitors(c('alpha', 'beta'))
+mcmcspec$addMonitors2('x')
+@
+
+Similarly, either thinning interval may be set at either step:
+<<thinning, eval=FALSE>>=
+## Using an argument to configureMCMC()
+mcmcspec <- configureMCMC(Rmodel, thin = 1, thin2 = 100)
+
+## Calling a member method of the mcmcspec object
+## This results in the same thinning intervals as above
+mcmcspec$setThin(1)
+mcmcspec$setThin2(100)
+@
+
+The current lists of monitors, and thinning intervals, may be displayed using the \cd{getMonitors()} method.  Both sets of monitors (\cd{monitors} and \cd{monitors2}) may be reset to empty character vectors by calling the \cd{resetMonitors()} method.
+
+\section{Building and compiling the MCMC algorithm}
+\label{sec:build-compile-mcmc}
+
+Once the MCMC configuration object has been created, and customized to one's liking, it may be used to build an MCMC function:
+
+<<buildMCMC, eval=FALSE>>=
+Rmcmc <- buildMCMC(mcmcspec)
+@
+
+\cd{buildMCMC()} is a \cd{nimbleFunction}.  The returned object \cd{Rmcmc} is an instance  of the NIMBLE function specific to configuration \cd{mcmcspec}.
+
+When no customization is needed, one can skip \cd{configureMCMC} and simply provide a model object to \cd{buildMCMC}. The following two MCMC functions will be identical:
+
+<<overloadedBuildMCMC, eval=FALSE>>=
+mcmcspec <- configureMCMC(Rmodel)   ## default MCMC configuration
+Rmcmc1 <- buildMCMC(mcmcspec)
+
+Rmcmc2 <- buildMCMC(Rmodel)   ## uses the default configuration for Rmodel
+@
+
+For speed of execution, we usually desire to compile the MCMC function to C++ (as is the case for other NIMBLE functions).  To do so, we use \cd{compileNimble()}.  Care must be taken to perform this compilation in the same project that contains the underlying model and compiled model objects.  A typical compilation call looks like:
+
+<<compileMCMC, eval=FALSE>>=
+Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
+@
+
+Alternatively, if the model has not already been compiled, they can be compiled together in one line:
+
+<<compileMCMC2, eval=FALSE>>=
+Cmcmc <- compileNimble(Rmodel, Rmcmc)
+@
+
+
+\section{Executing the MCMC algorithm}
+
+The MCMC function (either the compiled or uncompiled version) has one required argument, \cd{niter}, representing the number of iterations to run the MCMC algorithm.  We'll assume the function is called \cd{mcmc}. Calling \cd{mcmc(niter)} causes the full list of samplers (as determined from the input \cd{MCMCspec} object) to be executed \cd{niter} times, and the monitored variables to be stored into the internal \cd{mvSamples} and/or \cd{mvSamples2} objects as governed by the corresponding thinning intervals.
+
+The \cd{mcmc()} function has an optional \cd{reset} argument.  When \cd{reset = TRUE} (the default value), the following occurs at the onset of the call to \cd{mcmc\$run()}:
+\begin{itemize}
+\item All model nodes are checked that they contain values, and that model log-probabilities are up-to-date with the current node values.  If a stochastic node is missing a value, it is populated using a call to \cd{simulate()}.  The values of deterministic nodes are calculated, to be consistent with their parent nodes.  If any right-hand-side-only nodes are missing a value, an error results.
+\item All MCMC sampler functions are reset to their initial state: the initial values of any sampler control parameters (e.g., \cd{scale}, \cd{sliceWidth}, or \cd{propCov}) are reset to their initial values, as were specified by the original MCMC configuration.
+\item The internal \nm{modelValues} objects \cd{mvSamples} and \cd{mvSamples2} are each resized to the appropriate length for holding the requested number of samples (\cd{niter/thin}, and \cd{niter/thin2}, respectively).
+\end{itemize}
+
+When \cd{mcmc\$run(niter, reset = FALSE)} is called, the MCMC algorithm picks up from where it left off.  No values in the model are checked or altered, and sampler functions are not reset to their initial states.  Further, the internal \nm{modelValues} objects containing samples are each increased in size to appropriately accommodate the additional samples.
+
+Further arguments and details can be found by \cd{help(buildMCMC)}. 
+
+%% The MCMC function has a second optional argument, \cd{simulateAll}, with default value \cd{FALSE}.  When \cd{mcmc(niter, simulateAll = TRUE)} is called, the \cd{simulate()} method of all stochastic nodes in the model is called, prior to beginning MCMC iterations.  This behavior may be thought of as generating a new set of random, initial values for all stochastic nodes in the model. Note that there is some danger in doing this when non-informative priors (such as normal distributions with very large variances or gamma distributions with small parameter values) are used for top-level nodes, as one may easily simulate an extreme value as the starting value for a given node.
+
+\section{Extracting MCMC samples}
+\label{sec:extracting-samples}
+
+After executing the MCMC, the output samples can be extracted as follows as:
+
+<<samples, eval=FALSE>>=
+mvSamples <- mcmc$mvSamples
+mvSamples2 <- mcmc$mvSamples2
+@
+
+These \nm{modelValues} objects can be converted into matrices using \cd{as.matrix()}:
+
+<<as.matrix-samples, eval=FALSE>>=
+samplesMatrix <- as.matrix(mvSamples)
+samplesMatrix2 <- as.matrix(mvSamples2)
+@
+
+The column names of the matrices will be the node names of nodes in the monitored variables.  Then, for example, the mean of the samples for node \cd{x[2]} could be calculated as:
+
+<<access-samples, eval=FALSE>>=
+mean(samplesMatrix[, 'x[2]'])
+@
+
+\section{Sampler Algorithms provided with NIMBLE}
+\label{sec:samplers-provided}
+
+We now describe the samplers provided with NIMBLE.  The MCMC configuration for a model generated from the following model code will serve as our example for this section:
+
+<<demoModel, eval=FALSE>>=
+code <- nimbleCode({
+    a ~ dgamma(1, 1)
+    b ~ dgamma(1, 1)
+    p ~ dbeta(a, b)
+    y1 ~ dbinom(prob = p, size = 10)
+    y2 ~ dbinom(prob = p, size = 20)
+})
+@
+
+\subsection{Terminal node \nm{end} Sampler}
+The \cd{end} sampler is only appropriate for use on terminal stochastic nodes (that is, those having no stochastic dependencies).  Note that such nodes play no role in inference but have often been included in BUGS models to accomplish posterior predictive checks.  NIMBLE allows posterior predictive values to be simulated independently of running MCMC, for example by writing a \cd{nimbleFunction} to do so.  This means that in many cases where terminal stochastic nodes have been included in BUGS models, they are not needed when using NIMBLE.
+
+The \cd{end} sampler functions by calling the \cd{simulate()} method of relevant node, then updating model probabilities and deterministic dependent nodes.  The application of an \cd{end} sampler to any non-terminal node will result in invalid posterior inferences.  The \cd{end} sampler will automatically be assigned to all terminal, non-data stochastic nodes in a model by the default MCMC configuration, so it is uncommon to manually assign this sampler.  The \cd{end} sampler accepts no control list arguments.
+
+Example usage:
+<<terminal-sampler, eval=FALSE>>=
+mcmcspec$addSampler(target = 'y[1]', type = 'end')
+@
+
+\subsection{Scalar Metropolis-Hastings random walk \cd{RW} sampler}
+
+The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution CITE(Metropolis1953), implementing the adaptation routine given in CITE(ShabyAndWells2011).  This sampler can be applied to any scalar continuous-valued stochastic node.  
+
+The \cd{RW} sampler accepts the following control list elements:
+\begin{description}
+\item[adaptive (default = \cd{TRUE})] A logical argument, specifying whether the sampler should adapt the \cd{scale} (proposal standard deviation) throughout the course of MCMC execution to achieve a theoretically desirable acceptance rate.
+\item[adaptInterval (default = 200)] The interval on which to perform adaptation.  Every \cd{adaptInterval} MCMC iterations (prior to thinning), the \cd{RW} sampler will perform its adaptation procedure.  This updates the \cd{scale} variable, based upon the sampler's achieved acceptance rate over the past \cd{adaptInterval} iterations.  
+\item[scale (default = 1)] The initial value of the normal proposal standard deviation.  If \cd{adaptive = FALSE}, \cd{scale} will never change.
+\end{description}
+
+Example usage:
+<<RW-sampler, eval=FALSE>>=
+mcmcspec$addSampler(target = 'a', type = 'RW',
+     control = list(adaptive = FALSE, scale = 3))
+
+mcmcspec$addSampler(target = 'b', type = 'RW',
+     control = list(adaptive = TRUE, adaptInterval = 200))
+@
+
+Note that because we use a simple normal proposal distribution on all nodes, negative proposals may be simulated for non-negative random variables. These will be rejected, so the only downsides to this are some inefficiency and the presence of warnings during uncompiled (but not compiled) execution indicating \cd{NA} or \cd{NaN} values. 
+
+\subsection{Multivariate Metropolis-Hastings \cd{RW\_block} sampler}
+
+The \cd{RW\_block} sampler performs a simultaneous update of one or more model nodes, using an adaptive Metropolis-Hastings algorithm with a multivariate normal proposal distribution CITE(RobertsAndSahu1997), implementing the adaptation routine given in CITE(ShabyAndWells2011).  This sampler may be applied to any set of continuous-valued model nodes, to any single continuous-valued multivariate model node, or to any combination thereof.
+
+The \cd{RW\_block} sampler accepts the following control list elements:
+\begin{description}
+\item[adaptive (default = \cd{TRUE})] A logical argument, specifying whether the sampler should adapt the \cd{scale} (a coefficient for the entire proposal covariance matrix) and \cd{propCov} (the multivariate normal proposal covariance matrix) throughout the course of MCMC execution.  If only the \cd{scale} should undergo adaptation, this argument should be specified as \cd{TRUE}.
+\item[adaptScaleOnly (default = \cd{FALSE})] A logical argument, specifying whether adaption should be done only for \cd{scale} (TRUE) or also for \cd{provCov} (FALSE).  This argument is only relevant when \cd{adaptive = TRUE}.  When \cd{adaptScaleOnly = FALSE}, both \cd{scale} and \cd{propCov} undergo adaptation; the sampler tunes the scaling to achieve a theoretically good acceptance rate, and the proposal covariance to mimic that of the empirical samples.  When \cd{adaptScaleOnly = FALSE}, only the proposal \cd{scale} is adapted.  
+\item[adaptInterval (default = 200)] The interval on which to perform adaptation.  Every \cd{adaptInterval} MCMC iterations (prior to thinning), the \cd{RW\_block} sampler will perform its adaptation procedure, based on the past \cd{adaptInterval} iterations.
+\item[scale (default = 1)] The initial value of the scalar multiplier for \cd{propCov}.  If \cd{adaptive = FALSE}, \cd{scale} will never change.
+\item[propCov (default = ``identity'')] The initial covariance matrix for the multivariate normal proposal distribution.  This element may be equal to the character string \cd{``identity''}, in which case the identity matrix of the appropriate dimension will be used for the initial proposal covariance matrix.  
+\end{description}
+
+Example usage:
+<<block-sampler, eval=FALSE>>=
+mcmcspec$addSampler(target = c('a', 'b', 'c'), type = 'RW_block')
+@
+
+\subsection{Slice sampler}
+The \cd{slice} sampler performs slice sampling of the scalar node to which it is applied CITE(Neal2003).  This sampler can operate on either continuous-valued or discrete-valued scalar nodes.  The slice sampler performs a ``stepping out'' procedure, in which the slice is iteratively expanded to the left or right by an amount \cd{sliceWidth}.  This sampler is optionally adaptive, governed by a control list element, whereby the value of \cd{sliceWidth} is adapted towards the observed absolute difference between successive samples.
+
+The \cd{slice} sampler accepts the following control list elements:
+\begin{description}
+\item[adaptive (default = \cd{TRUE})] A logical argument, specifying whether the sampler will adapt the value of \cd{sliceWidth} throughout the course of MCMC execution.
+\item[adaptInterval (default = 200)] The interval on which to perform adaptation.
+\item[sliceWidth (default = 1)] The initial value of the width of each slice, and also the width of the expansion during the iterative ``stepping out'' procedure.
+\item[sliceMaxSteps (default = 100)] The maximum number of expansions which may occur during the ``stepping out'' procedure.
+\end{description}
+
+Example usage:
+<<slice-sampler, eval=FALSE>>=
+mcmcspec$addSampler(target = 'y[1]', type = 'slice',
+     control = list(adaptive = FALSE, sliceWidth = 3))
+
+mcmcspec$addSampler(target = 'y[2]', type = 'slice',
+     control = list(adaptive = TRUE, sliceMaxSteps = 1))
+@
+
+\subsection{Hierarchical \cd{crossLevel} sampler}
+This sampler is constructed to perform simultaneous updates across two levels of stochastic dependence in the model structure.  This is possible when all stochastic descendents of node(s) at one level have conjugate relationships with their own stochastic descendents.  In this situation, a Metropolis-Hastings algorithm may be used, in which a multivariate normal proposal distribution is used for the higher-level nodes, and the corresponding proposals for the lower-level nodes undergo Gibbs (conjugate) sampling.  The joint proposal is either accepted or rejected for all nodes involved based upon the Metropolis-Hastings ratio.
+
+The \cd{crossLevel} sampler accepts the following control list elements:
+\begin{description}
+\item[adaptive (default = \cd{TRUE})] Logical argument, specifying whether the multivariate normal proposal distribution for the \cd{target} nodes should be adaptived.
+\item[adaptInterval (default = 200)] As for \cd{RW\_block}, the interval on which to perform adaptation.
+\item[scale (default = 1)] As for \cd{RW\_block}, the initial value of the scalar multiplier for \cd{propCov}.
+\item[propCov (default = ``identity'')] As for \cd{RW\_block}, the initial covariance matrix for the multivariate normal proposal distribution.  This element may be equal to the character string \cd{``identity''} or any positive definite matrix of the appropriate dimensions.
+\end{description}
+
+Example usage:
+<<crossLevel-sampler, eval=FALSE>>=
+mcmcspec$addSampler(target = c('a', 'b', 'c'), type = 'crossLevel')
+@
+
+The requirement that all stochastic descendents of the \cd{target} nodes must themselves have only conjugate descendents will be checked when the MCMC algorithm is built.  This sampler is useful when there is strong dependence across the levels of a model that causes problems with convergence or mixing.
+
+ \subsection{Using customized log likelihood evaluations via the \cd{RW\_llFunction} sampler}
+ 
+ Sometimes it is useful to control the log likelihood calculations used for an MCMC updater instead of simply using the model.  For example, one could use a sampler with a log likelihood that analytically (or numerically) integrates over latent model nodes.  Or one could use a sampler with a log likelihood that comes from a stochastic approximation such as a particle filter (see below), allowing composition of a particle MCMC (PMCMC) algorithm CITE(Andrieu2010).  The \cd{RW\_llFunction} sampler handles this by using a Metropolis-Hastings algorithm with a normal proposal distribution and a user-provided log-likelihood function.  To allow compiled execution, the log-likelihood function must be provided as a specialized instance of a \cd{nimbleFunction}.  The log-likelihood function may use the same model as the MCMC as a setup argument (as does the example below), but if so the state of the model should be unchanged during execution of the function (or you must understand the implications otherwise).
+
+ Options for the \cd{RW\_llFunction} sampler include:
+ \begin{description}
+\item[adaptive (default = \cd{TRUE})] A logical argument, specifying whether the sampler should adapt the \cd{scale} (proposal standard deviation) throughout the course of MCMC execution.
+\item[adaptInterval (default = 200)] The interval on which to perform adaptation.
+\item[scale (default = 1)] The initial value of the normal proposal standard deviation.
+ \item[llFunction] A specialized nimbleFunction that accepts no arguments and returns a scalar double number.  The return value must be the total log-likelihood of all stochastic dependents of the \cd{target} nodes -- and, if \cd{includesTarget = TRUE}, of the target node(s) themselves --  or whatever surrogate is being used for the total log-likelihood.  This is a required element with no default.
+ \item[includesTarget] Logical variable indicating whether the return value of \cd{llFunction} includes the log-likelihood associated with \cd{target}.  This is a required element with no default.
+ \end{description}
+
+Complete example of correct usage:
+
+<<RW_ll, eval=FALSE>>=
+code <- nimbleCode({
+    p ~ dunif(0, 1)
+    y ~ dbin(p, n)
+})
+
+Rmodel <- nimbleModel(code, data = list(y=3), inits = list(p=0.5, n=10))
+
+llFun <- nimbleFunction(
+    setup = function(model) { },
+    run = function() {
+        y <- model$y
+        p <- model$p
+        n <- model$n
+        ll <- lfactorial(n) - lfactorial(y) - lfactorial(n-y) +
+              y * log(p) + (n-y) * log(1-p)
+        returnType(double())
+        return(ll)
+    }
+)
+
+RllFun <- llFun(Rmodel)
+
+mcmcspec <- configureMCMC(Rmodel, nodes = NULL)
+
+mcmcspec$addSampler(target = 'p', type = 'RW_llFunction',
+    control = list(llFunction = RllFun, includesTarget = FALSE))
+
+Rmcmc <- buildMCMC(mcmcspec)
+@
+
+\subsection{Conjugate (Gibbs) samplers}
+Gibbs samplers can be provided for nodes in conjugate relationships, as specified by the system-level \cd{conjugacyRelationshipsInputList}.  Conjugate samplers should not, in general, be manually added or modified by a user, since the control list requisites and syntax are lengthy, and determining conjugacy and assigning conjugate samplers is fully handled by the default MCMC configuration.
+
+A model may be checked for conjugate relationships using \cd{model\$checkConjugacy()}.  This returns a named list describing all conjugate nodes.  \cd{checkConjugacy} can also accept a character vector argument specifying a subset of model node names to check for conjugacy.
+
+The current release of NIMBLE supports conjugate sampling of the conjugate relationships listed in Table~\ref{table:conjugaciesSupported}.
+
+\input{conjugacyTable.tex}
+
+Conjugate sampler functions may (optionally) dynamically check that their own posterior likelihood calculations are correct.  If incorrect, a warning is issued.  However, this functionality will roughly double the run-time required for conjugate sampling.  By default, this option is disabled in NIMBLE.  This option may be enabled by executing the following:
+
+<<enable-conjugate-checking, eval=FALSE>>=
+nimbleOptions(verifyConjugatePosteriors = TRUE)
+
+buildConjugateSamplerFunctions()
+@
+
+\section{Detailed MCMC example: \cd{litters}}
+\label{sec:mcmc-example-litters}
+
+Here is a detailed example of specifying, building, compiling, and running two MCMC algorithms.  We use the \cd{litters} example from the BUGS examples.
+
+<<MCMC-litters>>=
+
+###############################
+##### model configuration #####
+###############################
+
+## define our model using BUGS syntax
+litters_code <- nimbleCode({
+    for (i in 1:G) {
+        a[i] ~ dgamma(1, .001)
+        b[i] ~ dgamma(1, .001)
+        for (j in 1:N) {
+            r[i,j] ~ dbin(p[i,j], n[i,j])
+            p[i,j] ~ dbeta(a[i], b[i]) 
+        }
+        mu[i] <- a[i] / (a[i] + b[i])
+        theta[i] <- 1 / (a[i] + b[i])
+    }
+})
+
+## list of fixed constants
+constants <- list(G = 2,
+                  N = 16,
+                  n = matrix(c(13, 12, 12, 11, 9, 10, 9,  9, 8, 11, 8, 10, 13,
+                      10, 12, 9, 10,  9, 10, 5,  9,  9, 13, 7, 5, 10, 7,  6, 
+                      10, 10, 10, 7), nrow = 2))
+
+## list specifying model data
+data <- list(r = matrix(c(13, 12, 12, 11, 9, 10,  9, 9, 8, 10, 8, 9, 12, 9,
+                 11, 8, 9,  8,  9,  4, 8,  7, 11, 4, 4, 5 , 5, 3,  7, 3, 
+                 7, 0), nrow = 2))
+
+## list specifying initial values
+inits <- list(a = c(1, 1),
+              b = c(1, 1),
+              p = matrix(0.5, nrow = 2, ncol = 16),
+              mu    = c(.5, .5),
+              theta = c(.5, .5))
+
+## build the R model object
+Rmodel <- nimbleModel(litters_code,
+                      constants = constants,
+                      data      = data,
+                      inits     = inits)
+
+
+###########################################
+##### MCMC configuration and building #####
+###########################################
+
+## generate the default MCMC configuration;
+## only wish to monitor the derived quantity 'mu'
+mcmcspec <- configureMCMC(Rmodel, monitors = 'mu')
+
+## check the samplers assigned by default MCMC configuration
+mcmcspec$getSamplers()
+
+## double-check our monitors, and thinning interval
+mcmcspec$getMonitors()
+
+## build the executable R MCMC function
+mcmc <- buildMCMC(mcmcspec)
+
+## let's try another MCMC, as well,
+## this time using the crossLevel sampler for top-level nodes
+
+## generate an empty MCMC configuration
+## we need a new copy of the model to avoid compilation errors
+Rmodel2 <- Rmodel$newModel()
+mcmcspec_CL <- configureMCMC(Rmodel2, nodes = NULL, monitors = 'mu')
+
+## add two crossLevel samplers
+mcmcspec_CL$addSampler(target = c('a[1]', 'b[1]'), type = 'crossLevel')
+
+mcmcspec_CL$addSampler(target = c('a[2]', 'b[2]'), type = 'crossLevel')
+
+## let's check the samplers
+mcmcspec_CL$getSamplers()
+
+## build this second executable R MCMC function
+mcmc_CL <- buildMCMC(mcmcspec_CL)
+
+
+###################################
+##### compile to C++, and run #####
+###################################
+
+## compile the two copies of the model
+Cmodel <- compileNimble(Rmodel)
+Cmodel2 <- compileNimble(Rmodel2)
+
+## compile both MCMC algorithms, in the same
+## project as the R model object
+## NOTE: at this time, we recommend compiling ALL
+## executable MCMC functions together
+Cmcmc <- compileNimble(mcmc, project = Rmodel)
+Cmcmc_CL <- compileNimble(mcmc_CL, project = Rmodel2)
+
+## run the default MCMC function,
+## and example the mean of mu[1]
+Cmcmc$run(1000)
+cSamplesMatrix <- as.matrix(Cmcmc$mvSamples)
+mean(cSamplesMatrix[, 'mu[1]'])
+
+## run the crossLevel MCMC function,
+## and examine the mean of mu[1]
+Cmcmc_CL$run(1000)
+cSamplesMatrix_CL <- as.matrix(Cmcmc_CL$mvSamples)
+mean(cSamplesMatrix_CL[, 'mu[1]'])
+@
+
+
+\section{Comparing different MCMC engines with \cd{MCMCsuite}}
+
+NIMBLE's \cd{MCMCsuite} function automatically runs WinBUGS, OpenBUGS, JAGS, Stan, and/or multiple NIMBLE configurations on the same model.  Note that the BUGS code must be compatible with whichever BUGS packages are included, and separate Stan code must be provided.
+
+We show how to use \cd{MCMCsuite} for the same \cd{litters} example used in \ref{sec:mcmc-example-litters}.  Subsequently, additional details of the \cd{MCMCsuite} are given.
+
+\subsection{MCMC Suite example: \cd{litters}}
+
+The following code executes the following MCMC algorithms on the \cd{litters} example:
+\begin{enumerate}
+\item WinBUGS
+\item JAGS
+\item NIMBLE default configuration
+\item NIMBLE configuration with argument \cd{onlySlice = TRUE}
+\item NIMBLE custom configuration using two crossLevel samplers
+\end{enumerate}
+
+<<MCMCsuite, eval=FALSE>>=
+output <- MCMCsuite(
+    code = litters_code,
+    constants = constants,
+    data = data,
+    inits = inits,
+    monitors = 'mu',
+    MCMCs = c('bugs', 'jags', 'nimble', 'nimble_slice', 'nimble_CL'),
+    MCMCdefs = list(
+        nimble_CL = quote({
+            mcmcspec <- configureMCMC(Rmodel, nodes = NULL)
+            mcmcspec$addSampler(target = c('a[1]', 'b[1]'), type = 'crossLevel')
+            mcmcspec$addSampler(target = c('a[2]', 'b[2]'), type = 'crossLevel')
+            mcmcspec
+        })),
+    plotName = 'littersSuite'
+)
+@
+
+\subsection{MCMC Suite outputs}
+
+Executing the MCMC Suite returns a named list containing three elements, as well as generates and saves traceplots and posterior density plots.  The elements of this return list object are:
+
+\subsubsection{Samples}
+
+\cd{samples} is a three-dimensional array, containing all MCMC samples from each algorithm.  The first dimension of the \cd{samples} array corresponds to each MCMC algorithm, and may be indexed by the name of the algorithm.  The second dimension of the \cd{samples} array corresponds to each node which was monitored, and may be indexed by the node name.  The third dimension of \cd{samples} contains the MCMC samples, and has length \cd{niter/thin - burnin}.
+
+\subsubsection{Summary}
+
+The MCMC suite output contains a variety of pre-computed summary statistics, which are stored in the \cd{summary} matrix.  For each monitored node and each MCMC algorithm, the following default summary statistics are calculated: \cd{mean}, \cd{median}, \cd{sd}, the 2.5\% quantile, and the 97.5\% quantile.  These summary statistics are easily viewable, as:
+
+\begin{verbatim}
+output$summary
+# , , mu[1]
+#                   mean    median         sd  quant025  quant975
+# bugs         0.8795868 0.8889000 0.04349589 0.7886775 0.9205025
+# jags         0.8872778 0.8911989 0.02911325 0.8287991 0.9335317
+# nimble       0.8562232 0.8983763 0.12501395 0.4071524 0.9299781
+# nimble_slice 0.8975283 0.9000483 0.02350363 0.8451926 0.9367147
+# nimble_CL    0.8871314 0.8961146 0.05243039 0.7640730 0.9620532
+# 
+# , , mu[2]
+#                   mean    median         sd  quant025  quant975
+# bugs         0.7626974 0.7678000 0.04569705 0.6745975 0.8296025
+# jags         0.7635539 0.7646913 0.03803033 0.6824946 0.8313314
+# nimble       0.7179094 0.7246935 0.06061116 0.6058669 0.7970130
+# nimble_slice 0.7665562 0.7683093 0.04051432 0.6641368 0.8350716
+# nimble_CL    0.7605938 0.7655945 0.09138471 0.5822785 0.9568195
+\end{verbatim}
+
+\subsubsection{Timing}
+
+\cd{timing} contains a named vector of the runtime for each MCMC algorithm, the total compile time for the NIMBLE model and MCMC algorithms, and the compile time for Stan (if specified).  All run- and compile- times are given in minutes.
+
+\subsubsection{Plots}
+
+Executing the MCMC Suite provides and saves several plots.  These include trace plots and posterior density plots for each monitored node, under each algorithm.
+
+Note that the generation of MCMC Suite plots \emph{in Rstudio} may result in several warning messages from R (regarding graphics devices), but will function without any problems.
+
+\subsection{Customizing MCMC Suite}
+
+An MCMC Suite is customizable in terms of all of the following: \\
+
+\begin{itemize}
+\item MCMC algorithms to execute, optionally including WinBUGS, JAGS, Stan, and various flavours of NIMBLE's MCMC
+\item Custom-specified NIMBLE MCMC algorithms
+\item Automated parameter blocking for efficienct MCMC sampling
+\item Nodes to monitor
+\item Number of MCMC iterations
+\item Thinning interval
+\item Burn-in
+\item Summary statistics to report
+\item Generating and saving plots
+\end{itemize}
+\ \\  % to fix spacing 
+
+NIMBLE MCMC algorithms may be specified using the \cd{MCMCs} argument to \cd{MCMCsuite()}, which is character vector defining the MCMC algorithms to run.  The \cd{MCMCs} argument may include any of the following algorithms: \\
+
+\begin{description}
+\item[\cd{`bugs'}] WinBUGS MCMC algorithm 
+\item[\cd{`jags'}] JAGS MCMC algorithm 
+\item[\cd{`Stan'}] Stan MCMC algorithm 
+\item[\cd{`nimble'}] NIMBLE MCMC using the default configuration 
+\item[\cd{`nimble\_RW'}] NIMBLE MCMC using the default configuration with \cd{onlyRW = TRUE}
+\item[\cd{`nimble\_slice'}] NIMBLE MCMC using the default configuration with \cd{onlySlice= TRUE}
+\item[\cd{`autoBlock'}] NIMBLE MCMC algorithm with block sampling of dynamically determined parameter groups attempting to maximize sampling efficiency 
+\end{description}
+\ \\  % to fix spacing 
+
+The default value for the \cd{MCMCs} argument is \cd{c(`jags',`nimble', `nimble\_RW', `nimble\_slice', `autoBlock')}.  
+ 
+The names of additional, custom, MCMC algorithms may also be provided in the \cd{MCMCs} argument, so long as these custom algorithms are defined in the \cd{MCMCdefs} argument.  An example of this usage is given with the \cd{crossLevel} algorithm in the \cd{litters} MCMC Suite example.
+
+The \cd{MCMCdefs} may be provided as named list of definitions, for any custom MCMC algorithms specified in the \cd{MCMCs} argument.  If \cd{MCMCs} specified an algorithm called \cd{`myMCMC'}, then \cd{MCMCdefs} must contain an element named \cd{`myMCMC'}.  The contents of this element must be a block of code that, when executed, returns the desired MCMC configuration object.  This block of code may assume the existence of the R model object, \cd{Rmodel}.  Further, this block of code need not worry about adding monitors to the MCMC configuration; it need only specify the samplers.  
+ 
+As a final important point, execution of this block of code must \emph{return} the MCMC configuration object.  Therefore, elements supplied in the \cd{MCMCdefs} argument should usually take the form:
+
+<<MCMCdefs, eval=FALSE>>=
+MCMCdefs = list(
+     myMCMC = quote({
+          mcmcspec <- configureMCMC(Rmodel, ....)  
+          mcmcspec$addSampler(.....)
+          mcmcspec     ## returns the MCMC configuration object  
+     })  
+)  
+@
+ 
+Full details of the arguments and customization of the MCMC Suite is available through the R help using \cd{help(MCMCsuite)}.
+
+
+%\subsubsection{argument: \cd{monitors}}
+% 
+%Character vector specifying the nodes and/or vectors to monitor.
+% 
+%\subsubsection{argument: \cd{niter}}
+% 
+%Integer specifying the number of MCMC iterations to run.
+% 
+%\subsubsection{argument: \cd{thin}}
+% 
+%Integer specifying the thinning interval.
+% 
+%\subsubsection{argument: \cd{burnin}}
+% 
+%Integer specifying the number of samples to discard from all chains of MCMC samples.  Samples are discarded subsequent to thinning.
+% 
+%\subsubsection{argument: \cd{summaryStats}}
+% 
+%A character vector, providing the name of any function which operates on a numeric vector, and returns a numeric scalar.  Likewise, a character string defining such a function is admissible, for example \cd{`function(x) mean(abs(x))'}.
+% 
+%The default value for \cd{summaryStats} is the set: \cd{mean}, \cd{median}, \cd{sd}, the 2.5\% quantile, and the 97.5\% quantile.
+% 
+%\subsubsection{argument: \cd{makePlot}}
+% 
+%A logical specifying whether to generate the trace plots and posterior density plots.  Default value is \cd{TRUE}.
+% 
+%\subsubsection{argument: \cd{savePlot}}
+% 
+%A logical specifying whether to save the generated plots.  Only used if \cd{makePlot = TRUE}.  Default value is \cd{TRUE}.
+% 
+%\subsubsection{argument: \cd{plotName}}
+% 
+%A character string giving the filename for saving plots.  Only used if \cd{savePlot = TRUE}.  Default value is \cd{`MCMCsuite'}.
+% 
+%\subsubsection{argument: \cd{setSeed}}
+% 
+%A logical argument, specifying whether to set.seed(0) prior to MCMC sampling.  Default value is \cd{TRUE}.
+% 
+%\subsubsection{argument: \cd{bugs\_directory}}
+% 
+%A character string giving the path to the directory containing the WinBUGS executable.  The default value is \cd{'C:/WinBUGS14'}.
+% 
+%\subsubsection{argument: \cd{bugs\_program}}
+% 
+%A character string giving the name of the WiBUGS program to execute.  This will be passed directly to the \cd{bugs()} function.  The default value is \cd{'WinBUGS'}.
+% 
+%\subsubsection{argument: \cd{stan\_model}}
+% 
+%A character string specifying the location and name of the model file (\cd{`modelName.stan'}) for use with the Stan MCMC program.  This argument must include the ".stan" extension, and must be provided whenever the \cd{MCMCs} argument includes \cd{`stan'}.
+% 
+%In addition, the Stan data file (\cd{`modelName.data.R'}) must also reside in the same directory as the Stan model file.
+% 
+%Optionally, the Stan initial values file (\cd{`modelName.init.R'}) may also be in this same directory; it will be used if present.
+
+\section{Advanced topics}
+
+\subsection{Custom sampler functions}
+
+The following code illustrates how a NIMBLE developer would concisely implement, and instantiate a Metropolis-Hastings random walk sampler with fixed proposal standard deviation.  The comments accompanying the code explain the necessary characteristics of all sampler functions.
+
+<<custom-sampler, eval=FALSE>>=
+## the name of this sampler function, for the purposes of 
+## adding it to MCMC configurations, will be 'my_RW'
+my_RW <- nimbleFunction(
+
+    ## sampler functions must contain 'sampler_BASE'
+    contains = sampler_BASE,
+    
+    ## sampler functions must have exactly these setup arguments:
+    ## model, mvSaved, target, control
+    setup = function(model, mvSaved, target, control) {
+        ## first, extract the control list elements, which will
+        ## dictate the behavior of this sampler.
+        ## the setup code will be later processed to determine
+        ## all named elements extracted from the control list.
+        ## these will become the required elements for any 
+        ## control list argument to this sampler, unless they also
+        ## exist in the NIMBLE system option 'MCMCcontrolDefaultList'.
+        
+        ## the random walk proposal standard deviation
+        scale <- control$scale
+        
+        ## determine the list of all dependent nodes,
+        ## up to the first layer of stochastic nodes, generally
+        ## called 'calcNodes'.  The values, inputs, and logProbs
+        ## of these nodes will be retrieved and/or altered
+        ## by this algorithm.
+        calcNodes <- model$getDependencies(target)
+    },
+    
+    ## the run function must accept no arguments, execute 
+    ## the sampling algorithm, leave the modelValues object
+    ## 'mvSaved' as an exact copy of the updated values in model,
+    ## and have no return value.  initially, mvSaved contains
+    ## an exact copy of the values and logProbs in the model.
+    run = function() {
+        
+        ## extract the initial model logProb
+        model_lp_initial <- getLogProb(model, calcNodes)
+        
+        ## generate a proposal value for target node
+        proposal <- rnorm(1, model[[target]], scale)
+        
+        ## store this proposed value into the target node.
+        ## notice the double assignment operator, `<<-`,
+        ## necessary because 'model' is a persistent member
+        ## data object of this sampler.
+        model[[target]] <<- proposal
+        
+        ## calculate target_logProb, propagate the 
+        ## proposed value through any deterministic dependents,
+        ## and calculate the logProb for any stochastic
+        ## dependnets.  The total (sum) logProb is returned.
+        model_lp_proposed <- calculate(model, calcNodes)
+        
+        ## calculate the log Metropolis-Hastings ratio
+        log_MH_ratio <- model_lp_proposed - model_lp_initial
+        
+        ## Metropolis-Hastings step: determine whether or
+        ## not to accept the newly proposed value
+        u <- runif(1, 0, 1)
+        if(u < exp(log_MH_ratio)) jump <- TRUE
+        else                      jump <- FALSE
+        
+        ## if we accepted the proposal, then store the updated
+        ## values and logProbs from 'model' into 'mvSaved'.
+        ## if the proposal was not accepted, restore the values
+        ## and logProbs from 'mvSaved' back into 'model'.
+        if(jump) copy(from = model, to = mvSaved, row = 1, 
+                         nodes = calcNodes, logProb = TRUE)
+        else     copy(from = mvSaved, to = model, row = 1,
+                         nodes = calcNodes, logProb = TRUE)
+    },
+    
+    ## sampler functions must have a member method 'reset',
+    ## which takes no arguments and has no return value.
+    ## this function is used to reset the sampler to its
+    ## initial state.  since this sampler function maintains
+    ## no internal member data variables, reset() needn't
+    ## do anything.
+    methods = list(
+        reset = function () {}
+    )
+)
+
+## now, assume the existence of an R model object 'Rmodel',
+## which has a scalar-valued stochastic node 'x'
+
+## create an MCMC configuration with no sampler functions
+mcmcspec <- configureMCMC(Rmodel, nodes = NULL)
+
+## add our custom-built random walk sampler on node 'x',
+## with a fixed proposal standard deviation = 0.1
+mcmcspec$addSampler(target = 'x', type = 'my_RW',
+    control = list(scale = 0.1))
+
+Rmcmc <- buildMCMC(mcmcspec)   ## etc...
+@
+
+
+
+
+
+
+
+
