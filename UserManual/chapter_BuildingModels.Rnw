@@ -250,18 +250,21 @@ as an example:
   computations.  Usually this is the parameterization in the
   \cd{Rmath} header of R's C implementation of distributions.  For
   \cd{gamma}, this is (shape, scale).  
-\item The \nm{BUGS} parameterization is the one defined in the
+\item The BUGS parameterization is the one defined in the
   original BUGS language.  For \cd{gamma}, this is (shape, rate).
 \item An \nm{alternative} parameterization is one that must be converted
   into the \nm{canonical} parameterization.  For example, NIMBLE
   provides a (mean, sd) parameterization and creates nodes to
   calculate (shape, scale) from (mean, sd).  In the case
-of \cd{gamma}, the \nm{BUGS} parameterization is also an \nm{alternative} parameterization.
+of \cd{gamma}, the BUGS parameterization is also an \nm{alternative} parameterization.
+
+Note that for certain multivariate distributions, such as the multivariate normal and the Wishart, we parameterize the distributions internally in terms of Cholesky decompositions, either of the precision or covariance matrix, depending on which is specified in the BUGS code. Alternatively, a user can directly provide the Cholesky factor of either matrix, with the distinction indicated by the \cd{prec_param} argument. By directly providing a Cholesky factor, this reduces computations because NIMBLE's mathematical operations never need to do the decomposition. 
+
 
 \end{enumerate}
 
 Since NIMBLE provides compatibility with existing BUGS and JAGS
-code, the order of parameters places the \nm{BUGS} parameterization
+code, the order of parameters places the BUGS parameterization
 first.  For example, the order of parameters for \cd{dgamma} is \cd{dgamma(shape, rate, scale, mean, sd)}.  Like R, if
 parameter names are not given, they are taken in order, so that (shape,
 rate) is the default. This happens to  match R's order of parameters,
@@ -269,27 +272,22 @@ but it need not.  If names are given, they can be given in any
 order.  NIMBLE knows that rate is an alternative to scale and that
 (mean, sd) are an alternative to (shape, scale or rate). 
 
-In addition, we provide the following aliases, as in JAGS: \cd{dbinom} for \cd{dbin}, \cd{dnbinom} for \cd
-The file \file{distributions\_inputList.R} in the R directory of the source
-package is the definitive source for the NIMBLE's distributions and parameterizations.
+\input{parameterizationTableLong.tex}
 
-TODO: WHAT IS THE STATUS OF THE NEXT STATEMENT?: CJP - I will not get to this for 0.4 but it is still on my to-do list.  
+In addition, we provide alternative distribution names, known as aliases, as in JAGS, as specified in Table \ref{distributions-aliases}. 
 
-We plan to, but do not currently, handle the following distributions: double exponential (Laplace), beta-binomial, Dirichlet-multinomial, F, inverse gamma, Pareto, inverse Wishart, and various forms of multivariate t. 
 
-% Chris: the aliases dbinom,dnbinom,dchisqr,dweibuill,ddirich are in devel and I will hopefully clean up the code so that we use an aliases object and do  direct substitution to the canonical BUGS names rather than having repeated info in distributions_inputList
-% before perryEdits1 existed I had made a table of aliases - hpoefully that will get pulled in when we merge to master branch
 
-TODO: SHOULD WE COMMENT ON MULTIVARIATE NORMAL USE OF CHOLESKY?
-E.G. PROVIDE IT EXPLICITLY FOR USERS WHO WANT TO PROVIDE CHOLESKY
-MATRIX DIRECTLY?
-% Note that for certain multivariate distributions, such as the multivariate normal and the Wishart, we parameterize the distributions internally in terms of Cholesky decompositions, and which matrix is decomposed depends on which matrix is provided by the user. For example if the user provides a variance matrix, we parameterize in terms of the Cholesky of the variance and if the precision is provided we parameterize in terms of the Cholesky of the precision. This helps to avoid doing unneeded matrix inverses in computing with a model.
+%TODO: WHAT IS THE STATUS OF THE NEXT STATEMENT?: CJP - I will not get to this for 0.4 but it is still on my to-do list.  
+
+We plan to, but do not currently, including the following distributions as part of core NIMBLE: double exponential (Laplace), beta-binomial, Dirichlet-multinomial, F, inverse gamma, Pareto, inverse Wishart, and various forms of multivariate t. 
+
 
 % [F is easy to add as it has R functions]
 
 % CJP still not satisfied with this table as we don't show how some of the parameterizations relate to the densities in the previous table - e.g. we don't say how weibuill(shape,scale) relates to shape,lambda in previous table
 
-\input{parameterizationTableLong.tex}
+
 
 \subsection{Available BUGS language functions}
 \label{subsec:BUGS-lang-fxns}

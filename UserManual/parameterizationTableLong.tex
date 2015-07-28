@@ -4,9 +4,9 @@
   \caption{Alternative distribution parameterizations. The first
     column indicates the supported parameterizations for
     distributions given in Table \ref{table:distributions} with their
-    \nm{BUGS} parameterization. The second column indicates the
+    BUGS parameterization. The second column indicates the
     relationship to the \nm{canonical} parameterization used in
-    NIMBLE. In cases where the the \nm{BUGS} parameterization is not
+    NIMBLE. In cases where the the BUGS parameterization is not
     the \nm{canonical} one, the latter is listed in this table with
     \textit{none} in the second column.} \label{table:distributions-alternates}\\
       \hline
@@ -25,9 +25,9 @@
      \texttt{dnorm(mu, sd)} & \textit{none} \\
      \texttt{dnorm(mu, var)} & \texttt{dnorm(mu, sd = sqrt(var))} \\
      \texttt{dt(mu, sigma, df)} & \textit{none} \\
-     \texttt{dmnorm(mu, cov)} & \texttt{dnorm(mu, chol = chol(cov), prec\_param = FALSE)} \\
-     \texttt{dmnorm(mu, chol)} & \texttt{dnorm(mu, chol, prec\_param = FALSE)} \\
-     \texttt{dwish(S, df)} & \texttt{dwish(chol = chol(S), df, scale\_param = TRUE)}\\ 
+     \texttt{dmnorm(mu, cov)} & \texttt{dnorm(mu, cholesky = chol(cov), prec\_param = FALSE)} \\
+     \texttt{dmnorm(mu, cholesky, prec\_param)} & \textit{none} \\
+     \texttt{dwish(S, df)} & \texttt{dwish(cholesky = chol(S), df, scale\_param = TRUE)}\\ 
      \end{longtable}
   \end{center}
 %\end{table}
