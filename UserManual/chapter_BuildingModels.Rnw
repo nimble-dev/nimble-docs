@@ -233,7 +233,7 @@ model <- nimbleModel(codeAlt, constants = list(n = 3, K = K,
 
 
 \subsection{Available distributions and functions}
-
+\label{subsec:dists-and-functions}
 \subsubsection{Distributions}
 \label{subsec:distributions}
 
@@ -331,8 +331,6 @@ for use in calculations, namely the ``p'', ``q'', and ``d'' functions.
 
 \input{functionTableLong.tex}
 \input{functionTableMatrixLong.tex}
-
-% note to us: not worknig now as Eigen expects 5 input arguments (e.g. to dnorm) not what the user would expect
 
 % [NOTE: JAGS source package has the Tex files for Martyn's manual, so we can copy the table formatting - s doc/manual/jags\_user\_manual.tex]
 

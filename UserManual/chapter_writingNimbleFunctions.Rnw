@@ -722,63 +722,58 @@ uncompiled case.
 \subsection{Distribution functions}
 \label{sec:nimble-dist-funs}
 
-IN PROGRESS
-
 Distribution ``d'', ``r'', ``p'', and ``q'' functions can all be used
-from nimbleFunctions, but the care is needed in the syntax. 
-
-with the name of the 
-distribution and the parameterization. We support only the canonical
-NIMBLE parameterization, as listed below. Also note that the names of the distributions are the names used under the hood in NIMBLE and differ from the BUGS names.
-
-Currently ``r'' functions only return one random
-draw at a time, and the first argument must always be 1.  For
-multivariate distribution functions the \cd{prec\_param} or
+from nimbleFunctions (and in BUGS model code), but the care is needed in the syntax. 
+\begin{itemize}
+  \item We support only the canonical
+NIMBLE parameterization, as listed below (with a small number of exceptions, also listed). 
+\item The names of the distributions are the names used under the hood in NIMBLE and differ from the standard BUGS distribution names.
+  \item Currently ``r'' functions only return one random
+draw at a time, and the first argument must always be 1.
+\item For the multivariate normal and Wishart distributions the \cd{prec\_param} or
 \cd{scale\_param} argument must be provided, indicating when a
-covariance or precision matrix has been given.  In a future release, we will also extend the
-alternative parameterizations given in Section X to \cd{nimbleFunctions}.
+covariance or precision matrix has been given. 
+
+User-defined distributions can also be used from nimbleFunctions. 
+Arguments are matched by order or by name (if given). If omitted, default argument values based on the standard R distribution functions will be used. Standard arguments to distribution functions in R (\cd{log}, \cd{log.p}, \cd{lower.tail}) can be used and take the usual default values as in R. User-supplied distributions are handled analogously with regard to matching by position and  use of defaults (when provided via the nimbleFunction run-time arguments) (Section \ref{sec:user-defined}).
 
 
-the order of
-arguments.  For distributions available in R, nimbleFunction
-parameterizations match those of R, \textit{which may differ in
-  default order from the same-named BUGS distributions}.  You can
-provide named arguments to be safe.  For distributions available in
-BUGS but not R, nimbleFunctions currently support the default BUGS
-parameterization but not alternatives.
-
-Supported distributions include (TODO: IS THIS UP TO DATE? SHOULD WE
-INCLUDE ALTERNATIVE ARGUMENT NAMES?):
+Supported distributions include:
 \begin{itemize}
 \item \cd{dbinom(size, prob)}
 \item \cd{dcat(prob)}
 \item \cd{dmulti(size, prob)}
-\item \cd{dnbinom(prob, size)}
+\item \cd{dnbinom(size, prob)}
 \item \cd{dpois(lambda)}
 \item \cd{dbeta(shape1, shape2)}
 \item \cd{dchisq(df)}
 \item \cd{dexp(rate)}
+\item \cd{dexp\_nimble(rate)}
+\item \cd{dexp\_nimble(scale)}
+\item \cd{dgamma(shape, rate)}
 \item \cd{dgamma(shape, scale)}
 \item \cd{dlnorm(meanlog, sdlog)}
 \item \cd{dlogis(location, scale)}
 \item \cd{dnorm(mean, sd)}
  \item \cd{dt\_nonstandard(df, mu, sigma)}
+ \item \cd{dt(df)}
+ \item \cd{dunif(min, max)}
  \item \cd{dweibull(shape, scale)}
   \item \cd{ddirch(alpha)}
-  \item \cd{dmnorm\_chol(mean, chol, prec\_param)}
-  \item \cd{dwish\_chol(chol, df, scale\_param)}
+  \item \cd{dmnorm\_chol(mean, cholesky, prec\_param)}
+  \item \cd{dwish\_chol(cholesky, df, scale\_param)}
 \end{itemize}
 
-In the last two, chol stands for Cholesky decomposition; 
+In the last two, cholesky stands for Cholesky decomposition of the relevant matrix; 
 prec\_param indicates whether the Cholesky is of a precision matrix or covariance
 matrix; and scale\_param indicates whether the Cholesky is of a scale
 matrix or an inverse scale matrix.
 
-In addition, user-defined distributions can also be used in nimbleFunctions.
+In a future release, we will also extend the
+alternative parameterizations given in Section \ref{subsec:dists-and-functions}  to \cd{nimbleFunctions}.
 
-TODO: THIS SEEMS REDUNDANT: Arguments to the distributions will be matched by either position, or if named, by name. If omitted, default argument values based on the standard R distribution functions will be used. User-supplied distributions are handled analogously with regard to matching by position and  use of defaults (when provided via the nimbleFunction run-time arguments) (Section \ref{sec:user-defined}).
 
-Note that when calling the ``r'' function, \cd{n} must be 1 and must be included.
+
 
 \subsection{rankSample}
 \label{sec:ranksample}
