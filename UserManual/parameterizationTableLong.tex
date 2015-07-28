@@ -5,28 +5,48 @@
     column indicates the supported parameterizations for
     distributions given in Table \ref{table:distributions}. The second column indicates the
     relationship to the \nm{canonical} parameterization used in
-    NIMBLE. In cases where the the parameterization is not
-    the \nm{canonical} one, the latter is listed in this table with
-    \textit{none} in the second column.} \label{table:distributions-alternates}\\
+    NIMBLE. } \label{table:distributions-alternates}\\
       \hline
-      Alternative Parameterization & NIMBLE re-parameterization \\
+      Parameterization & NIMBLE re-parameterization \\
       \hline \hline
 \endhead
+   \texttt{dbern(prob)} & \texttt{dbinom(size = 1, prob)} \\
+      \texttt{dbeta(shape1, shape2)} & canonical \\
       \texttt{dbeta(mean, sd)} & \verb|dbeta(shape1 = mean^2 * (1 - mean) / sd^2 - mean,| \\
       & \verb|shape2 = mean * (1 - mean)^2 / sd^2 + mean - 1)| \\
-      \texttt{dexp(scale)} & \texttt{dexp(rate = 1/scale)} \\
-     \texttt{dgamma(shape, scale)} & \textit{none} \\
+   \texttt{dbin(prob, size)} & canonical \\
+         \texttt{dcat(prob)} & canonical \\
+         \texttt{dchisq(df)} & canonical \\
+         \texttt{ddirch(alpha)} & canonical \\
+      \texttt{dexp(rate)} & canonical \\
+       \texttt{dexp(scale)} & \texttt{dexp(rate = 1/scale)} \\
+     \texttt{dgamma(shape, scale)} & canonical \\
+      \texttt{dgamma(shape, rate)} & \verb|dgamma(shape, scale = 1 / rate| \\
       \texttt{dgamma(mean, sd)} & \verb|dgamma(shape = mean^2 / sd^2, scale = sd^2 / mean)| \\
-     \texttt{dweib(shape, scale)} & \textit{none} \\
-     \texttt{dweib(shape, rate)} & \texttt{dweib(shape, scale = 1/rate)} \\
-     \texttt{dlnorm(mu, sd)} & \textit{none} \\
-     \texttt{dlogis(location, scale)} & \textit{none} \\
-     \texttt{dnorm(mu, sd)} & \textit{none} \\
-     \texttt{dnorm(mu, var)} & \texttt{dnorm(mu, sd = sqrt(var))} \\
-     \texttt{dt(mu, sigma, df)} & \textit{none} \\
-     \texttt{dmnorm(mu, cov)} & \texttt{dnorm(mu, cholesky = chol(cov), prec\_param = FALSE)} \\
-     \texttt{dmnorm(mu, cholesky, prec\_param)} & \textit{none} \\
-     \texttt{dwish(S, df)} & \texttt{dwish(cholesky = chol(S), df, scale\_param = TRUE)}\\ 
+     \texttt{dlogis(location, scale)} & canonical \\
+     \texttt{dlogis(location, rate)} & \verb|dlogis(location, scale = 1 / rate| \\
+     \texttt{dlnorm(meanlog, sdlog)} & canonical \\
+     \texttt{dlnorm(meanlog, taulog)} & \verb|dlnorm(meanlog, sdlog = 1 / sqrt(taulog)| \\
+     \texttt{dlnorm(meanlog, varlog)} & \verb|dlnorm(meanlog, sdlog = sqrt(varlog)| \\
+     \texttt{dmulti(prob, size)} & canonical \\
+     \texttt{dmnorm(mean, cholesky, prec\_param = 1)} & canonical (precision) \\
+     \texttt{dmnorm(mean, cholesky, prec\_param = 0)} & canonical (covariance) \\
+     \texttt{dmnorm(mean, prec)} & \texttt{dmnorm(mean, cholesky = chol(prec), prec\_param = 1)} \\
+     \texttt{dmnorm(mean, cov)} & \texttt{dmnorm(mean, cholesky = chol(cov), prec\_param = 0)} \\
+   \texttt{dnegbin(prob, size)} & canonical \\
+     \texttt{dnorm(mean, sd)} & canonical \\
+     \texttt{dnorm(mean, tau)} & \verb|dnorm(mean, sd = 1 / sqrt(var))| \\
+     \texttt{dnorm(mean, var)} & \texttt{dnorm(mean, sd = sqrt(var))} \\
+     \texttt{dpois(lambda)} & canonical \\
+     \texttt{dt(mu, sigma, df)} & canonical \\
+    \texttt{dt(mu, tau, df)} & \verb|dt(mu, sigma = 1 / sqrt(tau), df)| \\
+    \texttt{dt(mu, sigma2, df)} & \verb|dt(mu, sigma = sqrt(sigma2), df)| \\
+   \texttt{dunif(min, max)} & canonical \\
+     \texttt{dweib(shape, scale)} & canonical \\
+     \texttt{dweib(shape, rate)} & \verb|dweib(shape, scale = 1 / rate)| \\
+     \texttt{dweib(shape, lambda)} & \verb|dweib(shape, scale = lambda^(- 1 / shape)| \\
+     \texttt{dwish(R, df)} & \texttt{dwish(cholesky = chol(R), df, scale\_param = 0)}\\ 
+     \texttt{dwish(S, df)} & \texttt{dwish(cholesky = chol(S), df, scale\_param = 1)}\\ 
      \end{longtable}
   \end{center}
 %\end{table}
