@@ -25,13 +25,13 @@ flexible. The BUGS language originally appeared in WinBUGS, then in
 OpenBUGS and JAGS.  These systems all provide automatically-generated
 MCMC algorithms, but we have adopted only the language for describing
 models, not their systems for generating MCMCs. In fact, if you want
-to use those or other MCMCs in combination with NIMBLE's other algorithms,
-you can\footnote{and will be able to do so more thoroughly in the future}.  We adopted BUGS
+to use MCMCs run in BUGS, JAGS, or other systems in combination with NIMBLE's other algorithms,
+you can\footnote{And you will be able to do so more thoroughly in the future.}.  We adopted BUGS
 because it has been so successful, with over 30,000 registered users
 by the time they stopped counting, and
 with many papers and books that provide BUGS code as a way to document
 their statistical models. To learn the basics of BUGS, we refer you to
-the OpenBUGS or JAGS web sites.  For the most part, if you have BUGS code, you can try
+the OpenBUGS or JAGS websites.  For the most part, if you have BUGS code, you can try
 NIMBLE.
 
   NIMBLE takes BUGS code and does several things with it:
@@ -76,7 +76,7 @@ NIMBLE.
   values and probabilities.  In fact, the calculations of the model
   are themselves constructed as functions in the NIMBLE language, as
   are the algorithms provided in NIMBLE's algorithm library.  This
-  means that you can BUGS with new
+  means that you can extend BUGS with new
   distributions and new functions written in NIMBLE.
   
   Like the models themselves, functions in
@@ -122,7 +122,7 @@ In v\ver, the NIMBLE algorithm library is fairly limited.  It includes:
 
 \begin{enumerate}
 \item MCMC with samplers including conjugate, slice, adaptive random
-  walk, and adaptive block.  NIMBLE's MCMC system illustrates the
+  walk, and adaptive block random walk.  NIMBLE's MCMC system illustrates the
   flexibility of combining R and C++.  An R function inspects the
   model object and creates an MCMC specification object representing
   choices of which kind of sampler to use for each node.  This MCMC
@@ -130,7 +130,7 @@ In v\ver, the NIMBLE algorithm library is fairly limited.  It includes:
   particular nodes, before compiling the algorithm.  Since
   each sampler is written in NIMBLE, you can use its source code or
   write new samplers to insert into the MCMC.  And if you want to
-  build an entire MCMC system differently, you could do that too.
+  build an entire MCMC system differently, you can do that too.
 \item A \cd{nimbleFunction} that provides a likelihood function for
   arbitrary sets of nodes in any model. This can be useful for simple
   maximum likelihood estimation of non-hierarchical models using R's
@@ -141,13 +141,13 @@ In v\ver, the NIMBLE algorithm library is fairly limited.  It includes:
  sets of values for
   arbitrary sets of nodes.
 \item A basic Monte Carlo Expectation Maximization (MCEM) algorithm.
-  MCEM has its issues as an algorithm, such as potentially slow convergence to maximum
-  likelihood (i.e. empirical Bayes in this context) estimates, but we chose it as a
+  MCEM has its issues as an algorithm, such as potentially slow convergence to the maximum
+  likelihood (i.e., empirical Bayes in this context) estimates, but we chose it as a
   good illustration of how NIMBLE can be used.  Each MCMC step uses
   NIMBLE's MCMC; the objective function for maximization is another
   \cd{nimbleFunction}; and the actual maximization is done through R's
   \cd{optim} function\footnote{In the future we plan to provide direct
-    access to R's optimizers from within \cd{nimbleFunction}s}.
+    access to R's optimizers from within \cd{nimbleFunction}s.}.
 \end{enumerate}
   
 More about the NIMBLE algorithm library is in Chapter \ref{cha:algos-provided}.
