@@ -258,7 +258,7 @@ as an example:
   calculate (shape, scale) from (mean, sd).  In the case
 of \cd{gamma}, the BUGS parameterization is also an \nm{alternative} parameterization.
 
-Note that for certain multivariate distributions, such as the multivariate normal and the Wishart, we parameterize the distributions internally in terms of Cholesky decompositions, either of the precision or covariance matrix, depending on which is specified in the BUGS code. Alternatively, a user can directly provide the Cholesky factor of either matrix, with the distinction indicated by the \cd{prec_param} argument. By directly providing a Cholesky factor, this reduces computations because NIMBLE's mathematical operations never need to do the decomposition. 
+Note that for certain multivariate distributions, such as the multivariate normal and the Wishart, we parameterize the distributions internally in terms of Cholesky decompositions, either of the precision or covariance matrix, depending on which is specified in the BUGS code. Alternatively, a user can directly provide the Cholesky factor of either matrix, with the distinction indicated by the \cd{prec\_param} argument. By directly providing a Cholesky factor, this reduces computations because NIMBLE's mathematical operations never need to do the decomposition. 
 
 
 \end{enumerate}

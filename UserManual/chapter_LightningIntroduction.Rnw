@@ -106,6 +106,7 @@ subsequent changes in one will not be reflected in the other.
 <<compilePump>>=
 @ 
 
+Note that the compiled model is used when running any NIMBLE algorithms via C++, so the model needs to be compiled before (or at the same time as) any compilation of algorithms, such as the compilation of the MCMC done in the next section.
 
 \section{Creating, compiling and running a basic MCMC specification}
 
