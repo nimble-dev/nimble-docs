@@ -237,7 +237,7 @@ model <- nimbleModel(codeAlt, constants = list(n = 3, K = K,
 \subsubsection{Distributions}
 \label{subsec:distributions}
 
-NIMBLE supports most of the distributions allowed in BUGS and JAGS. Table \ref{table:distributions} lists the distributions that are currently supported, with their default parameterizations, which match those of BUGS. NIMBLE also allows one to use alternative parameterizations for a variety of distributions as described next in Section \ref{subsec:alternative-params}.
+NIMBLE supports most of the distributions allowed in BUGS and JAGS. Table \ref{table:distributions} lists the distributions that are currently supported, with their default parameterizations, which match those of BUGS. NIMBLE also allows one to use alternative parameterizations for a variety of distributions as described next.
 
 Note that the same distributions are available for writing \cd{nimbleFunction}s, but in that case the default parameterizations match R's when possible (see Chapter \ref{cha:progr-with-models}).
 
@@ -284,6 +284,7 @@ order.  NIMBLE knows that rate is an alternative to scale and that
 
 In addition, we provide alternative distribution names, known as aliases, as in JAGS, as specified in Table \ref{distributions-aliases}. 
 
+\input{densityAliasesTable.tex}
 
 
 %TODO: WHAT IS THE STATUS OF THE NEXT STATEMENT?: CJP - I will not get to this for 0.4 but it is still on my to-do list.  
@@ -306,23 +307,27 @@ and operators available for \cd{nimbleFunction}s are also available
 for the model declarations.
 
 TODO: CHECK ALL OF THE FOLLOWING STATEMENTS.
+CJP thinks this is fine now - most text is now in Chap 9, but I think it is right.
 
 For the most part NIMBLE supports the functions used in BUGS and JAGS,
 with exceptions indicated in the table.  Additional functions provided
-by NIMBLE are also listed.  For distribution functions, currently
-``r'' and ``d'' functions are provided for each distribution, and when
-called from \cd{nimbleFunctions} only the BUGS parameterization is
-available in v\ver, and in fact sometimes that is provided
-differently.  See \ref{sec:nimble-dist-funs}.  Currently ``r'' functions only return one random
-draw at a time, and the first argument must always be 1.  For
-multivariate distribution functions the \cd{prec\_param} or
-\cd{scale\_param} argument must be provided, indicating when a
-covariance or precision matrix has been given.  In a future release we
-will provide a variety of distribution functions, including density,
-cumulative distribution and quantile functions, using the same syntax
-as \cd{dnorm}, \cd{pnorm}, \cd{qnorm}.  We will also extend the
-alternative parameterizations with named parameters to
-\cd{nimbleFunctions}.
+by NIMBLE are also listed. Note that we provide distribution functions
+for use in calculations, namely the ``p'', ``q'', and ``d'' functions.
+ See Section \ref{sec:nimble-dist-funs} for details on the syntax for using distribution functions, as only some parameterizations are allowed and the names of the distributions differ from those used to define nodes in a model. 
+ 
+
+% TODO: CJP moved this material to Chap 9 - that's where it is most relevant 
+% so I thought it best to go into the caveats there
+%Currently ``r'' functions only return one random
+%draw at a time, and the first argument must always be 1.  For
+%multivariate distribution functions the \cd{prec\_param} or
+%\cd{scale\_param} argument must be provided, indicating when a
+%covariance or precision matrix has been given.  In a future release we
+%will provide a variety of distribution functions, including density,
+%cumulative distribution and quantile functions, using the same syntax
+%as \cd{dnorm}, \cd{pnorm}, \cd{qnorm}.  We will also extend the
+%alternative parameterizations with named parameters to
+%\cd{nimbleFunctions}.
 
 \input{functionTableLong.tex}
 \input{functionTableMatrixLong.tex}

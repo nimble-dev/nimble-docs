@@ -10,11 +10,14 @@
       Parameterization & NIMBLE re-parameterization \\
       \hline \hline
 \endhead
-   \texttt{dbern(prob)} & \texttt{dbinom(size = 1, prob)} \\
+   \texttt{dbern(prob)} & \texttt{dbin(size = 1, prob)} \\
+\hline
       \texttt{dbeta(shape1, shape2)} & canonical \\
-      \texttt{dbeta(mean, sd)} & \verb|dbeta(shape1 = mean^2 * (1 - mean) / sd^2 - mean,| \\
+      \texttt{dbeta(mean, sd)} & \verb|dbeta(shape1 = mean^2 * (1-mean) / sd^2 - mean,| \\
       & \verb|shape2 = mean * (1 - mean)^2 / sd^2 + mean - 1)| \\
+\hline
    \texttt{dbin(prob, size)} & canonical \\
+\hline
          \texttt{dcat(prob)} & canonical \\
          \texttt{dchisq(df)} & canonical \\
          \texttt{ddirch(alpha)} & canonical \\
@@ -22,17 +25,17 @@
        \texttt{dexp(scale)} & \texttt{dexp(rate = 1/scale)} \\
      \texttt{dgamma(shape, scale)} & canonical \\
       \texttt{dgamma(shape, rate)} & \verb|dgamma(shape, scale = 1 / rate| \\
-      \texttt{dgamma(mean, sd)} & \verb|dgamma(shape = mean^2 / sd^2, scale = sd^2 / mean)| \\
+      \texttt{dgamma(mean, sd)} & \verb|dgamma(shape = mean^2/sd^2, scale = sd^2/mean)| \\
      \texttt{dlogis(location, scale)} & canonical \\
      \texttt{dlogis(location, rate)} & \verb|dlogis(location, scale = 1 / rate| \\
      \texttt{dlnorm(meanlog, sdlog)} & canonical \\
      \texttt{dlnorm(meanlog, taulog)} & \verb|dlnorm(meanlog, sdlog = 1 / sqrt(taulog)| \\
      \texttt{dlnorm(meanlog, varlog)} & \verb|dlnorm(meanlog, sdlog = sqrt(varlog)| \\
      \texttt{dmulti(prob, size)} & canonical \\
-     \texttt{dmnorm(mean, cholesky, prec\_param = 1)} & canonical (precision) \\
-     \texttt{dmnorm(mean, cholesky, prec\_param = 0)} & canonical (covariance) \\
-     \texttt{dmnorm(mean, prec)} & \texttt{dmnorm(mean, cholesky = chol(prec), prec\_param = 1)} \\
-     \texttt{dmnorm(mean, cov)} & \texttt{dmnorm(mean, cholesky = chol(cov), prec\_param = 0)} \\
+     \texttt{dmnorm(mean, cholesky, prec\_param=1)} & canonical (precision) \\
+     \texttt{dmnorm(mean, cholesky, prec\_param=0)} & canonical (covariance) \\
+     \texttt{dmnorm(mean, prec)} & \texttt{dmnorm(mean, cholesky = chol(prec), prec\_param=1)} \\
+     \texttt{dmnorm(mean, cov)} & \texttt{dmnorm(mean, cholesky = chol(cov), prec\_param=0)} \\
    \texttt{dnegbin(prob, size)} & canonical \\
      \texttt{dnorm(mean, sd)} & canonical \\
      \texttt{dnorm(mean, tau)} & \verb|dnorm(mean, sd = 1 / sqrt(var))| \\

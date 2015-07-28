@@ -722,8 +722,24 @@ uncompiled case.
 \subsection{Distribution functions}
 \label{sec:nimble-dist-funs}
 
+IN PROGRESS
+
 Distribution ``d'', ``r'', ``p'', and ``q'' functions can all be used
-from nimbleFunctions, but the care is needed with the order of
+from nimbleFunctions, but the care is needed in the syntax. 
+
+with the name of the 
+distribution and the parameterization. We support only the canonical
+NIMBLE parameterization, as listed below. Also note that the names of the distributions are the names used under the hood in NIMBLE and differ from the BUGS names.
+
+Currently ``r'' functions only return one random
+draw at a time, and the first argument must always be 1.  For
+multivariate distribution functions the \cd{prec\_param} or
+\cd{scale\_param} argument must be provided, indicating when a
+covariance or precision matrix has been given.  In a future release, we will also extend the
+alternative parameterizations given in Section X to \cd{nimbleFunctions}.
+
+
+the order of
 arguments.  For distributions available in R, nimbleFunction
 parameterizations match those of R, \textit{which may differ in
   default order from the same-named BUGS distributions}.  You can
