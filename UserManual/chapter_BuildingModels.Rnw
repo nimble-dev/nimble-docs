@@ -684,10 +684,7 @@ NIMBLE provides three ways to declare boundaries on the value of a variable, eac
 
 Truncation means the possible values of \cd{x} are limited a priori, hence the probability density of \cd{x} must be normalized.  In this example it would be the normal probability density divided by its integral from 0 to \cd{a}\footnote{If you have a model object \cd{model}, you can see exactly the calculation used by typing \cd{model\$nodes[[`x`]]\$calculate}}.  Like JAGS, NIMBLE also provides \cd{I} as a synonym for \cd{T} to accommodate older BUGS code, but \cd{T} is preferred because it disambiguates multiple usages of \cd{I} in WinBUGS.
 
-Note that in NIMBLE, \cd{mu $\sim$ dfoo(theta) T(L, U)} restricts $X$ to lie in $(L,U]$ whereas in JAGS it restricts $X$ to lie in $[L,U]$.  This distinction makes no difference for continuous random variables.
-% doesn't matter for continuous and we could follow jags but for discrete we would need to add extra code to deal with X == L -- thoughts?
-
-TODO: NEED TO DISCUSS THIS.
+As in JAGS, \cd{mu $\sim$ dfoo(theta) T(L, U)} restricts $X$ to lie in $[L,U]$ (i.e., inclusive of \cd{L} and \cd{U}).  This distinction makes no difference for continuous random variables.
 
 \subsubsection{Censoring} Censoring refers to the situation where one datum gives the lower or upper bound on an unobserved random variable.  This is common in survival time studies, when we may know at least how long some patients lived (right-censoring) but not their ages of death, so their age of death is ``censored''.  NIMBLE adopts JAGS syntax for censoring, as follows (using right-censoring as an example):
  <<dinterval-example, eval=FALSE>>=
@@ -744,7 +741,7 @@ will enforce \cd{alpha1 $\le$ alpha2 $\le$ alpha3}, but it does not treat the th
 
 Of course, in many cases, parameterizing the model so that the constraints are automatically respected may be a better strategy than using \cd{dconstraint}.  If constraints are used, it will generally be wise to ensure the model is initialized with values that satisfy them.
 
-NIMBLE does not support the JAGS \cd{dsort} syntax.
+NIMBLE does not support the JAGS \cd{sort} syntax.
 
 \subsection{Understanding lifted nodes}
 \label{sec:introduced-nodes}
