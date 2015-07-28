@@ -33,12 +33,12 @@
 %      Double  & \verb+ddexp(mu,tau)+ & 
  %      \multirow{2}{*}{$\tau \exp(-\tau | x-\mu |)/2$} & & \\
  %     exponential & $\tau > 0$ \\
-      Dirichlet & \cd{ddirch(alpha)} & 
+      Dirichlet & \cd{ddirch(alpha = $\alpha$)} & 
       \multirow{2}{*}{$\Gamma(\sum_i \alpha_i) \prod_j 
         \frac{\textstyle x_j^{\alpha_j - 1}}{\textstyle \Gamma(\alpha_j)}$} & 0 &  \\
        & $\alpha_j \geq 0$ \\
       & \\
-      Exponential & \cd{dexp(rate = lambda)} & 
+      Exponential & \cd{dexp(rate = $\lambda$)} & 
       \multirow{2}{*}{$\lambda \exp(-\lambda x)$} & 0 & \\ 
       & $\lambda > 0$ \\
  %     F   & \verb+df(n,m)+ & 
@@ -66,7 +66,7 @@
         {\textstyle  \left[1 + \exp\{(x - \mu) \tau\}\right]^2}$
       } &  & \\
        & $\tau > 0$ \\
-      Log-normal  & \cd{dlnorm(mu, tau)} & 
+      Log-normal  & \cd{dlnorm(meanlog = $\mu$, taulog = $\tau$)} & 
       \multirow{2}{*}{
         $\left(\frac{\tau}{2\pi}\right)^{\frac{1}{2}} x^{-1} \exp \left\{-\tau (\log(x) - \mu)^2 / 2 \right\}$} & 0 \\
        & $\tau > 0$ \\
@@ -79,18 +79,18 @@
  %       $
  %     } & 0 & \\
  %     Chi-squre & $k > 0, \delta \geq 0$ \\
-      Multinomial  & \cd{dmulti(prob = b,size = n)} & 
+      Multinomial  & \cd{dmulti(prob = p, size = n)} & 
       \multirow{2}{*}{$n! \prod_j 
         \frac{\textstyle p_j^{x_j}}{\textstyle x_j!}$} \\
        & $\sum_j x_j = n$ \\
-      Multivariate & \cd{dmnorm(mu, prec = $\Lambda$)} &
+      Multivariate & \cd{dmnorm(mean = $\mu$, prec = $\Lambda$)} &
       \multirow{2}{*}{
         $(2\pi)^{-\frac{d}{2}}|\Lambda|^{\frac{1}{2}} \exp\{-(x-\mu)^T \Lambda (x-\mu) / 2\}$} \\
       normal & $\Lambda$ positive definite \\
        Negative & \verb+dnegbin(prob = p, size = r)+ &
       \multirow{2}{*}{${x + r -1 \choose x} p^r (1-p)^x$} & 0 & \\
       binomial & $0 < p \leq 1$, $r \geq 0$ \\
-     Normal   & \cd{dnorm(mu, tau)} & 
+     Normal   & \cd{dnorm(mean = $\mu$, tau = $\tau$)} & 
       \multirow{2}{*}{
         $\left(\frac{\tau}{2\pi}\right)^{\frac{1}{2}} \exp\{- \tau (x - \mu)^2 / 2\}$} & & \\
        & $\tau > 0$ \\
@@ -99,19 +99,19 @@
  %       $\alpha c^{\alpha} x^{-(\alpha + 1)}$
  %     } & $c$ & \\
  %     ~ & $\alpha > 0$, $c > 0$ \\
-      Poisson & \cd{dpois(lambda)} & 
+      Poisson & \cd{dpois(lambda = $\lambda$)} & 
       \multirow{2}{*}{$\frac{\textstyle \exp(-\lambda) \lambda^x}{\textstyle x!}$} & 0 & \\
        & $\lambda > 0$ \\
-       Student t   & \cd{dt(mu, tau, df = k)} & 
+       Student t   & \cd{dt(mu = $\mu$, tau = $\tau$, df = k)} & 
       \multirow{2}{*}{
         $\textstyle \frac{\Gamma(\frac{k+1}{2})}{\Gamma(\frac{k}{2})} 
         \left(\frac{\tau}{k\pi} \right)^{\frac{1}{2}} 
         \left\{1 + \frac{\tau (x - \mu)^2}{k} \right\}^{-\frac{(k+1)}{2}}$} & & \\
        & $\tau > 0$, $k > 0$ \\
-      Uniform     & \verb+dunif(min = a,max = b)+ & 
+      Uniform     & \verb+dunif(min = a, max = b)+ & 
       \multirow{2}{*}{$\frac{\textstyle 1}{\textstyle b - a}$} & $a$ & $b$ \\
        & $a < b$ \\ 
-      Weibull     & \cd{dweib(shape = v, lambda)} & 
+      Weibull     & \cd{dweib(shape = v, lambda = $\lambda$)} & 
       \multirow{2}{*}{$v  \lambda  x^{v - 1} \exp (- \lambda x^v)$} & 0 & \\
        & $v > 0$, $\lambda > 0$ \\
   %    Beta & \verb+dbetabin(a, b, n)+ &
@@ -128,7 +128,7 @@
  %     $\scriptstyle \text{max}(0,n_+ - m_1)$ & 
  %     $\scriptstyle \text{min}(n_1,m_1)$ \\
  %     hypergeometric & $0 \leq n_i$, $0 < m_1 \leq n_+$  \\
-      Wishart & \cd{dwish(R, df = k)} &
+      Wishart & \cd{dwish(R = R, df = k)} &
       \multirow{2}{*}{
         $\frac{\textstyle |x|^{(k-p-1)/2} |R|^{k/2} \exp\{-\text{tr}(Rx/2)\}}
                {\textstyle 2^{pk/2} \Gamma_p (k/2)}$

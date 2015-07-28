@@ -69,9 +69,9 @@ For readers familiar with BUGS, we begin with an overview of supported features 
 
 \begin{enumerate}
 \item Stochastic and deterministic\footnote{NIMBLE calls non-stochastic nodes ``deterministic'', whereas BUGS calls them ``logical''. NIMBLE uses ``logical'' in the way R does, to refer to boolean (TRUE/FALSE) variables.} node declarations.
-\item Most univariate and multivariate distributions
-\item Link functions
-\item Most mathematical functions
+\item Most univariate and multivariate distributions.
+\item Link functions.
+\item Most mathematical functions.
 \item ``for'' loops for iterative declarations.
 \item Arrays of nodes up to 4 dimensions.
 \item Truncation and censoring as in JAGS using the \cd{T()}
@@ -91,6 +91,7 @@ NIMBLE extends the BUGS language in the following ways:
   in WinBUGS\footnote{e.g., \cd{y $\sim$ dnorm(5 + mu, 3 *
       exp(tau))}}.  Caveat: parameters to \emph{multivariate}
   distributions (\emph{e.g.,} \cd{dmnorm()}) cannot be expressions.
+  TODO: I don't think this is true anymore - PdV/DT - please confirm.
  \item Alternative models can be defined from the same model code by
    using if-then-else statements that are evaluated when the model is defined.
 \item More flexible indexing of vector nodes within larger variables is allowed.  For example one can place a multivariate normal vector arbitrarily within a higher-dimensional object, not just in the last index.
@@ -98,7 +99,7 @@ NIMBLE extends the BUGS language in the following ways:
  \item Link functions can be used in stochastic, as well as
    deterministic, declarations.\footnote{But beware of the possibility
      of needing to set values for ``lifted'' nodes created by NIMBLE.}
- \item Data values can be reset, and which parts of a model are flagged as data can be reset, allowing one model to be used for different data sets without rebuilding the model each time.
+ \item Data values can be reset, and which parts of a model are flagged as data can be changed, allowing one model to be used for different data sets without rebuilding the model each time.
   \end{enumerate}
   
 \subsection{Not-yet-supported features of BUGS and JAGS}
@@ -116,6 +117,7 @@ In this release, the following are not supported.
   sizes of variables from the BUGS code.  However, when a variable
   appears with blank indices, such as in \cd{x.sum <- sum(x[])},
   NIMBLE currently requires that the dimensions of x be provided.
+  \item TODO: do we want to say that we generally require explicit indexing for all multivar vars?
 \end{enumerate}
 
 \section{Writing models}
@@ -146,7 +148,7 @@ exampleCode <- nimbleCode({
     ## 6. Simple deterministic node
     d1 <- a + b
     ## 7. Vector deterministic node with matrix multiplication
-    d2[] <- A[,] %*% mvMean[1:5] 
+    d2[] <- A[ , ] %*% mvMean[1:5] 
     ## 8. Deterministic node with user-provided function
     d3 <- foo(x, hooray = y) 
 })
@@ -163,7 +165,7 @@ This code does not show a complete model and includes some arbitrary indices (e.
   (\cd{blockID}) are provided as constants when the model is defined (via \cd{nimbleModel} or \cd{readBUGSmodel}).  Variables that define for-loop indices (\cd{N} and \cd{M}) must be provided as constants.  
 \item The arbitrary block \cd{mvx[8:10, i]} follows a multivariate
   normal distribution, with a named covariance matrix instead of BUGS'
-  default of a precision matrix.  Like in R, curly braces for for-loop
+  default of a precision matrix.  As in R, curly braces for for-loop
   contents are only needed if there is more than one line.
 \item \cd{w} follows a user-defined distribution. See \ref{sec:user-defined}.
 \item \cd{d1} is a scalar deterministic node that, when calculated, will be
@@ -212,7 +214,8 @@ code <- nimbleCode({
 
 K <- 5
 model <- nimbleModel(code, constants = list(n = 3, K = K,
-                          alpha0 = rep(0, K), R = diag(K)))
+                          alpha0 = rep(0, K), R = diag(K)),
+                     check = FALSE)
 
 codeAlt <- nimbleCode({
   y[] ~ dmulti(p[], n)
@@ -222,7 +225,8 @@ codeAlt <- nimbleCode({
 
 model <- nimbleModel(codeAlt, constants = list(n = 3, K = K,
                           alpha0 = rep(0, K), R = diag(K)),
-                  dimensions = list(y = K, p = K, alpha = K))
+                  dimensions = list(y = K, p = K, alpha = K),
+                      check = FALSE)
                   
                                            
 @ 
@@ -233,15 +237,19 @@ model <- nimbleModel(codeAlt, constants = list(n = 3, K = K,
 \subsubsection{Distributions}
 \label{subsec:distributions}
 
-NIMBLE supports most of the distributions allowed in BUGS and JAGS. Table \ref{table:distributions} lists the distributions currently supported with their default parameterizations, which match those of BUGS.  The same distributions are available for writing \cd{nimbleFunction}s, but in that case the default parameterizations match R's when possible (see Chapter \ref{cha:progr-with-models}).
+NIMBLE supports most of the distributions allowed in BUGS and JAGS. Table \ref{table:distributions} lists the distributions that are currently supported, with their default parameterizations, which match those of BUGS. NIMBLE also allows one to use alternative parameterizations for a variety of distributions as described next in Section \ref{subsec:alternative-params}.
 
-TODO: WE NEED TO PUT MISSING ARGUMENT NAMES IN THIS TABLE
+Note that the same distributions are available for writing \cd{nimbleFunction}s, but in that case the default parameterizations match R's when possible (see Chapter \ref{cha:progr-with-models}).
+
 
 \input{densityTableLong.tex}
 
 \subsubsection{Alternative parameterizations for distributions}
+\label{subsec:alternative-params}
 
-NIMBLE provides additional parameterizations listed in Table \ref{table:distributions-alternates}.
+NIMBLE allows one to specify distributions in model code using a variety of parameterizations, including the BUGS parameterizations. Behind the scenes, NIMBLE uses a single parameterization (NIMBLE's 'canonical' parameterization) to when definining nodes and relationships between nodes and when doing calculations. 
+
+The full set of parameterizations that one can used in model code is listed in Table \ref{table:distributions-alternates}.
 To understand how NIMBLE handles alternative parameterizations, it is
 useful to distinguish three cases, using the \cd{gamma} distribution
 as an example:
@@ -281,11 +289,7 @@ In addition, we provide alternative distribution names, known as aliases, as in 
 %TODO: WHAT IS THE STATUS OF THE NEXT STATEMENT?: CJP - I will not get to this for 0.4 but it is still on my to-do list.  
 
 We plan to, but do not currently, including the following distributions as part of core NIMBLE: double exponential (Laplace), beta-binomial, Dirichlet-multinomial, F, inverse gamma, Pareto, inverse Wishart, and various forms of multivariate t. 
-
-
 % [F is easy to add as it has R functions]
-
-% CJP still not satisfied with this table as we don't show how some of the parameterizations relate to the densities in the previous table - e.g. we don't say how weibuill(shape,scale) relates to shape,lambda in previous table
 
 
 
