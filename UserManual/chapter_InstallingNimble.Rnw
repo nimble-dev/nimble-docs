@@ -2,13 +2,13 @@
 
 \Sexpr{set_parent('NimbleUserManual.Rnw')}
 
-\chapter{Getting started}
-\label{cha:getting-started}
+\chapter{Installing NIMBLE}
+\label{cha:installing-nimble}
 
 \section{Requirements to run NIMBLE}
 \label{sec:requ-run-nimble}
 
-You can run NIMBLE on any of the three common operating systems: Linux, Mac, or Windows. 
+You can run NIMBLE on any of the three common operating systems: Linux, Mac OS X, or Windows. 
 
 The following are required to run NIMBLE.
 
@@ -76,7 +76,7 @@ library (DLL). This does repeat the same code across models and so occupies
 more memory. There may be a marginal speed advantage. 
 This is currently what happens on Windows.  One can disable
 using \nm{libnimble} via the configuration argument \cd{--enable-lib},
-e.g.
+e.g.,
 
 \verb|R CMD INSTALL --configure-args='--enable-lib=false' nimble|
 
@@ -109,14 +109,14 @@ run-time.  This is needed during the R session to compile the C++
 code that NIMBLE generates for a user's models and algorithms.
 
 \subsection{OS X}
-On OS X, you should install Xcode.  The command-line tools, which are
+On OS X, you should install \nm{Xcode}.  The command-line tools, which are
 available as a smaller installation, should be sufficient. This is freely available from the
 \href{https://developer.apple.com/xcode/downloads/}{Apple developer
   site} and the
 \href{https://itunes.apple.com/us/app/xcode/id497799835?ls=1&mt=12}{App Store}.
 
 For the compiler to work correctly for OS X, it is very important that the installed
-R be matched to the correct OS, i.e. R for snowleopard will attempt to use
+R be matched to the correct OS, i.e. R for Snow Leopard will attempt to use
 the incorrect compiler if the user has OS 10.9 or higher. 
 
 
@@ -134,8 +134,8 @@ sudo apt-get install build-essential
 On Windows, you should download and install \file{Rtools.exe} available from
 \url{http://cran.r-project.org/bin/windows/Rtools/}.  Select the appropriate
 executable corresponding to your version of R.  (We strongly recommend
-using the most recent version of R, currently 3.1.0, and hence
-\file{Rtools31.exe}).  This installer leads you through several
+using the most recent version of R, currently 3.2.1, and hence
+\file{Rtools33.exe}).  This installer leads you through several
 ``pages''. You can accept all of the defaults. It is essential the
 checkbox for the ``R 2.15+ toolchain'' (page 4) is enabled in order to
 have \nm{gcc}/\nm{g++}, \nm{make}, etc. installed.  Also, we recommend that you check
@@ -144,21 +144,21 @@ commands.
 
 
 Advanced users may wish to change their default compilers. This can be done
-by editing the Makevars file, see Writing R Externsions: 1.2.1. 
+by editing the \nm{Makevars} file, see Writing R Externsions: 1.2.1. 
 
 \section{Customizing Compilation of the NIMBLE-generated Code}
 
 For each model or nimbleFunction, the NIMBLE package generates and compiles
 C++ code. This uses classes and routines available through the NIMBLE run-time
 library and also the Eigen library. The compilation mechanism uses R's
-SHLIB functionality and so the regular R configuration in
+SHLIB functionality and therefore uses the regular R configuration in
 \verb|${R_HOME}/etc${R_ARCH}/Makeconf|. NIMBLE places a \file{Makevars}
 file in the directory in which the code is generated and \verb|R CMD SHLIB| uses this file.
 
 In all but specialized cases, the general compilation mechanism will
 suffice. However, one can customize this.  One can specify the
 location of an alternative \file{Makevars} (or \file{Makevars.win})
-file to use.  That should define the variables \cd{PKG\_CPPFLAGS} and
+file to use.  Such an alternative file should define the variables \cd{PKG\_CPPFLAGS} and
 \cd{PKG\_LIBS}.  These should contain, respectively, the pre-processor flag
 to locate the NIMBLE include directory, and the necessary
 libraries to link against (and their location as necessary),

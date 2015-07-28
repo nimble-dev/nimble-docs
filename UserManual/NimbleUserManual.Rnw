@@ -59,7 +59,7 @@ require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
 
 \Sexpr{knit_child('chapter_MoreIntroduction.Rnw')}
 
-\Sexpr{knit_child('chapter_GettingStarted.Rnw')}
+\Sexpr{knit_child('chapter_InstallingNimble.Rnw')}
 
 \Sexpr{knit_child('chapter_BuildingModels.Rnw')}
 
