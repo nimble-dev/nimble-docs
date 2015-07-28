@@ -2,12 +2,12 @@
 
 pumpCode <- nimbleCode({ 
   for (i in 1:N){
-      theta[i] ~ dgamma(alpha,beta);
-      lambda[i] <- theta[i]*t[i];
+      theta[i] ~ dgamma(alpha,beta)
+      lambda[i] <- theta[i]*t[i]
       x[i] ~ dpois(lambda[i])
   }
-  alpha ~ dexp(1.0);
-  beta ~ dgamma(0.1,1.0);
+  alpha ~ dexp(1.0)
+  beta ~ dgamma(0.1,1.0)
 })
 
 pumpConsts <- list(N = 10,
@@ -50,7 +50,7 @@ pump$theta   ## the new theta values
 ## lambda and logProb_x haven't been re-calculated yet
 pump$lambda ## these are the same values as above
 pump$logProb_x
-getLogProb(pump, 'x') ## The sum of pump\$logProb_x
+getLogProb(pump, 'x') ## The sum of logProb_x
 calculate(pump, pump$getDependencies(c('theta')))
 pump$lambda  ## Now they have.
 pump$logProb_x
@@ -117,7 +117,8 @@ acf(samplesNew[, 'beta'])  ## plot autocorrelation of beta  sample
 
 pump2 <- pump$newModel()
 
-nodes <- pump2$getNodeNames(stochOnly = TRUE)
+# nodes <- pump2$getNodeNames(stochOnly = TRUE)
+# as mentioned by Nick - this line is not needed
 
 box = list( list(c('alpha','beta'), c(0, Inf)))
 
@@ -156,6 +157,7 @@ simNodesTheta6to10 <- simNodesMany(pump, 'theta[6:10]')
 set.seed(0)  ## make the calculation repeatable
 pump$alpha <- pumpMLE[1]
 pump$beta <- pumpMLE[2]
+## make sure to update deterministic dependencies of the altered nodes
 calculate(pump, pump$getDependencies(c('alpha','beta'), determOnly = TRUE))
 saveTheta <- pump$theta
 simNodesTheta1to5$run(10)

@@ -47,18 +47,19 @@ the ability to program with those models.  That's the goal of NIMBLE.
 \section{What does NIMBLE do?}
 \label{sec:what-is-nimble}
 
-NIMBLE stands for Numerical Inference of statistical Models for Bayesian and
+NIMBLE stands for Numerical Inference for statistical Models for Bayesian and
 Likelihood Estimation.  Although NIMBLE was motivated by algorithms
 for hierarchical
 statistical models, you could use it for
 simpler models too.
+% TODO: Chris changed "Inference of statistical" to "Inference for statistical" as 'inference for' is standard phrasing (but it does mean a lot of 'for's in the sentence - OK?
 
 You can think of NIMBLE as comprising three pieces:
 
 \begin{enumerate}
 \item A system for writing statistical models flexibly, which is an
   extension of the BUGS language\footnote{But see Section
-    \ref{sec:not-yet-supported} for information about limitations and
+    \ref{sec:supp-feat-bugs} for information about both limitations and
     extensions to how NIMBLE handles BUGS right now.}.
 \item A library of algorithms such as MCMC.
 \item A language, called NIMBLE, embedded within and similar in style
@@ -77,7 +78,7 @@ numerical functions with or without BUGS models involved\footnote{The
   program directly in C++, while in NIMBLE you program in an R-like
   fashion and the NIMBLE compiler turns it into C++.  Programming
   directly in C++ allows full access to C++, while programming in
-  NIMBLE allows simpler code.}
+  NIMBLE allows simpler code.}.
 
 One of the beauties of R is that many of the high-level analysis
 functions are themselves written in R, so it is easy to see their code and modify

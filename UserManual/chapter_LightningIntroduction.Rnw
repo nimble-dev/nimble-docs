@@ -71,7 +71,7 @@ You are in control of the model.  By default, \cd{nimbleModel} does
 its best to initialize a model, but let's say you want to
 re-initialize \cd{theta}.  To simulate from the prior for \cd{theta} (overwriting the
 initial values previously in the model) we first need to be sure the
-parent nodes of all \cd{theta[i]} nodes were fully initialized, including any non-stochastic nodes such
+parent nodes of all \cd{theta[i]} nodes are fully initialized, including any non-stochastic nodes such
 as lifted nodes.  We then use the \cd{simulate} function to simulate
 from the distribution for \cd{theta}.  Finally we use the
 \cd{calculate} function to 
@@ -80,6 +80,8 @@ log probabilities of \cd{x} to ensure all parts of the
 model are up to date.  First we show how
 to use the model's \cd{getDependencies} method to query information
 about its graph.
+
+% TODO: the logic here is a bit weird - we say we want to know all parents of theta are initialized by our code actually finds dependencies of alpha+beta not parents of theta
 
 <<manipPump>>=
 @ 
@@ -113,15 +115,17 @@ Note that the compiled model is used when running any NIMBLE algorithms via C++,
 At this point we have initial values for all of the nodes in the model
 and we have both the original and compiled versions of the model. As a first algorithm
 to try on our model, let's use NIMBLE's default MCMC. Note that conjugate relationships are detected for all nodes except for
-\cd{alpha}\footnote{We haven't set up conjugate relationships for an
-  exponential yet.}, on which the default sampler is a random walk Metropolis sampler.
+\cd{alpha}, on which the default sampler is a random walk Metropolis sampler.
+%\footnote{We haven't set up conjugate relationships for an
+%  exponential yet.}
+% footnote is true but not relevant as there is not a conj relationship for alpha in a gamma-distributed dependency
 
-<<mcmcPump, fig.height=3>>=
+<<mcmcPump, fig.height=2.5>>=
 @ 
 
 Notice the posterior correlation between \cd{alpha} and \cd{beta}.
-And a measure of the mixing for each is the 
-autocorrelation for each, shown by the \cd{acf} plots. 
+A measure of the mixing for each is the 
+autocorrelation for each parameter, shown by the \cd{acf} plots. 
 
 \section{Customizing the MCMC}
 \label{sec:customizing-mcmc}
@@ -130,7 +134,7 @@ Let's add an adaptive
 block sampler on \cd{alpha} and \cd{beta} jointly and see if that
 improves the mixing. 
 
-<<mcmcPump2, fig.height=3>>=
+<<mcmcPump2, fig.height=2.5>>=
 @ 
 
 We can see that the block sampler has decreased the 
@@ -188,7 +192,7 @@ Here are a few things to notice about the \cd{nimbleFunction}
 \item The functions \cd{calculate} and \cd{simulate}, which were
   introduced above in R, can be used in NIMBLE.
 \item The special function \cd{copy} is used here to record values
-  from the model into the modelValues object.  
+  from the model into the \cd{modelValues} object.  
 \item Multiple instances, or ``specializations'', can be made by
   calling \cd{simNodesMany} with different arguments.  Above \cd{simNodesTheta1to5}, has
   been made by calling \cd{simNodesMany} with the \cd{pump} model and
@@ -200,6 +204,7 @@ Here are a few things to notice about the \cd{nimbleFunction}
   \cd{setup} code and a \cd{run} method (member function).  Arbitrary
   other methods can be provided with a \cd{methods} argument,
   following the syntax of R's \cd{setRefClass} function.
+  % TODO: I think this last sentence is too involved for the lightning intro - CJP
 \end{enumerate}
 
 By the way, \cd{simNodesMany} is very similar to a standard
@@ -224,5 +229,5 @@ Finally, let's compile the function and run that version.
 @ 
 
 Given the same initial values and the same random number generator
-seed, we got identical results for \cd{theta[1:5]} and their dependencies, but it happened much faster.
+seed, we got identical results for \cd{theta[1:5]} and their dependencies, but it happens much faster.
 
