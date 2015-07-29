@@ -676,7 +676,7 @@ modelWithX2$getVarNames()
 \subsection{Truncation, censoring, and constraints}
 \label{subsec:trunc}
 
-NIMBLE provides three ways to declare boundaries on the value of a variable, each for different situations.  We introduce these and comment on their relationships to related features of JAGS and WinBUGS/OpenBUGS.  The three methods are:
+NIMBLE provides three ways to declare boundaries on the value of a variable, each for different situations.  We introduce these and comment on their relationships to related features of JAGS and BUGS.  The three methods are:
 
 \subsubsection{Truncation}
 Either of the following forms, 
@@ -699,10 +699,10 @@ where \cd{censored[i]} should be given as \cd{data} with a value of 1 if
 \cd{t[i]} is right-censored (\cd{t[i] $>$ c[i]}) and 0 if it is observed.  The data vector for \cd{t} should have \cd{NA} (indicating missing data) for any censored \cd{t[i]} entries. (As a result, these nodes will be sampled in an MCMC.)  The data vector for \cd{c} should give the censoring times corresponding to censored entries and a value below the observed times for uncensored entries (e.g., \cd{0} (assuming \cd{t[i] $>$ 0})). Left-censoring would be specified by setting \cd{censored[i]} to 0 and \cd{t[i]} to \cd{NA} if a value is left-censored. 
   
 
-The \cd{dinterval} is not really a distribution but rather a trick: in the above example when \cd{censored[i] = 1} it gives a ``probability'' of 1 if \cd{t[i] $>$ c[i]} and 0 otherwise .  This means that \cd{t[i] $\le$ c[i]} is treated as impossible.  More generally than simple right- or left-censoring, \cd{censored[i] $\sim$ dinterval(t[i], c[i, ])} is defined such that for a vector of increasing cutpoints, \cd{c[i, ]}, \cd{t[i]} is enforced to fall within the \cd{is.censored[i]}-th cutpoint interval.  This is done by setting data \cd{censored[i]} as follows:
+The \cd{dinterval} is not really a distribution but rather a trick: in the above example when \cd{censored[i] = 1} it gives a ``probability'' of 1 if \cd{t[i] $>$ c[i]} and 0 otherwise.  This means that \cd{t[i] $\le$ c[i]} is treated as impossible.  More generally than simple right- or left-censoring, \cd{censored[i] $\sim$ dinterval(t[i], c[i, ])} is defined such that for a vector of increasing cutpoints, \cd{c[i, ]}, \cd{t[i]} is enforced to fall within the \cd{censored[i]}-th cutpoint interval.  This is done by setting data \cd{censored[i]} as follows:
 \begin{eqnarray}
 \mbox{\cd{censored[i] = 0}} & \mbox{if} & \mbox{\cd{t[i] $\le$ c[i, 1]}} \nonumber \\
-\mbox{\cd{censored[i] = m}} & \mbox{if} & \mbox{\cd{c[i, m] < t[i] $\le$ c[i, m+1]} for } 1 <= m <= M \nonumber \\
+\mbox{\cd{censored[i] = m}} & \mbox{if} & \mbox{\cd{c[i, m] $<$ t[i] $\le$ c[i, m+1]} for } 1 <= m <= M \nonumber \\
 \mbox{\cd{censored[i] = M}} & \mbox{if} & \mbox{\cd{c[i, M] $<$ t[i]}}.\nonumber
 \end{eqnarray}
 (The \cd{i} index is provided only for consistency with the previous example.)  The most common usage of \cd{dinterval} will be for left- and right-censored data, in which case \cd{c[i,]} will be a single value (and typically given as simply \cd{c[i]}), and for interval-censored data, in which case \cd{c[i,]} will be a vector of two values.  
@@ -710,24 +710,24 @@ The \cd{dinterval} is not really a distribution but rather a trick: in the above
 % or \cd{x[i] $\sim$ dinterval(c[i], t[i])} with \cd{x[i]} set to 1.
 % WHY - our dinterval code treats the 2nd arg as possibly a vector - the above presumably works for scalars but I think it is clearer if we always use the first arg as the data value and the 2nd as the interval points
 
-Nodes following a \cd{dinterval} distribution should normally be set as \cd{data} with known values. Otherwise, the node may simulated during initialization in some algorithms (e.g. MCMC) and thereby establish a permanent, perhaps unintended, constraint.  
+Nodes following a \cd{dinterval} distribution should normally be set as \cd{data} with known values. Otherwise, the node may simulated during initialization in some algorithms (e.g., MCMC) and thereby establish a permanent, perhaps unintended, constraint.  
 
 Censoring differs from truncation because censoring an observation involves bounds on a random variable that could have taken any value, while in truncation we know a priori that a datum could not have occurred outside the truncation range.  
 
 
 \subsubsection{Constraints and ordering}
 
-NIMBLE provides a more general way to enforce constraints using \cd{dconstraint(condition)}.  For example, we could specify that the sum of \cd{mu1} and \cd{mu2} must be positive like this:
+NIMBLE provides a more general way to enforce constraints using \cd{dconstraint(cond)}.  For example, we could specify that the sum of \cd{mu1} and \cd{mu2} must be positive like this:
 <<dconstraint-example, eval=FALSE>>=
 mu1 ~ dnorm(0, 1) 
 mu2 ~ dnorm(0, 1) 
 constraint_data ~ dconstraint( mu1 + mu2 > 0 )
 @ 
-with data \cd{constraint\_data} set (as \cd{data}) to 1.  This is equivalent to a half-normal distribution on the half-plane $\mu_1 + \mu_2 > 0$. However, note that this equivalence only holds when conditioning on \cd{constraint\_data}. Nodes following \cd{dconstraint} should be provided as data for the same reason of avoiding unintended initialization described above for \cd{dinterval}.
+with \cd{constraint\_data} set (as \cd{data}) to 1.  This is equivalent to a half-normal distribution on the half-plane $\mu_1 + \mu_2 > 0$. However, note that this equivalence only holds when conditioning on \cd{constraint\_data} (e.g., in an MCMC) and not when simulating from the model using \cd{simulate}. Nodes following \cd{dconstraint} should be provided as data for the same reason of avoiding unintended initialization described above for \cd{dinterval}.
 
 %If one simulates from the model using the \cd{simulate} functions and the condition is not satisfied, then \cd{const} will be 0 and the log probability of \cd{const} (and therefore of the model as whole) will be $-\infty$.
 
-Formally, \cd{dconstraint(condition)} is a probability distribution on $\left\{ 0, 1 \right\}$ such that $P(1) = 1$ if \cd{constraint} is \cd{TRUE} and $P(0) = 1$ if \cd{constraint} is \cd{FALSE}. 
+Formally, \cd{dconstraint(condition)} is a probability distribution on $\left\{ 0, 1 \right\}$ such that $P(1) = 1$ if \cd{cond} is \cd{TRUE} and $P(0) = 1$ if \cd{cond} is \cd{FALSE}. 
 
 % TODO: Chris thought this wording is confusing:
 %Like \cd{dinterval}, \cd{dconstraint} results in distributions that are not normalized (e.g. for (\cd{mu1}, \cd{mu2})), which makes most sense if the constraint is observed rather than established a priori. 
@@ -739,7 +739,7 @@ Of course, in many cases, parameterizing the model so that the constraints are a
 
 To specify an ordering of parameters, such as $\alpha_1 <= \alpha_2 <= \alpha_3$ one can use \cd{dconstraint} as follows: 
 <<ordering-example, eval=FALSE>>=
-const ~ dconstraint( alpha1 <= alpha2 & alpha2 <= alpha3 )
+constraint_data ~ dconstraint( alpha1 <= alpha2 & alpha2 <= alpha3 )
 @ 
 
 Note that unlike in BUGS, one cannot specify prior ordering using syntax such as
@@ -805,7 +805,7 @@ formats for models, variables, data, and initial values for MCMC.
 NIMBLE also provides some additional flexibility in setting data in a model and in defining multiple models from the same model definition, as described at the end of this section. 
 
 
-\subsection{Using \cd{nimbleModel()} to specify a model}
+\subsection{Using \cd{nimbleModel} to specify a model}
 
   The R help page
 (\cd{?nimbleModel}) provides more details on \cd{nimbleModel} arguments.
@@ -873,14 +873,14 @@ NIMBLE also provides some additional flexibility in setting data in a model and 
 \label{sec:readBUGSmodel}
 
 Users with BUGS and JAGS experience may have files set up in standard
-formats for use in BUGS and JAGS.  \cd{readBUGSmodel()} can
+formats for use in BUGS and JAGS.  \cd{readBUGSmodel} can
 read in the model, data/constant values and initial values in those
 formats. It can also take information directly from R objects
-somewhat more flexibly than \cd{nimbleModel()}, specifically allowing
+somewhat more flexibly than \cd{nimbleModel}, specifically allowing
 inputs set up similarly to those for BUGS and JAGS.
-In either case, after processing the inputs, it calls \cd{nimbleModel()}.
+In either case, after processing the inputs, it calls \cd{nimbleModel}.
 Note that unlike BUGS and JAGS, only a single set of initial values can be
-specified in creating a model.
+specified in creating a model. Please see \cd{help(readBUGSmodel)} for argument details.  
 
 %% \cd{readBUGSmodel()} can take the following arguments:
 %% \begin{description}
@@ -895,12 +895,7 @@ specified in creating a model.
 %% \item[inits] is either a file name or a named list of initial values.  
 %% \end{description}
 
-Please see \cd{help(readBUGSmodel)} for argument details.  
-
-\subsubsection{Example using \cd{readBUGSmodel}}
-\label{sec:example-using-cdre}
-
-Let's create a model for the \nm{pump} example from BUGS.
+As an example of using \cd{readBUGSmodel}, let's create a model for the \nm{pump} example from BUGS.
 <<readBUGSmodel>>=
 pumpDir <- system.file('classic-bugs', 'vol1', 'pump', package = 'nimble')
 pumpModel <- readBUGSmodel('pump.bug', data = 'pump-data.R', 
@@ -908,7 +903,7 @@ pumpModel <- readBUGSmodel('pump.bug', data = 'pump-data.R',
                            
 @ 
 
-Note that \cd{readBUGSmodel()} allows one to include \cd{var} and \cd{data} blocks in the model file as in some of the BUGS examples (such as \cd{inhaler}). The \cd{data} block pre-computes constant and data values. Also note that if  \cd{data} and \cd{inits} are provided
+Note that \cd{readBUGSmodel} allows one to include \cd{var} and \cd{data} blocks in the model file as in some of the BUGS examples (such as \cd{inhaler}). The \cd{data} block pre-computes constant and data values. Also note that if  \cd{data} and \cd{inits} are provided
 as files, the files should contain R code that creates objects
 analogous to what would populate the list if a list were provided
 instead.  Please see the JAGS manual examples or the
