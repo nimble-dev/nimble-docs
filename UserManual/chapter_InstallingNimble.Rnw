@@ -90,7 +90,7 @@ NIMBLE also uses BLAS and LAPACK for some of its linear algebra (in particular c
 
 \subsection{Problems with Installation}
 We have tested the installation on the three commonly used platforms
--- OS X, Linux, Windows 7.  We don't anticipate problems with installation,
+-- OS X, Linux, Windows\footnote{We've tested NIMBLE on Windows 7 and 8}.  We don't anticipate problems with installation,
 but we want to hear about any and help resolve them. 
 Please post about installation problems to the nimble-users Google group or 
 email \cd{nimble.stats@gmail.com}.
