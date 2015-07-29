@@ -37,7 +37,7 @@ Most fairly recent versions of these requirements should work.
 \section{Installation}
 
 Since NIMBLE is an R package, you can install it in the usual way, via
-\cd{install.packages()} or related mechanisms.  We have not yet put in
+\cd{install.packages} or related mechanisms.  We have not yet put in
 on CRAN, so you'll have to find it at R-nimble.org. 
 
 For most installations, you can ignore low-level details.

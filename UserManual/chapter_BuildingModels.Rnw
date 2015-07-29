@@ -75,7 +75,7 @@ For readers familiar with BUGS, we begin with an overview of supported features 
 \item ``for'' loops for iterative declarations.
 \item Arrays of nodes up to 4 dimensions.
 \item Truncation and censoring as in JAGS using the \cd{T()}
-  notation and \cd{dinterval()}.
+  notation and \cd{dinterval}.
 \end{enumerate}
 
 \subsection{NIMBLE's Extensions to BUGS and JAGS}
@@ -84,18 +84,18 @@ For readers familiar with BUGS, we begin with an overview of supported features 
 NIMBLE extends the BUGS language in the following ways:
 
 \begin{enumerate}
-  \item User-defined functions and distributions -- written as \cd{nimbleFunctions} -- can be used in model code. See \ref{sec:user-defined}.
+  \item User-defined functions and distributions -- written as \cd{nimbleFunctions} -- can be used in model code. See Section \ref{sec:user-defined}.
 \item Multiple parameterizations for distributions, similar to those  in R, can be used.
 \item Named parameters for distributions and functions, similar to R function calls, can be used.
 \item Distribution parameters can be expressions, as in JAGS but not
   in WinBUGS\footnote{e.g., \cd{y $\sim$ dnorm(5 + mu, 3 *
       exp(tau))}}.  Caveat: parameters to \emph{multivariate}
-  distributions (\emph{e.g.,} \cd{dmnorm()}) cannot be expressions.
+  distributions (\emph{e.g.,} \cd{dmnorm}) cannot be expressions.
   TODO: I don't think this is true anymore - PdV/DT - please confirm.
  \item Alternative models can be defined from the same model code by
    using if-then-else statements that are evaluated when the model is defined.
 \item More flexible indexing of vector nodes within larger variables is allowed.  For example one can place a multivariate normal vector arbitrarily within a higher-dimensional object, not just in the last index.
-\item More general constraints can be declared using \cd{dconstraint()}, which extends the concept of JAGS' \cd{dinterval()}. See Section \ref{subsec:trunc}.
+\item More general constraints can be declared using \cd{dconstraint}, which extends the concept of JAGS' \cd{dinterval}. See Section \ref{subsec:trunc}.
  \item Link functions can be used in stochastic, as well as
    deterministic, declarations.\footnote{But beware of the possibility
      of needing to set values for ``lifted'' nodes created by NIMBLE.}
@@ -108,7 +108,7 @@ NIMBLE extends the BUGS language in the following ways:
 In this release, the following are not supported.
 
 \begin{enumerate}
-\item Stochastic indices (but see \ref{sec:user-defined} for a
+\item Stochastic indices (but see Section \ref{sec:user-defined} for a
   description of how you could handle some cases with user-defined distributions).
 \item The appearance of the same node on the left-hand side of both a
   \cd{<-} and a \cd{$\sim$} declaration (used in WinBUGS for data
@@ -167,13 +167,13 @@ This code does not show a complete model and includes some arbitrary indices (e.
   normal distribution, with a named covariance matrix instead of BUGS'
   default of a precision matrix.  As in R, curly braces for for-loop
   contents are only needed if there is more than one line.
-\item \cd{w} follows a user-defined distribution. See \ref{sec:user-defined}.
+\item \cd{w} follows a user-defined distribution. See Section \ref{sec:user-defined}.
 \item \cd{d1} is a scalar deterministic node that, when calculated, will be
   set to \cd{a + b}.
 \item \cd{d2} is a vector deterministic node using matrix
   multiplication in R's syntax.
 \item \cd{d3} is a deterministic node using a user-provided
-  function.  See \ref{sec:user-defined}.
+  function.  See Section \ref{sec:user-defined}.
 \end{enumerate}
 
 \subsubsection{More about indexing}
@@ -306,8 +306,8 @@ BUGS declarations, so it would be more correct to say that functions
 and operators available for \cd{nimbleFunction}s are also available
 for the model declarations.
 
-TODO: CHECK ALL OF THE FOLLOWING STATEMENTS.
-CJP thinks this is fine now - most text is now in Chap 9, but I think it is right.
+%TODO: CHECK ALL OF THE FOLLOWING STATEMENTS.
+% CJP thinks this is fine now - most text is now in Chap 9, but I think it is right.
 
 For the most part NIMBLE supports the functions used in BUGS and JAGS,
 with exceptions indicated in the table.  Additional functions provided
@@ -385,7 +385,7 @@ provided in JAGS as a user-defined distribution in NIMBLE.
 
 To provide a new function for use in BUGS code, simply create a \cd{nimbleFunction} that has no \cd{setup} code. Then use it in your BUGS code. That's it.
 
-Writing \cd{nimbleFunction}s requires that you declare the dimensionality of arguments and the returned object (\label{sec:decl-argum-types}).  Make sure that the dimensionality specified in your \cd{nimbleFunction} matches how you use it in BUGS code.  For example, if you define  scalar parameters in your BUGS code you will want to define \cd{nimbleFunctions} that take scalar arguments.  Here is an example that returns twice its input argument:
+Writing \cd{nimbleFunction}s requires that you declare the dimensionality of arguments and the returned object (Section \label{sec:decl-argum-types}).  Make sure that the dimensionality specified in your \cd{nimbleFunction} matches how you use it in BUGS code.  For example, if you define  scalar parameters in your BUGS code you will want to define \cd{nimbleFunctions} that take scalar arguments.  Here is an example that returns twice its input argument:
 
 <<user-fun, eval=FALSE>>=
 timesTwo <- nimbleFunction(    
@@ -574,9 +574,9 @@ be considered ``data'' in BUGS and JAGS.
 \end{itemize}
 
 We encourage users to distinguish between data and constants
-when building a model via \cd{nimbleModel()}. However, for compatibility
+when building a model via \cd{nimbleModel}. However, for compatibility
 with BUGS and JAGS, NIMBLE allows both to provided in the
-the \cd{constants} argument to \cd{nimbleModel()}, in which case
+the \cd{constants} argument to \cd{nimbleModel}, in which case
 NIMBLE determines which are which, based on which variables appear on the 
 left-hand side of BUGS declarations. 
 
@@ -584,7 +584,7 @@ TODO: Perry said 'this is confusing'
 Chris: does this rewording help?
 
 It is also possible to have variables appear only on the right-hand side of BUGS declarations (e.g., covariates/predictors). If the values of these variables will never change, one can specify these via \cd{constants}. However, one might want to define a model and then change such values (e.g., use a model with different covariate values). Therefore one can provide the values of such variables via the \cd{data} argument 
-to \cd{nimbleModel()} and these will
+to \cd{nimbleModel} and these will
 appear as variables in the model but will not
 be nodes in the model. A user can change these values via direct
 assignment if desired.
@@ -785,7 +785,7 @@ generated.  These include:
   given parameter. The node is then a direct descendant of the new
   deterministic node.  This is an optional feature, but it is
   currently enabled in all cases.
-\item As discussed in \ref{subsec:BUGS-link} the use of link functions causes new nodes to be introduced. In particular, this can cause headaches in terms of initializing values in stochastic declarations with link functions.
+\item As discussed in Section \ref{subsec:BUGS-link} the use of link functions causes new nodes to be introduced. In particular, this can cause headaches in terms of initializing values in stochastic declarations with link functions.
 \item Use of alternative parameterizations of distributions, described in Section \ref{subsec:dists-and-functions}. For
   example when a user provides the precision of a normal distribution
   as \cd{tau}, NIMBLE creates a new node \cd{sd <- 1/sqrt(tau)} and
@@ -934,7 +934,7 @@ is a named list of data values.
 and it flags those nodes as containing data.  \cd{nimbleFunction}
 programmers can then use that information to control whether an
 algorithm should over-write data or not.  For example, NIMBLE's
-\cd{simulate()} functions by default do not overwrite data values but
+\cd{simulate} functions by default do not overwrite data values but
 can be told to do so.  Values of data variables can be replaced, and
 the indication of which nodes should be treated as data can be reset
 by using the \cd{resetData} method, e.g. \cd{pump\$resetData()}.

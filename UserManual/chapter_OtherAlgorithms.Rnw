@@ -217,7 +217,7 @@ pumpMCEM <- buildMCEM(model = newPump,
   integrated over (sampled via MCMC), rather than
   maximized.  These
   nodes must be stochastic, not deterministic! \cd{latentNodes} will
-  be expanded as described in section \ref{sec:arbitr-coll-nodes}:
+  be expanded as described in Section \ref{sec:arbitr-coll-nodes}:
   e.g., either \cd{latentNodes = `x'} or \cd{latentNodes = c(`x[1]',
     `x[2]')} will treat \cd{x[1]} and \cd{x[2]} as latent nodes if
   \cd{x} is a vector of two values. All other non-data nodes will be
@@ -226,7 +226,7 @@ pumpMCEM <- buildMCEM(model = newPump,
 
  The \cd{burnIn} argument indicates the number of samples from the MCMC for the E-step that should be discarded when computing the expected likelihood in the M-step. Note that \cd{burnIn} can be set to values lower than in standard MCMC computations, as each iteration will start off where the last left off. 
   
-The  \cd{mcmcControl} argument will be passed to \cd{configureMCMC()} to define the MCMC to be used.
+The  \cd{mcmcControl} argument will be passed to \cd{configureMCMC} to define the MCMC to be used.
 
  The MCEM algorithm allows for box constraints on the nodes that will
  be optimized, specified via the \cd{boxConstraints} argument. This is
@@ -236,13 +236,13 @@ The  \cd{mcmcControl} argument will be passed to \cd{configureMCMC()} to define 
  in which the first element is the names of the nodes or variables
  that the constraint will be applied to and the second element is a
  vector of length 2, in which the first value is the lower limit and
- the second is the upper limit.  Values of \cd{Inf} and \cd{-Inf} are allowed. If a node is not listed, it will be assumed that there are no constraints. These arguments are passed as \cd{lower} and \cd{upper} to R's \cd{optim()} function, using \cd{method = `L-BFGS-B'}) 
+ the second is the upper limit.  Values of \cd{Inf} and \cd{-Inf} are allowed. If a node is not listed, it will be assumed that there are no constraints. These arguments are passed as \cd{lower} and \cd{upper} to R's \cd{optim} function, using \cd{method = `L-BFGS-B'}) 
 
  The value of the  \cd{buffer} argument shrinks the
  \cd{boxConstraints} by this amount.  This can help protect against
  non-finite values occuring when a parameter is on its boundary value. 
   
-    Once the MCEM has been built for the model of interest using \cd{buildMCEM()}, it can be run as follows.
+    Once the MCEM has been built for the model of interest using \cd{buildMCEM}, it can be run as follows.
 
  <<run-MCEM>>=
 pumpMCEM(maxit = 20, m1 = 250, m2 = 500)
@@ -258,5 +258,5 @@ The \cd{maxit} argument is the number of total iterations to run the algorithm. 
   switches from \cd{m1} to \cd{m2}.  This provides smaller MCMC error
   as the algorithm converges. If \cd{m1} or \cd{m2} is less than or equal to \cd{burnIn} as defined in \cd{build\_MCEM}, the MCEM algorithm will immediately quit.
 
-  When using the MCEM algorithm, we suggest first starting with small values of \cd{m1} and \cd{m2} to get an estimate of how long the algorithm will take for larger MCMC samples. The speed of the algorithm will be linear in \cd{m2} (assuming that $m1 > m2$ as intended).
+  When using the MCEM algorithm, we suggest first starting with small values of \cd{m1} and \cd{m2} to get an estimate of how long the algorithm will take for larger MCMC samples. The speed of the algorithm will be linear in \cd{m2} (assuming that $m2 > m1$ as intended).
 

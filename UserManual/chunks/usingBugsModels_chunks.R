@@ -10,7 +10,8 @@ mc <- nimbleCode({
     y.squared[1:5] <- y[1:5]^2
 })
 
-model <- nimbleModel(mc, data = list(z = matrix(rnorm(15), nrow = 5)))
+model <- nimbleModel(mc, data = list(z = matrix(rnorm(15), nrow = 5)),
+                     check = FALSE)
 
 ## @knitr usingModelVars
 
@@ -45,7 +46,8 @@ multiVarCode <- nimbleCode({
     X[6:10, 3] ~ dmnorm(mu[], cov[,])
 })
 
-multiVarModel <- nimbleModel(multiVarCode, dimensions = list(mu = 5, cov = c(5,5)))
+multiVarModel <- nimbleModel(multiVarCode, dimensions = list(mu = 5, cov = c(5,5)),
+                             check = FALSE)
 
 multiVarModel$getNodeNames()
 
@@ -100,6 +102,24 @@ pump$getNodeNames(determOnly = TRUE)
 pump$getNodeNames(stochOnly = TRUE)
 pump$getNodeNames(dataOnly = TRUE)
 pump$getVarNames()
+
+## @knitr expandNodeNames
+
+multiVarCode2 <- nimbleCode({
+    X[1, 1:5] ~ dmnorm(mu[], cov[,])
+    X[6:10, 3] ~ dmnorm(mu[], cov[,])
+    for(i in 1:4) 
+        Y[i] ~ dnorm(mn, 1)
+})
+
+multiVarModel2 <- nimbleModel(multiVarCode2, dimensions = list(mu = 5, cov = c(5,5)),
+                             check = FALSE)
+
+
+multiVarModel2$expandNodeNames('Y')
+
+multiVarModel2$expandNodeNames(c('X', 'Y'), returnScalarComponents = TRUE)
+
 
 ## @knitr getDependencies
 

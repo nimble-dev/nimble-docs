@@ -278,7 +278,6 @@ useThem <- nimbleFunction(
         nfl <- nimbleFunctionList(baseClass)
         nfl[[1]] <- derived1()
         nfl[[2]] <- derived2()
-        val <- 0
     },
     run = function(x = double(1)) {
         for(i in seq_along(nfl)) {

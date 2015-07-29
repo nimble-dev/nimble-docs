@@ -64,7 +64,7 @@ executes it, and returns an object, \cd{logProbCalcPlusA}, that has a
 \nm{run} member function (method) accessed by \cd{\$run}.  In this case, the
 \cd{setup} function obtains the stochastic dependencies of the
 \cd{node} using the \cd{getDependencies} member function of the model
-(see \ref{sec:cdgetdependencies}) and stores them in
+(see Section \ref{sec:cdgetdependencies}) and stores them in
 \cd{dependentNodes}.  In this way, \cd{logProbCalcPlus} can adapt to any
 model.  It also creates a variable, \cd{valueToAdd}, that can be used by the nimbleFunction.
 
@@ -78,7 +78,7 @@ dependencies\footnote{Note the use of the global assignment operator
   to assign into the model.  This is necessary for assigning into
   variables from the \cd{setup} function, at least if you want to void
   warnings from R.  These warnings come from R's reference class
-  system.}.  We say  \cd{logProbCalcPlusA} is and ``instance'' of
+  system.}.  We say  \cd{logProbCalcPlusA} is an ``instance'' of
 \cd{logProbCalcPlus} that is
 ``specialized'' or ``bound'' to \cd{a} and \cd{testModel}.  Usually, the
 \cd{setup} code will be where information about the model
@@ -157,7 +157,7 @@ Some of the useful tools and objects to create in \cd{setup} functions include
 \begin{description}
 \item[vectors of node names] Often these are obtained from the
   \cd{getNodeNames} and \cd{getDependencies} methods of a model,
-  described in section \ref{sec:cdgetn-cdgetv}.
+  described in Section \ref{sec:cdgetn-cdgetv}.
 \item[modelValues objects] These are discussed more below.
 \item[specializations of other nimbleFunctions] A useful NIMBLE
   programming technique is to have one nimbleFunction contain other
@@ -263,7 +263,7 @@ assigned to, or an explicit call to \cd{setSize} is needed.
 \label{sec:driv-models:-calc}
 
 These four functions are the primary ways to operate a model.  Their
-syntax was explained in section \ref{sec:cdcalc-cdsim-cdgetl}. Except
+syntax was explained in Section \ref{sec:cdcalc-cdsim-cdgetl}. Except
 for \cd{getLogProb}, it is usually important for the \cd{nodes}
 object to be created in \cd{setup} code such that they are sorted in
 topological order.
@@ -271,7 +271,7 @@ topological order.
 \subsection{Accessing model and modelValues variables and using \cd{copy}}
 \label{sec:access-model-modelv}
 
-The \cd{modelValues} structure was introduced in section
+The \cd{modelValues} structure was introduced in Section
 \ref{sec:modelValues-struct}.  Inside nimbleFunctions, modelValues are
 designed to easily save values from a model object during the running
 of a nimbleFunction. A \cd{modelValues} object used in \cd{run} code
@@ -448,7 +448,7 @@ In other cases you must declare the type.  The rules are as follows:
 \item If the first uses of a variable involves indexing, the type must
   be declared explicitly, using \cd{declare}, before using it.  In addition, its size must
   be set before assigning into it.  Sizes can be included in the
-  declare() statement, but if so they should not subsequently change.
+  \cd{declare()} statement, but if so they should not subsequently change.
   If a variable may have its size changed during execution, then the
   declare statement should omit the size argument, and a separate call
   to \cd{setSize} should be used to set the initial size(s).
@@ -491,7 +491,7 @@ function to provide a vector of sizes if X is more than 1-dimensional.
 
 NIMBLE uses the \nm{Eigen} library in C++ to accomplish linear algebra.  In
 v\ver, we use a lot of Eigen's capabilities, but not all of them.  The
-supported operations are given in tables \ref{table:functions}-\ref{table:functions-matrix}.
+supported operations are given in Tables \ref{table:functions}-\ref{table:functions-matrix}.
 
 No vectorized operations other than assignment are supported for more
 than two dimensions in

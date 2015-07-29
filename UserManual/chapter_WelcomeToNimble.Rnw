@@ -92,4 +92,4 @@ to write algorithms. So as you get started, feel free to focus on
 Chapters \ref{cha:intro}-\ref{cha:algos-provided}.  The algorithm
 library in Version \ver\ is just a start, so we hope you'll let us know what
 you want to see and consider writing it in NIMBLE.  More about NIMBLE
-programming comes in \ref{cha:progr-with-models}.
+programming comes in Chapter \ref{cha:progr-with-models}.

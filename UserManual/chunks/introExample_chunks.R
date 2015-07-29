@@ -117,9 +117,6 @@ acf(samplesNew[, 'beta'])  ## plot autocorrelation of beta  sample
 
 pump2 <- pump$newModel()
 
-# nodes <- pump2$getNodeNames(stochOnly = TRUE)
-# as mentioned by Nick - this line is not needed
-
 box = list( list(c('alpha','beta'), c(0, Inf)))
 
 pumpMCEM <- buildMCEM(model = pump2, latentNodes = 'theta[1:10]',
