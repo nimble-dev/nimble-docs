@@ -11,6 +11,7 @@
 \usepackage{verbatim}
 \usepackage{longtable}
 \usepackage{enumitem}
+\usepackage{color}
 \setlist{nolistsep}
 
 \geometry{tmargin = 1in, bmargin = 1in, lmargin = 1in, rmargin = 1in}

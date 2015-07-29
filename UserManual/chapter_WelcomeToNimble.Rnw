@@ -7,7 +7,7 @@
 
 NIMBLE is a system for building and sharing analysis methods for
 statistical models, especially for hierarchical models and
-computationally-intensive methods.  This is an early version,
+computationally-intensive methods.  This is an early version, 
 \ver. You can do quite a bit with it, but it has some rough edges and
 gaps, and we plan to keep expanding it.  If you want to analyze data,
 we hope you will find something already useful.  If you want to build
@@ -90,6 +90,6 @@ We emphasize that you can use NIMBLE for data analysis with the
 algorithms provided by NIMBLE without ever using the NIMBLE language
 to write algorithms. So as you get started, feel free to focus on
 Chapters \ref{cha:intro}-\ref{cha:algos-provided}.  The algorithm
-library in v\ver\ is just a start, so we hope you'll let us know what
+library in Version \ver\ is just a start, so we hope you'll let us know what
 you want to see and consider writing it in NIMBLE.  More about NIMBLE
 programming comes in \ref{cha:progr-with-models}.

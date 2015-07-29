@@ -1,6 +1,7 @@
 %\begin{table}[!h]
   \begin{center}
     \begin{longtable}{ll}
+
   \caption{Distribution parameterizations allowed in NIMBLE. The first
     column indicates the supported parameterizations for
     distributions given in Table \ref{table:distributions}. The second column indicates the
@@ -11,13 +12,10 @@
       \hline \hline
 \endhead
    \texttt{dbern(prob)} & \texttt{dbin(size = 1, prob)} \\
-\hline
       \texttt{dbeta(shape1, shape2)} & canonical \\
       \texttt{dbeta(mean, sd)} & \verb|dbeta(shape1 = mean^2 * (1-mean) / sd^2 - mean,| \\
       & \verb|shape2 = mean * (1 - mean)^2 / sd^2 + mean - 1)| \\
-\hline
    \texttt{dbin(prob, size)} & canonical \\
-\hline
          \texttt{dcat(prob)} & canonical \\
          \texttt{dchisq(df)} & canonical \\
          \texttt{ddirch(alpha)} & canonical \\

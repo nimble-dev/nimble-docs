@@ -282,7 +282,7 @@ order.  NIMBLE knows that rate is an alternative to scale and that
 
 \input{parameterizationTableLong.tex}
 
-In addition, we provide alternative distribution names, known as aliases, as in JAGS, as specified in Table \ref{distributions-aliases}. 
+In addition, we provide alternative distribution names, known as aliases, as in JAGS, as specified in Table \ref{table:distributions-aliases}. 
 
 \input{densityAliasesTable.tex}
 
@@ -367,12 +367,12 @@ to the follow two declarations:
 \end{itemize}
 where \cd{expit} is the inverse of \cd{logit}.  When the BUGS expression defines a deterministic node, such as \cd{logit(p) <- b0 + b1*x}, the same operations are performed except that \cd{logit\_p} is a deterministic node. 
 
-Note that we do not provide an automatic way of initializing the additional node(\cd{logit\_p} in this case), which is a parent node of the explicit node (\cd{p[i]}), without explicitly referring to the additional node by the name that NIMBLE generates. For deterministic declarations, this is of little import, but for stochastic declarations, it requires care. 
+Note that we do not provide an automatic way of initializing the additional node (\cd{logit\_p} in this case), which is a parent node of the explicit node (\cd{p[i]}), without explicitly referring to the additional node by the name that NIMBLE generates. For deterministic declarations, this is of little import, but for stochastic declarations, it requires care. 
 
 \subsection{Adding user-defined distributions and functions}
 \label{sec:user-defined}
 
-As of Version 0.4, NIMBLE now allows you to define your own functions and distributions as \cd{nimbleFunction}s for use in BUGS code. As a result, NIMBLE frees you from being constrained to the functions and distributions listed in Section \ref{sec:more-details-nimble}.  For example, instead of setting up a Dirichlet prior with multinomial data and needing to use MCMC, one could recognize that this results in a Dirichlet-multinomial distribution and provide that as a user-defined distribution instead.
+As of Version 0.4, NIMBLE allows you to define your own functions and distributions as \cd{nimbleFunction}s for use in BUGS code. As a result, NIMBLE frees you from being constrained to the functions and distributions just discussed.  For example, instead of setting up a Dirichlet prior with multinomial data and needing to use MCMC, one could recognize that this results in a Dirichlet-multinomial distribution and provide that as a user-defined distribution instead.
 
 Further, while NIMBLE at the moment does not allow the use of random
 indices, such as is common in clustering contexts, you may be able to
@@ -540,25 +540,12 @@ Here are more details on the requirements for distribution-related \cd{nimbleFun
 \item All simulation (``r'') functions must take \cd{n} as their first argument. Note that you may simply have your function only handle \cd{n=1} and return an warning for other values of \cd{n}.
 \item Your distribution-related functions must take as arguments the default parameters, starting as the second argument and in the order used in the parameterizations in the \cd{Rdist} argument to \cd{registerDistributions} or the \cd{BUGSdist} argument if there are no alternative parameterizations. NIMBLE uses doubles for numerical calculations, so we suggest simply using doubles in general, even for integer-valued parameters or values of random variables.
   \item All density functions must have as their last argument \cd{log} and implement return of the log probability density. NIMBLE algorithms typically use only \cd{log = 1}, but we recommend you implement the \cd{log = 0} case for completeness. 
-  \item All distribution and quantile functions must have their last two arguments be (in order), \cd{lower.tail} and \cd{log.p}. These functions must work for \cd{lower.tail = 1} (i.e., TRUE) and \cd{log.p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but again we recommend doing so for completeness.
-  \item Define the \cd{nimbleFunctions} in R's global environment.  Don't expect R's standard scoping to work. \footnote{NIMBLE can't use R's standard scoping because it doesn't work for R reference classes, and \cd{nimbleFunction}s are implemented as custom-generated reference classes.}.
+  \item All distribution and quantile functions must have their last two arguments be (in order) \cd{lower.tail} and \cd{log.p}. These functions must work for \cd{lower.tail = 1} (i.e., TRUE) and \cd{log.p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but again we recommend doing so for completeness.
+  \item Define the \cd{nimbleFunctions} in R's global environment.  Don't expect R's standard scoping to work\footnote{NIMBLE can't use R's standard scoping because it doesn't work for R reference classes, and \cd{nimbleFunction}s are implemented as custom-generated reference classes.}.
 \end{itemize}
 
-Further details on using \cd{registerDistributions} can be found by \cd{help(registerDistributions)}.  NIMBLE uses the same list format as \cd{registerDistributions} to define its distributions.  This list can be found in the \cd{R/distributions\_inputList.R} in the package source code \cd{R} directory.
+Further details on using \cd{registerDistributions} can be found via \cd{help(registerDistributions)}.  NIMBLE uses the same list format as \cd{registerDistributions} to define its distributions.  This list can be found in the \cd{R/distributions\_inputList.R} file in the package source code directory.
 
-%% Next we provide basic information on the structure of the distribution information passed to \cd{registerDistributions}. The single argument should be a list of lists, with each of the sublists providing information about a single user-defined distribution. Full details are given in the help information for \cd{registerDistributions}. Also note that additional examples can be seen in the \cd{R/distributions\_inputList.R} file for the default NIMBLE distributions in the source code for the NIMBLE package or on our Github repository. 
-%% Here is a quick summary of the elements needed for each distribution:
-%% \begin{itemize}
-%% \item \cd{BUGSdist} should specify the name of the distribution to be used in BUGS and list all of the possible parameters from all parameterizations.
-%% \item \cd{Rdist} (optional) should provide a vector of potential reparameterizations, including reordering of parameters. The distribution name should match that of the nimbleFunctions you have written. 
-%% \item \cd{types} should provide a character vector indicating the dimensions of any non-scalar parameters or value of the random variable. Since NIMBLE uses doubles for numerical calculations and the default type of any parameter or value of the random variable is \cd{double(0)}, one should generally use 'double' and one need only specify the type for non-scalars. For multivariate densities, one should use syntax such as \cd{value = double(1)} for vectors and \cd{value = double(2)} for matrices. 
-%% \item \cd{altParams} (optional) should provide a character vector of expressions that express any alternative parameters as functions of the default parameters.  This is used in our MCMC conjugacy processing but is not yet relevant for user-supplied distributions as we don't provide for conjugacy for user-defined distributions. We envision this functionality also might be used in the future to provide functionals of parameters for other algorithms, e.g., if an algorithm needs the expected value or variance of the distribution, these could be obtained if 'mean' and 'var' are given in \cd{altParams}, as illustrated with 'mean' in the \cd{dmyexp} example above.
-%% \item \cd{discrete} (optional; default is \cd{FALSE}) is a logical value indicating whether the distribution is that of a discrete random variable.
-%% \item \cd{pqAvail} (optional; default is \cd{FALSE}) indicates if you have provided distribution and quantile functions that can be used for truncated versions of your distribution.
-%% \item \cd{range} (optional; default is \cd{(-Inf, Inf)}) indicates the range of the distribution as vector of two values for possible use in future algorithms (not used currently). When the lower or upper limit involves a strict inequality (e.g., $x>0$), you should simply treat it as a non-strict inequality ($x>=0$, and set the lower value to 0). Also we do not handle ranges that are functions of parameters, so simply use the smallest/largest possible values given the possible parameter values.
-%% \end{itemize}
-
-% You may notice the presence of a \cd{types} element in the list of NIMBLE-provided distributions in \cd{R/distributions\_inputList.R}  that has information on type and dimension. This syntax is in flux at the moment, and there is no need to provide \cd{types} as part of your input list to \cd{registerDistributions}. 
 
 \subsection{Data and constants}
 \label{sec:data-constants}
@@ -574,14 +561,16 @@ be considered ``data'' in BUGS and JAGS.
   for-loops must also be provided as constants.
 \item \nm{Data} is a label for the role a node plays in the model.
   Nodes marked as data will by default be protected from any functions
-  that would simulate over their values (see \cd{simulate} in
+  that would simulate over their values (see \cd{simulate} in Chapter
   \ref{cha:progr-with-models}), but it is possible to over-ride
   that default or to change their values by direct assignment.  This
   allows an algorithm to be applied to many data sets in the same
   model without re-creating the model each time.  It also allows
-  simulation of data in a model.  Data must be provided when an
-  instance of a model is created from the model definition, although
-  they can also be provided earlier when a model is defined.
+  simulation of data in a model.  
+  % TODO: I don't think this statement is true (i.e., setData()):
+  % Data must be provided when an
+  %instance of a model is created from the model definition, although
+  % they can also be provided earlier when a model is defined.
 \end{itemize}
 
 We encourage users to distinguish between data and constants
@@ -591,11 +580,12 @@ the \cd{constants} argument to \cd{nimbleModel()}, in which case
 NIMBLE determines which are which, based on which variables appear on the 
 left-hand side of BUGS declarations. 
 
+TODO: Perry said 'this is confusing'
+Chris: does this rewording help?
 
-THIS IS CONFUSING:  One can also provide variables appearing only on the right-hand side of
-BUGS declarations (e.g., covariates/predictors) via the \cd{data} argument
+It is also possible to have variables appear only on the right-hand side of BUGS declarations (e.g., covariates/predictors). If the values of these variables will never change, one can specify these via \cd{constants}. However, one might want to define a model and then change such values (e.g., use a model with different covariate values). Therefore one can provide the values of such variables via the \cd{data} argument 
 to \cd{nimbleModel()} and these will
-appear as variables in the model, but will not
+appear as variables in the model but will not
 be nodes in the model. A user can change these values via direct
 assignment if desired.
 % we used to say that RHS 'data' would be flagged as data but this
@@ -636,10 +626,12 @@ samples[1:5, 13:17]
 
 @ 
 
-TODO: IS THIS REDUNDANT: Missing values may also occur in variables appearing on the
+% TODO: IS THIS REDUNDANT 
+% I THINK IT IS NICE TO HAVE - CJP: 
+Missing values may also occur in variables appearing on the
 right-hand side of BUGS declarations. Values for such variables should
-be passed in via the \cd{data} argument to \cd{nimbleModel}, with NA
-for the missing values.  In some contexts, one would want to 
+be passed in via the \cd{data} argument to \cd{nimbleModel}, with \cd{NA}
+for the missing values.  In many contexts, one would want to 
 specify (prior) distributions for the elements with missing values.
 
 \subsection{Defining alternative models with the same code}
@@ -672,10 +664,12 @@ regressionCode <- nimbleCode({
 })
 
 includeX2 <- FALSE
-modelWithoutX2 <- nimbleModel(regressionCode, constants = list(N = 30), check=FALSE)
+modelWithoutX2 <- nimbleModel(regressionCode, constants = list(N = 30), 
+                              check=FALSE)
 modelWithoutX2$getVarNames()
 includeX2 <- TRUE
-modelWithX2 <- nimbleModel(regressionCode, constants = list(N = 30), check = FALSE)
+modelWithX2 <- nimbleModel(regressionCode, constants = list(N = 30), 
+                           check = FALSE)
 modelWithX2$getVarNames()
 @ 
 
@@ -685,7 +679,12 @@ modelWithX2$getVarNames()
 NIMBLE provides three ways to declare boundaries on the value of a variable, each for different situations.  We introduce these and comment on their relationships to related features of JAGS and WinBUGS/OpenBUGS.  The three methods are:
 
 \subsubsection{Truncation}
-\cd{x $\sim$ dnorm(0, sd = 10) T(0, a)} or,  equivalently, \cd{x $\sim$ T(dnorm(0, sd = 10), 0, a)} declares that \cd{x} follows a normal distribution between 0 and \cd{a}.  Either boundary may be omitted or may be another node, such as \cd{a} in this example.  The first syntax is compatible with JAGS, but in NIMBLE it can only be used when reading code from a text file.  When writing model code in R, the second version must be used.  
+Either of the following forms, 
+\begin{itemize}
+\item \cd{x $\sim$ dnorm(0, sd = 10) T(0, a)}, or
+\item \cd{x $\sim$ T(dnorm(0, sd = 10), 0, a)}, 
+  \end{itemize}
+  declares that \cd{x} follows a normal distribution between 0 and \cd{a}.  Either boundary may be omitted or may be another node, such as \cd{a} in this example.  The first form is compatible with JAGS, but in NIMBLE it can only be used when reading code from a text file.  When writing model code in R, the second version must be used.  
 
 Truncation means the possible values of \cd{x} are limited a priori, hence the probability density of \cd{x} must be normalized.  In this example it would be the normal probability density divided by its integral from 0 to \cd{a}\footnote{If you have a model object \cd{model}, you can see exactly the calculation used by typing \cd{model\$nodes[[`x`]]\$calculate}}.  Like JAGS, NIMBLE also provides \cd{I} as a synonym for \cd{T} to accommodate older BUGS code, but \cd{T} is preferred because it disambiguates multiple usages of \cd{I} in WinBUGS.
 
@@ -693,23 +692,26 @@ As in JAGS, \cd{mu $\sim$ dfoo(theta) T(L, U)} restricts $X$ to lie in $[L,U]$ (
 
 \subsubsection{Censoring} Censoring refers to the situation where one datum gives the lower or upper bound on an unobserved random variable.  This is common in survival time studies, when we may know at least how long some patients lived (right-censoring) but not their ages of death, so their age of death is ``censored''.  NIMBLE adopts JAGS syntax for censoring, as follows (using right-censoring as an example):
  <<dinterval-example, eval=FALSE>>=
-is.censored[i] ~ dinterval(t[i], c[i])
+censored[i] ~ dinterval(t[i], c[i])
 t[i] ~ dweib(r, mu[i])
 @
-where \cd{is.censored[i]} should be given as data with a value of 1 if
+where \cd{censored[i]} should be given as \cd{data} with a value of 1 if
 \cd{t[i]} is right-censored (\cd{t[i] $>$ c[i]}) and 0 if it is observed.  The data vector for \cd{t} should have \cd{NA} (indicating missing data) for any censored \cd{t[i]} entries. (As a result, these nodes will be sampled in an MCMC.)  The data vector for \cd{c} should give the censoring times corresponding to censored entries and \cd{0} for uncensored entries (assuming \cd{t[i] $>$ 0}).
   
-Censoring differs from truncation because in censoring an observation gives an upper or lower bound on a random variable that could have taken any value, while in truncation we know a priori that a datum could not have occurred outside the truncation range.  
+Censoring differs from truncation because censoring an observation gives an upper or lower bound on a random variable that could have taken any value, while in truncation we know a priori that a datum could not have occurred outside the truncation range.  
 
-The \cd{dinterval} is not really a distribution but rather a trick: in the above example it gives a ``probability'' of 1 if \cd{t[i] $>$ c[i]} and 0 otherwise.  This means that \cd{t[i] $\le$ c[i]} is treated as impossible.  More generally, \cd{is.censored[i] $\sim$ dinterval(t[i], c[i,])} is defined such that for a vector of increasing cutpoints, \cd{c[i,]}, \cd{t[i]} is enforced to fall within the \cd{is.censored[i]}-th cutpoint interval.  This is done by setting data \cd{is.censored[i]} as follows:
+The \cd{dinterval} is not really a distribution but rather a trick: in the above example it gives a ``probability'' of 1 if \cd{t[i] $>$ c[i]} and 0 otherwise.  This means that \cd{t[i] $\le$ c[i]} is treated as impossible.  More generally, \cd{censored[i] $\sim$ dinterval(t[i], c[i, ])} is defined such that for a vector of increasing cutpoints, \cd{c[i, ]}, \cd{t[i]} is enforced to fall within the \cd{is.censored[i]}-th cutpoint interval.  This is done by setting data \cd{censored[i]} as follows:
 \begin{eqnarray}
-\mbox{\cd{is.censored[i] = 0}} & \mbox{if} & \mbox{\cd{t[i] $\le$ c[i, 1]}} \nonumber \\
-\mbox{\cd{is.censored[i] = m}} & \mbox{if} & \mbox{\cd{c[i, m] < t[i] $\le$ c[i, m+1]} for } 1 <= m <= M \nonumber \\
-\mbox{\cd{is.censored[i] = M}} & \mbox{if} & \mbox{\cd{c[i, M] $<$ t[i]}}.\nonumber
+\mbox{\cd{censored[i] = 0}} & \mbox{if} & \mbox{\cd{t[i] $\le$ c[i, 1]}} \nonumber \\
+\mbox{\cd{censored[i] = m}} & \mbox{if} & \mbox{\cd{c[i, m] < t[i] $\le$ c[i, m+1]} for } 1 <= m <= M \nonumber \\
+\mbox{\cd{censored[i] = M}} & \mbox{if} & \mbox{\cd{c[i, M] $<$ t[i]}}.\nonumber
 \end{eqnarray}
-(The \cd{i} index is provided only for consistency with the previous example.)  The most common usage of \cd{dinterval} will be for left- and right-censored data, in which case \cd{c[i,]} will be a single value (and typically given as simply \cd{c[i]}), and for interval-censored data, in which case \cd{c[i,]} will be a vector of two values.  For left-censoring, one can use \cd{x[i] $\sim$ dinterval(t[i], c[i])} with \cd{x[i]} set to 0 or \cd{x[i] $\sim$ dinterval(c[i], t[i])} with \cd{x[i]} set to 1.
+(The \cd{i} index is provided only for consistency with the previous example.)  The most common usage of \cd{dinterval} will be for left- and right-censored data, in which case \cd{c[i,]} will be a single value (and typically given as simply \cd{c[i]}), and for interval-censored data, in which case \cd{c[i,]} will be a vector of two values.  For left-censoring, one would use \cd{x[i] $\sim$ dinterval(t[i], c[i])} with \cd{x[i]} set to 0.
+% TODO: I think this is confusing:
+% or \cd{x[i] $\sim$ dinterval(c[i], t[i])} with \cd{x[i]} set to 1.
+% our dinterval code treats the 2nd arg as possibly a vector - the above presumably works for scalars but I think it is clearer if we always use the first arg as the data value and the 2nd as the interval points
 
-Nodes following a \cd{dinterval} distribution should normally be set as data with known values. Otherwise, the node may simulated during some algorithm's (e.g. MCMC's) initialization and thereby establish a permanent, perhaps unintended, constraint.  
+Nodes following a \cd{dinterval} distribution should normally be set as \cd{data} with known values. Otherwise, the node may simulated during some algorithm's (e.g. MCMC's) initialization and thereby establish a permanent, perhaps unintended, constraint.  
 
 \subsubsection{Constraints and ordering}
 
@@ -720,6 +722,8 @@ mu2 ~ dnorm(0, 1)
 constraint.data ~ dconstraint( mu1 + mu2 > 0 )
 @ 
 with data \cd{constraint.data} set (as data) to 1.  Formally, \cd{dconstraint(condition)} is a probability distribution on $\left\{ 0, 1 \right\}$ such that $P(1) = 1$ if \cd{constraint} is \cd{TRUE} and $P(0) = 1$ if \cd{constraint} is \cd{FALSE}. Like \cd{dinterval}, \cd{dconstraint} results in distributions that are not normalized (e.g. for (\cd{mu1}, \cd{mu2})), which makes most sense if the constraint is observed rather than established a priori.  Nodes following \cd{dconstraint} should be provided as data for the same reason of avoiding unintended initialization described above for \cd{dinterval}.
+
+TODO: Perry I don't follow your comment about it making most sense if observed. I don't remember my wording from before, but I think (surprise!) that it was more clear. I would much prefer to go back to my original wording.
 
 \paragraph{Ordering}
 
@@ -734,7 +738,8 @@ alpha[1] ~ dnorm(0, 1) I(, alpha[2])
 alpha[2] ~ dnorm(0, 1) I(alpha[1], alpha[3])
 alpha[3] ~ dnorm(0, 1) I(alpha[2], )
 \end{verbatim}
-as this is does not represent a directed acyclic graph.  CHRIS, WOULDN'T THIS WORK WITH \cd{alpha[1] $\sim$ dnorm(0, 1)}?  DOES BUGS REALLY ALLOW THIS NON-DAG?
+as this does not represent a directed acyclic graph.  CHRIS, WOULDN'T THIS WORK WITH \cd{alpha[1] $\sim$ dnorm(0, 1)}?  DOES BUGS REALLY ALLOW THIS NON-DAG?
+PERRY - I think it is in the manual, so presumably allowed. Are you asking if it would work in NIMBLE with alpha1~dnorm(0,1) -- no because alpha2 still depends on alpha3 and vice versa
 
 Also note that specifying prior ordering using \cd{T(,)} can result in possibly unexpected results.  For example:
 \begin{verbatim}
