@@ -51,6 +51,10 @@ multiVarModel <- nimbleModel(multiVarCode, dimensions = list(mu = 5, cov = c(5,5
 
 multiVarModel$getNodeNames()
 
+## @knitr multivariateExpandNodeNames
+
+multiVarModel$expandNodeNames("X[1,1:5]")
+
 ## @knitr calcSimGLPdemos
 
 model$y

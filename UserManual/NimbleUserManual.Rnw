@@ -1,5 +1,7 @@
 % To avoid execution of code, do opts_chunk$set(eval = FALSE)
-% Or in shell to make NimbleUserManualNoEval.pdf
+% Or in shell to make NimbleUserManualNoEval.pdf %not sure that works anymore
+% See options() calls below.  To force evaluation of all chunks, use
+% the one with cache.rebuild = TRUE
 \documentclass[12pt,oneside]{book}
 
 \usepackage{bbding}
@@ -12,7 +14,9 @@
 \usepackage{longtable}
 \usepackage{enumitem}
 \usepackage{color}
-\setlist{nolistsep}
+%\setlist{nosep}
+\setlist{noitemsep}
+\usepackage[numbers]{natbib}
 
 \geometry{tmargin = 1in, bmargin = 1in, lmargin = 1in, rmargin = 1in}
 
@@ -32,6 +36,7 @@
 ## replace.assign replaces "=" with "<-"; 
 ## width controls (not perfectly) width of R code lines, hopefully avoiding some of the margin overflow
 options(replace.assign=TRUE, width=65)
+## options(replace.assign=TRUE, cache.rebuild = TRUE, width=65)
 @
 
 
@@ -72,6 +77,7 @@ require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
 
 \Sexpr{knit_child('chapter_writingNimbleFunctions.Rnw')}
 
-
+\bibliographystyle{chicago}
+\bibliography{UserManualRefs.bib}
 
 \end{document}

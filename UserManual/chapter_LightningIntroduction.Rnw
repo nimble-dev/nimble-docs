@@ -39,7 +39,7 @@ In this ``lightning introduction'' we will:
 
 
 \section{Creating a model}
-
+\label{sec:creating-model}
 First we define the model code, its constants, data, and initial
 values for MCMC.
 
@@ -154,12 +154,12 @@ NIMBLE is a system for working with algorithms, not just an MCMC engine. So let'
 <<mcemPump>>=
 @ 
 
-Both estimates are within 0.01 of the values reported by George et
-al. (1993)\footnote{George, E.I., Makov, U.E. \& Smith,
-  A.F.M. 1993. Conjugate likelihood
-  distributions. \textit{Scand. J. Statist.} \textbf{20}:147-156.
-  Their numbers were accidentally swapped in Table 2.}.  Some
-discrepancy is to be expected since it is a Monte Carlo algorithm.
+Both estimates are within 0.01 of the values reported by
+\citet{George_Makov_Smith_1993}\footnote{Their numbers were accidentally swapped in Table 2.}. %\footnote{George, E.I., Makov, U.E. \& Smith,
+%  A.F.M. 1993. Conjugate likelihood
+ % distributions. \textit{Scand. J. Statist.} \textbf{20}:147-156.
+ % Their numbers were accidentally swapped in Table 2.}.  
+Some discrepancy is to be expected since it is a Monte Carlo algorithm.
 
 \section{Creating your own functions}
 \label{sec:creating-your-own}
@@ -194,7 +194,7 @@ Here are a few things to notice about the \cd{nimbleFunction}
 \item The special function \cd{copy} is used here to record values
   from the model into the \cd{modelValues} object.  
 \item Multiple instances, or ``specializations'', can be made by
-  calling \cd{simNodesMany} with different arguments.  Above \cd{simNodesTheta1to5}, has
+  calling \cd{simNodesMany} with different arguments.  Above, \cd{simNodesTheta1to5} has
   been made by calling \cd{simNodesMany} with the \cd{pump} model and
   nodes \cd{`theta[1:5]'} as inputs to
   the \cd{setup} function, while \cd{simNodesTheta6to10} differs by
@@ -229,5 +229,5 @@ Finally, let's compile the function and run that version.
 @ 
 
 Given the same initial values and the same random number generator
-seed, we got identical results for \cd{theta[1:5]} and their dependencies, but it happens much faster.
+seed, we got identical results for \cd{theta[1:5]} and their dependencies, but it happened much faster.
 
