@@ -57,12 +57,12 @@ You can specify a particular location in either of two ways:
 \begin{enumerate}
   \item Set the environment variable \cd{EIGEN\_DIR} before installing the R
     package,  e.g., \cd{export EIGEN\_DIR=/usr/include/eigen3} in the bash shell.
-  \item Use \verb|R CMD INSTALL --configure-args='--with-eigen=/path/to/eigen' nimble|
+  \item Use \verb|R CMD INSTALL --configure-args='--with-eigen=/path/to/eigen' nimble_VERSION.tar.gz|
       or \\ \cd{install.packages("nimble", configure.args = "--with-eigen=/path/to/eigen")}.
 \end{enumerate}  
 In these cases, the directory should be the full path to the directory that
-contains the Eigen directory, e.g. \cd{/usr/local/include}. It is not the full path to the Eigen
-directory itself, i.e., NOT \cd{/usr/local/include/Eigen}.
+contains the Eigen directory, e.g. \cd{/usr/include/eigen3}. It is not the full path to the Eigen
+directory itself, i.e., NOT \cd{/usr/include/eigen3/Eigen}.
 
 
 \subsection{Using libnimble}
@@ -78,7 +78,7 @@ This is currently what happens on Windows.  One can disable
 using \nm{libnimble} via the configuration argument \cd{--enable-lib},
 e.g.,
 
-\verb|R CMD INSTALL --configure-args='--enable-lib=false' nimble|
+\verb|R CMD INSTALL --configure-args='--enable-lib=false' nimble_VERSION.tar.gz|
 
 
 
