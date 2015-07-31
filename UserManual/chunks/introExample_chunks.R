@@ -100,7 +100,7 @@ set.seed(0);
 CpumpNewMCMC$run(niter)
 samplesNew <- as.matrix(CpumpNewMCMC$mvSamples)
 
-par(mfrow = c(1, 4), mai = c(.5, .5, .1, .2))
+par(mfrow = c(1, 4), mai = c(.6, .5, .1, .2))
 plot(samplesNew[ , 'alpha'], type = 'l', xlab = 'iteration',
      ylab = expression(alpha))
 plot(samplesNew[ , 'beta'], type = 'l', xlab = 'iteration',

@@ -36,7 +36,7 @@ This chapter also discusses:
 \item Sampling algorithms provided with NIMBLE.
 \item Default sampler assignments in an MCMC configuration.
 \item Writing new samplers that conform to NIMBLE's MCMC system.
-\item Using \cd{MCMCsuite} to automatically run WinBUGS, OpenBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model.
+\item Using \cd{MCMCsuite} to automatically run WinBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model.\footnote{We haven't added OpenBUGS support yet.}
 \item Using NIMBLE's algorithm to search blocks of nodes for efficient joint (block) sampling.
 \end{itemize}
 
@@ -68,9 +68,9 @@ The default sampling algorithm assigned to each stochastic node is determined by
 \begin{enumerate}
 \item If the node has no stochastic dependents, a predictive \nm{end} sampler is assigned.  The \nm{end} sampling algorithm merely calls \cd{simulate} on the particular node.
 \item The node is checked for presence of a conjugate relationship between its prior distribution and the distributions of its stochastic dependents.  If it is determined to be in a conjugate relationship, then the corresponding \nm{conjugate} (Gibbs) sampler is assigned.
-\item If the node is discrete-valued, then a \nm{slice} sampler is assigned CITE(Neal2003).
-\item If the node follows a multivariate distribution, then a \nm{RW\_block} sampler is assigned for all elements.  This is a Metropolis-Hastings adaptive random-walk sampler with a multivariate normal proposal CITE(RobertsAndSahu1997).
-\item If none of the above criteria are satisfied, then a \nm{RW} sampler is assigned.  This is a Metropolis-Hastings adaptive random-walk sampler with a univariate normal proposal distribution CITE(Metropolis1953).
+\item If the node is discrete-valued, then a \nm{slice} sampler is assigned \citep{Neal2003}.
+\item If the node follows a multivariate distribution, then a \nm{RW\_block} sampler is assigned for all elements.  This is a Metropolis-Hastings adaptive random-walk sampler with a multivariate normal proposal \citep{Roberts_Sahu_1997}.
+\item If none of the above criteria are satisfied, then a \nm{RW} sampler is assigned.  This is a Metropolis-Hastings adaptive random-walk sampler with a univariate normal proposal distribution.
 \end{enumerate}
 
 The control parameters governing each of the default sampling algorithms are defined in the NIMBLE system option \cd{MCMCcontrolDefaultList}.  These default values are described in Section \ref{sec:samplers-provided}, along with the related sampling algorithms.
@@ -324,7 +324,7 @@ mcmcspec$addSampler(target = 'y[1]', type = 'end')
 
 \subsection{Scalar Metropolis-Hastings random walk \cd{RW} sampler}
 
-The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution CITE(Metropolis1953), implementing the adaptation routine given in CITE(ShabyAndWells2011).  This sampler can be applied to any scalar continuous-valued stochastic node.
+The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler can be applied to any scalar continuous-valued stochastic node.
 
 The \cd{RW} sampler can be customized using the \cd{control} list argument to set the initial proposal distribution scale, and the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
 
@@ -341,7 +341,7 @@ Note that because we use a simple normal proposal distribution on all nodes, neg
 
 \subsection{Multivariate Metropolis-Hastings \cd{RW\_block} sampler}
 
-The \cd{RW\_block} sampler performs a simultaneous update of one or more model nodes, using an adaptive Metropolis-Hastings algorithm with a multivariate normal proposal distribution CITE(RobertsAndSahu1997), implementing the adaptation routine given in CITE(ShabyAndWells2011).  This sampler may be applied to any set of continuous-valued model nodes, to any single continuous-valued multivariate model node, or to any combination thereof.
+The \cd{RW\_block} sampler performs a simultaneous update of one or more model nodes, using an adaptive Metropolis-Hastings algorithm with a multivariate normal proposal distribution \citep{Roberts_Sahu_1997}, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler may be applied to any set of continuous-valued model nodes, to any single continuous-valued multivariate model node, or to any combination thereof.
 
 The \cd{RW\_block} sampler can be customized using the \cd{control} list argument to set the initial proposal covariance, and the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
 
@@ -351,7 +351,7 @@ mcmcspec$addSampler(target = c('a', 'b', 'c'), type = 'RW_block')
 @
 
 \subsection{\cd{slice} sampler}
-The \cd{slice} sampler performs slice sampling of the scalar node to which it is applied CITE(Neal2003).  This sampler can operate on either continuous-valued or discrete-valued scalar nodes.  The slice sampler performs a ``stepping out'' procedure, in which the slice is iteratively expanded to the left or right by an amount \cd{sliceWidth}.  This sampler is optionally adaptive, whereby the value of \cd{sliceWidth} is adapted towards the observed absolute difference between successive samples.
+The \cd{slice} sampler performs slice sampling of the scalar node to which it is applied \citep{Neal2003}.  This sampler can operate on either continuous-valued or discrete-valued scalar nodes.  The slice sampler performs a ``stepping out'' procedure, in which the slice is iteratively expanded to the left or right by an amount \cd{sliceWidth}.  This sampler is optionally adaptive, whereby the value of \cd{sliceWidth} is adapted towards the observed absolute difference between successive samples.
 
 The \cd{slice} sampler can be customized using the \cd{control} list argument to set the initial slice width, and the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
 
@@ -378,7 +378,7 @@ The requirement that all stochastic descendents of the \cd{target} nodes must th
 
 \subsection{Customized log likelihood evaluations using the \cd{RW\_llFunction} sampler}
  
-Sometimes it is useful to control the log likelihood calculations used for an MCMC updater instead of simply using the model.  For example, one could use a sampler with a log likelihood that analytically (or numerically) integrates over latent model nodes.  Or one could use a sampler with a log likelihood that comes from a stochastic approximation such as a particle filter (see below), allowing composition of a particle MCMC (PMCMC) algorithm CITE(Andrieu2010).  The \cd{RW\_llFunction} sampler handles this by using a Metropolis-Hastings algorithm with a normal proposal distribution and a user-provided log-likelihood function.  To allow compiled execution, the log-likelihood function must be provided as a specialized instance of a \cd{nimbleFunction}.  The log-likelihood function may use the same model as the MCMC as a setup argument (as does the example below), but if so the state of the model should be unchanged during execution of the function (or you must understand the implications otherwise).
+Sometimes it is useful to control the log likelihood calculations used for an MCMC updater instead of simply using the model.  For example, one could use a sampler with a log likelihood that analytically (or numerically) integrates over latent model nodes.  Or one could use a sampler with a log likelihood that comes from a stochastic approximation such as a particle filter (see below), allowing composition of a particle MCMC (PMCMC) algorithm \citep{Andrieu_Doucet_Holenstein_2010}.  The \cd{RW\_llFunction} sampler handles this by using a Metropolis-Hastings algorithm with a normal proposal distribution and a user-provided log-likelihood function.  To allow compiled execution, the log-likelihood function must be provided as a specialized instance of a \cd{nimbleFunction}.  The log-likelihood function may use the same model as the MCMC as a setup argument (as does the example below), but if so the state of the model should be unchanged during execution of the function (or you must understand the implications otherwise).
 
 The \cd{RW\_llFunction} sampler can be customized using the \cd{control} list argument to set the initial proposal distribution scale and the adaptive properties for the Metropolis-Hastings sampling.  In addition, the \cd{control} list argument must contain a named \cd{llFunction} element, which is specialized nimbleFunction that accepts no arguments and returns a scalar double number.  The return value must be the total log-likelihood of all stochastic dependents of the \cd{target} nodes -- and, if \cd{includesTarget = TRUE}, of the target node(s) themselves --  or whatever surrogate is being used for the total log-likelihood.  This is a required \cd{control} list element with no default.  See \cd{help(samplers)} for details. 
 
@@ -551,7 +551,7 @@ mean(cSamplesMatrix_CL[, 'mu[1]'])
 
 \section{Comparing different MCMC engines with \cd{MCMCsuite}}
 
-NIMBLE's \cd{MCMCsuite} function automatically runs WinBUGS, OpenBUGS, JAGS, Stan, and/or multiple NIMBLE configurations on the same model.  Note that the BUGS code must be compatible with whichever BUGS packages are included, and separate Stan code must be provided.
+NIMBLE's \cd{MCMCsuite} function automatically runs WinBUGS, JAGS, Stan, and/or multiple NIMBLE configurations on the same model.  Note that the BUGS code must be compatible with whichever BUGS packages are included, and separate Stan code must be provided.
 
 We show how to use \cd{MCMCsuite} for the same \cd{litters} example used in \ref{sec:mcmc-example-litters}.  Subsequently, additional details of the \cd{MCMCsuite} are given.
 

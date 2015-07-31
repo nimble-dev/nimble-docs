@@ -26,14 +26,11 @@ OpenBUGS and JAGS.  These systems all provide automatically-generated
 MCMC algorithms, but we have adopted only the language for describing
 models, not their systems for generating MCMCs.  We adopted BUGS
 because it has been so successful, with over 30,000 users by the time
-they stopped counting \footnote{D. Lunn, D. Spiegelhalter, A. Thomas,
-  and N. Best. 2009. The BUGS Project: Evolution, Critique and Future
-  Directions. Statistics in Medicine 28 (25):
-  3049–67. doi:10.1002/sim.3680.}, and with many papers and books that
-provide BUGS code as a way to document their statistical models. We
-provide a brief introduction to BUGS later, but we refer you to the
-OpenBUGS or JAGS websites for more material.  For the most part, if
-you have BUGS code, you can try NIMBLE.
+they stopped counting \citep{Lunn_Spiegelhalter_Thomas_Best_2009}.
+Many papers and books provide BUGS code as a way to document their
+statistical models. We provide a brief introduction to BUGS later, but
+we refer you to the WinBUGS, OpenBUGS or JAGS websites for more material.  For
+the most part, if you have BUGS code, you can try NIMBLE.
 
   NIMBLE takes BUGS code and does several things with it:
   \begin{enumerate}
@@ -141,6 +138,8 @@ In v\ver, the NIMBLE algorithm library includes:
   calculate, or retrieve the summed log probability (density) of many
  sets of values for
   arbitrary sets of nodes.
+\item A \cd{nimbleFunction} that provides a basic particle filter for
+  a state-space model.
 \item A basic Monte Carlo Expectation Maximization (MCEM) algorithm.
   MCEM has its issues as an algorithm, such as potentially slow convergence to the maximum
   likelihood (i.e., empirical Bayes in this context) estimates, but we chose it as a

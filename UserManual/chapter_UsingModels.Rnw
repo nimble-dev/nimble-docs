@@ -119,7 +119,7 @@ example, to get the spaces correctly inserted into ``X[1,1:5]'':
 <<multivariateExpandNodeNames>>=
 @ 
 
-For those inclined to R's less commonly used features, a nice trick is
+Alternatively, for those inclined to R's less commonly used features, a nice trick is
 to use its \cd{parse} and \cd{deparse} functions.  
 <<>>=
 deparse(parse(text = "X[1,1:5]", keep.source = FALSE)[[1]])

@@ -9,11 +9,11 @@ require(nimble)
 \chapter{Other algorithms provided by NIMBLE}
 \label{cha:algos-provided}
 
-In v\ver, the NIMBLE algorithm library is quite limited beyond MCMC.
+In v\ver, the NIMBLE algorithm library is fairly limited beyond MCMC.
 It includes some basic utilities for calculating and simulating sets
 of nodes.  And it includes a couple of algorithms, particle filters
-and MCEM, that illustrate the
-kind of programming with models that can be done with NIMBLE.
+and MCEM, that illustrate the kind of programming with models that can
+be done with NIMBLE.
 
 \section{Basic Utilities}
 \label{sec:basic-utils}
@@ -30,9 +30,9 @@ takes a model and a character string of node names
   as inputs. If \cd{nodes} is left blank, then all the nodes of the model
   are used. 
   
-  For \cd{simNodes}, the nodes provided are topologically sorted to 
+  For \cd{simNodes}, the nodes provided will be topologically sorted to 
   simulate in the correct order. For \cd{calcNodes} and \cd{getLogProb},
-  the nodes are sorted and dependent nodes are included.  Recall that
+  the nodes will be sorted and dependent nodes will be included.  Recall that
  the calculations must be up to date (from a calculate call) for \cd{getLogProb} 
   to return the values you are probably looking for.
   
@@ -126,7 +126,7 @@ cGetLogProbMany$run() #
 
   NIMBLE includes an algorithm for a basic particle filter to be used for approximating the
   log likelihood of a state-space model.  A particle filter can be built
-  around such a model by a call to \cd{buildPF}. This nimbleFunction requires
+  for such a model by a call to \cd{buildPF}. This nimbleFunction requires
   setup arguments \cd{model} and \cd{nodes}, which is a character vector specifying latent model nodes.
   The particle filter can be run by specifying the number of particles.
   
@@ -161,7 +161,8 @@ for(i in 2:t){
 	y[i] = rnorm(1, x[i] * c, 1)
 }
 ## build and compile the model
-rTimeModel <- nimbleModel(timeModelCode, constants = list(t = t), data = list(y = y) )
+rTimeModel <- nimbleModel(timeModelCode, constants = list(t = t), 
+                          data = list(y = y), check = FALSE )
 cTimeModel <- compileNimble(rTimeModel)
 
 #Build the particle filter
@@ -198,6 +199,31 @@ cPF$run(m = 5000)
   We will revisit the \nm{pump} example to illustrate the use of
   NIMBLE's MCEM algorithm.
   
+ %% newPump didn't exist so I'm creating it in some non-echoed code.
+<<echo=FALSE>>=
+pumpCode <- nimbleCode({ 
+  for (i in 1:N){
+      theta[i] ~ dgamma(alpha,beta)
+      lambda[i] <- theta[i]*t[i]
+      x[i] ~ dpois(lambda[i])
+  }
+  alpha ~ dexp(1.0)
+  beta ~ dgamma(0.1,1.0)
+})
+
+pumpConsts <- list(N = 10,
+                   t = c(94.3, 15.7, 62.9, 126, 5.24,
+                       31.4, 1.05, 1.05, 2.1, 10.5))
+
+pumpData <- list(x = c(5, 1, 5, 14, 3, 19, 1, 1, 4, 22))
+
+pumpInits <- list(alpha = 1, beta = 1,
+                  theta = rep(0.1, pumpConsts$N))
+
+newPump <- nimbleModel(code = pumpCode, name = 'pump', constants = pumpConsts,
+                    data = pumpData, inits = pumpInits)
+
+@   
   
 <<build-MCEM>>=
 pumpMCEM <- buildMCEM(model = newPump,
@@ -210,7 +236,7 @@ pumpMCEM <- buildMCEM(model = newPump,
 @
 
 %  When building the MCEM algorithm, the arguments supplied are \cd{model}, \cd{latentNodes}, \cd{burnIn}, \cd{mcmcControl}, \cd{boxConstraints} and \cd{buffer}. 
-  The first argument, \cd{model}, is a NIMBLE model, which can be
+  Here \cd{newPump} was created just like \cd{pump} in Section \ref{sec:creating-model}. The first argument, \cd{model}, is a NIMBLE model, which can be
   either the uncompiled or compiled version. At the moment, the model provided cannot be part of another MCMC sampler.
  
   The \cd{latentNodes} argument should indicate the nodes that will be
@@ -231,7 +257,7 @@ The  \cd{mcmcControl} argument will be passed to \cd{configureMCMC} to define th
  The MCEM algorithm allows for box constraints on the nodes that will
  be optimized, specified via the \cd{boxConstraints} argument. This is
  highly recommended for nodes that have zero density on parts of the
- real line\footnote{Currently NIMBLE is not able to determine this automatically.}
+ real line\footnote{Currently NIMBLE does not determine this automatically.}.
  Each constraint given should be a list
  in which the first element is the names of the nodes or variables
  that the constraint will be applied to and the second element is a
@@ -242,13 +268,12 @@ The  \cd{mcmcControl} argument will be passed to \cd{configureMCMC} to define th
  \cd{boxConstraints} by this amount.  This can help protect against
  non-finite values occuring when a parameter is on its boundary value. 
   
-    Once the MCEM has been built for the model of interest using \cd{buildMCEM}, it can be run as follows.
+Once the MCEM has been built for the model of interest using \cd{buildMCEM}, it can be run as follows.
 
- <<run-MCEM>>=
+<<run-MCEM>>=
 pumpMCEM(maxit = 20, m1 = 250, m2 = 500)
-
 pumpMCEM(maxit = 50, m1 = 1000, m2 = 5000)
-@
+@ 
 
 There are three run-time arguments:
  

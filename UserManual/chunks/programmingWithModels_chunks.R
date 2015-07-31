@@ -15,11 +15,11 @@ logProbCalcPlus <- nimbleFunction(
 code <- nimbleCode({
     a ~ dnorm(0, 1); b ~ dnorm(a, 1)
 })
-testModel <- nimbleModel(code)
+testModel <- nimbleModel(code, check = FALSE)
 logProbCalcPlusA <- logProbCalcPlus(testModel, 'a')
 testModel$b <- 1.5
-logProbCalcPlusA$run(0.25) ## should match
-                      ## dnorm(1.25,0,1,TRUE)+dnorm(1.5,1.25,1,TRUE) 
+logProbCalcPlusA$run(0.25) 
+dnorm(1.25,0,1,TRUE)+dnorm(1.5,1.25,1,TRUE) ## direct validation
 testModel$a  ## a was set to 0.5 + valueToAdd
 
 
@@ -115,8 +115,8 @@ propModelCode <- nimbleCode({
 })
 
 ##	Building R models
-targetModel = nimbleModel(targetModelCode)
-propModel = nimbleModel(propModelCode)
+targetModel = nimbleModel(targetModelCode, check = FALSE)
+propModel = nimbleModel(propModelCode, check = FALSE)
 cTargetModel = compileNimble(targetModel)
 cPropModel = compileNimble(propModel)
 
@@ -177,7 +177,7 @@ savedPropSamp_1['x',1]
 
 savedPropSamp_2['x',1]
 
-savedPropSamp_1['x',1] <- 0
+savedPropSamp_1['x',1] <- 0 ## example of directly setting a value
 savedPropSamp_2['x',1]
 
 ## Viewing the saved importance weights
@@ -223,6 +223,7 @@ usePreviousDemo <- nimbleFunction(
     },
     run = function(x = double(1)) {
         myMethodsDemo$sharedValue <<- initialSharedValue
+        print(myMethodsDemo$sharedValue)
         A <- myMethodsDemo$run(x[1:5])
         print(A)
         B <- myMethodsDemo$times(10)
@@ -320,6 +321,7 @@ myDataNF$Y
 myDataNF$Z
 myUseDataNF$myDataNF$X
 
+nimbleOptions(useMultiInterfaceForNestedNimbleFunctions = FALSE)
 CmyUseDataNF <- compileNimble(myUseDataNF)
 CmyUseDataNF$run(-100, -(100:110), matrix(-(101:120), nrow = 2))
 CmyDataNF <- CmyUseDataNF$myDataNF

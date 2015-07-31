@@ -255,7 +255,8 @@ don't need to include that because it is the default if no
 \cd{returnType} statement is included.
 \cd{nDim} is the number of dimensions, with 0 indicating scalar.
 \cd{sizes} is an optional vector of fixed, known sizes.  These
-should use R's \cd{c} function if \cd{nDim} $>1$.  If sizes
+should use R's \cd{c} function if \cd{nDim} $>1$ (e.g. \cd{double(2,
+  c(4, 5))} declareds a \cd{4-$\times$-5} matrix).  If sizes
 are omitted, they will either be set when the entire object is
 assigned to, or an explicit call to \cd{setSize} is needed.
 
@@ -292,18 +293,20 @@ difference in log probability (density) between the model and the
   
   The simplest way to pass values back and forth between models and
   modelValues inside of a nimbleFunction is with \cd{copy}, which
-  has the synonym \cd{nimCopy}. This takes arguments 
-  \begin{description}
-  \item[\cd{from}, \cd{to}] which can either be models or modelValues
-  \item[\cd{row}, \cd{rowTo}] which refers to the rows of a
-    modelValues object, if either \cd{from} or \cd{to} is a
-    modelValues. If \cd{rowTo} is omitted, it is assumed to be equal to \cd{row} if necessary.
-    \item[\cd{nodes}, \cd{nodesTo}] which is a vector of the names of the nodes
-      to be copied.  The node names will be expanded when variable names are provided.  If
-      \cd{nodesTo} is omitted it will be set equal to \cd{nodes}.
-  \end{description}
+  has the synonym \cd{nimCopy}. See \cd{help(nimCopy)} for argument details.
   
-  TODO: CHECK THESE USAGES
+  %% This takes arguments 
+  %% \begin{description}
+  %% \item[\cd{from}, \cd{to}] which can either be models or modelValues
+  %% \item[\cd{row}, \cd{rowTo}] which refers to the rows of a
+  %%   modelValues object, if either \cd{from} or \cd{to} is a
+  %%   modelValues. If \cd{rowTo} is omitted, it is assumed to be equal to \cd{row} if necessary.
+  %%   \item[\cd{nodes}, \cd{nodesTo}] which is a vector of the names of the nodes
+  %%     to be copied.  The node names will be expanded when variable names are provided.  If
+  %%     \cd{nodesTo} is omitted it will be set equal to \cd{nodes}.
+  %% \end{description}
+  
+%  TODO: CHECK THESE USAGES
   
   Alternatively, the values may be accessed via indexing of individual
   rows, using the notation \cd{mv[var, i]}, where \cd{mv} is a
@@ -312,7 +315,7 @@ difference in log probability (density) between the model and the
   \cd{resize} functions can be used as discussed previously. However the function
   \cd{as.matrix} does not work in \cd{run} code.
   
-  Here is a run-time function to use these modelValues:
+  Here is a \cd{run} function to use these modelValues:
   
 <<mv-run-time>>=
 @
@@ -348,7 +351,8 @@ C[6:10] <- mv[v, i][1:5, k] + B
 @ 
 if B is a vector or matrix.
 
-The NIMBLE language allows scalars, but BUGS models never have purely
+The NIMBLE language allows scalars, but models defined from BUGS code
+are never created as purely
 scalar nodes.  Instead, a single node such as defined by \cd{z $\sim$
   dnorm(0, 1)} is implemented as a vector of length 1, similar to R.
 When using z via \cd{model\$z} or \cd{model[[`z']]}, NIMBLE
@@ -468,7 +472,7 @@ Sizes can be queried as follows:
   \cd{length} function for vectors.  In other words, regardless of
   whether the number of dimensions is 1 or more, it returns a vector
   of the sizes.  Using \cd{dim} vs. \cd{nimDim} is a personal choice,
-  but if you use \cd{dim}, you use it you should keep in mind that
+  but if you use \cd{dim}, you should keep in mind that
   it behaves differently from R's \cd{dim}.
   \begin{itemize}
   \item A quirky limitation in v\ver: It not currently possible to
@@ -481,10 +485,10 @@ Sizes can be queried as follows:
 
 Sizes can be changed using:
 \begin{itemize}
-\item setSize(X, sizes)
+\item setSize(X, size1, size2, ...)
 \end{itemize}
-where \cd{sizes} is a scalar if \cd{X} is 1-dimensional and uses R's \cd{c()}
-function to provide a vector of sizes if X is more than 1-dimensional.
+where \cd{size1}, \cd{size2} etc. provide the sizes of as many
+dimensions as needed by \cd{X}.
 
 \subsection{Basic math and linear algebra}
 \label{sec:basic-math-linear}
@@ -598,14 +602,12 @@ be an effective way to program.  When a nimbleFunction needs to
 access a setup variable or method of another nimbleFunction, use
 \cd{\$}. 
 
-TODO: DEMONSTRATE DIRECT ACCESS to sharedValues in this demo
-
 <<owningMemberFunctions>>=
 @ 
 
 Note that the output from the \cd{print} calls in the compiled
 function match those from the uncompiled function when run in an R
-session.  It is not shown here because this document is created with
+session.  It may not be shown here because this document is created with
 \cd{knitr} and for some reason output printed from C++ does not make it into
 \cd{knitr} output.
 
@@ -640,7 +642,7 @@ Currently \cd{seq\_along} works only for nimbleFunctionLists.
 
 Virtual nimbleFunctions cannot define \cd{setup} values to be inherited.
 
-\subsection{print and stop}
+\subsection{\cd{print} and \cd{stop}}
 \label{sec:print}
 
 As demonstrated above, the NIMBLE function \cd{print}, or equivalently
@@ -649,15 +651,24 @@ NIMBLE function \cd{stop}, or equivalently \cd{nimStop}, throws
 control to R's error-handling system and can take one string
 (character) argument.
 
+\subsection{Checking for user interrupts}
+\label{sec:check-user-interr}
+
+When you write algorithms that will run for a long time in C++, you
+may want to explicitly check whether a user has tried to interrupt the
+execution (e.g. by pressing Control-C).  Simply include
+\cd{checkInterrupt()} in \cd{run} code to do so.  If there has been an
+interrupt, the process with stop and return control to R.
+
 \subsection{Character objects}
 
-NIMBLE provides limited uses of character objects in \cd{code}.
+NIMBLE provides limited uses of character objects in \cd{run} code.
 Character vectors created in \cd{setup} code will be available in
 \cd{run} code, but the only thing you can really do with them is
 include them in a \cd{print} or \cd{stop} statement.  
 
 Note that character vectors of model node and variable names are
-completely different.  For example, in \cd{model[[node]]}, \cd{node}
+processed during compilation.  For example, in \cd{model[[node]]}, \cd{node}
 may be a character object, and the NIMBLE compiler processes this
 differently than \cd{print(``The node name was '', node)}.  In the
 former, the NIMBLE compiler sets up a C++ pointer directly to the
@@ -702,18 +713,31 @@ can use nimbleFunctions to achieve a similar effect.  To do so, one
 can define setup code with whatever variables are wanted and ensure
 they are compiled using \cd{setupOutputs}.  Here is an example:
 
-TODO: FIX THIS EXAMPLE
+<<dataStructures>>=
+@ 
 
-%<<dataStructures>>=
-%@ 
-
-You'll notice that 
+You'll notice that:
 \begin{itemize}
-\item after execution of the compiled function, access to
-the \cd{X}, \cd{Y}, and \cd{Z} is not yet quite the same as for the
-uncompiled case.  
+\item After execution of the compiled function, access to
+the \cd{X}, \cd{Y}, and \cd{Z} is the same as for the
+uncompiled case. This occurs because \cd{CmyUseDataNF} is an interface
+to the compiled version of \cd{myUseDataNF}, and it provides access to
+member objects and functions.  In this case, one member object is
+\cd{myDataNF}, which is an interface to the compiled version of
+\cd{myUseDataNF\$myDataNF}, which in turn provides access to \cd{X},
+\cd{Y}, and \cd{Z}.  To reduce memory use, NIMBLE defaults to
+\textit{not} providing full interfaces to nested nimbleFunctions like
+\cd{myUseDataNF\$myDataNF}.  In this example we made it provide a full
+interfaces by setting the \cd{useMultiInterfaceForNestedNimbleFunctions} option via \cd{nimbleOptions} as shown.  If
+we had left that option TRUE (its
+default value), we could still get to the values of interest using
+
+<<eval=FALSE>>=
+valueInCompiledNimbleFunction(CmyDataNF, 'X')
+@ 
+
 \item We need to take care that at the time of compilation, the
-  \cd{X}, \cd{Y} and \cd{Z} values contains doubles via
+  \cd{X}, \cd{Y} and \cd{Z} values contain doubles via
   \cd{as.numeric} so that they are not compiled as integer objects.
 \item The \cd{myDataNF} could be created in the setup code.  We just
   provided it as a setup argument to illustrate that option.
@@ -774,23 +798,41 @@ In a future release, we will also extend the
 alternative parameterizations given in Section \ref{subsec:dists-and-functions}  to \cd{nimbleFunctions}.
 
 
+\section{Some options for reducing memory usage}
+
+NIMBLE can make a lot of objects in its processing, and some of them
+use R features like reference classes that are not light in memory
+usage.  We have noticed that building large models can use lots of
+memory.  To help alleviate this, we provide two options, which can be
+controlled via \cd{nimbleOptions}.  As noted above, the option
+\cd{useMultiInterfaceForNestedNimbleFunctions} defaults to TRUE, which
+means NIMBLE will not build full interfaces to compiled
+nimbleFunctions that ony appear within other nimbleFunctions.  If you
+want access to all such nimbleFunctionsm use
+\cd{useMultiInterfaceForNestedNimbleFunctions = FALSE}.  The option
+\cd{clearNimbleFunctionsAfterCompiling} is more drastic, and it is
+experimental, so ``buyer beware''.  This will clear much of the
+contents of an uncompiled nimbleFunction object after it has been
+compiled in an effort to free some memory.  We expect to be able to
+keep making NIMBLE more efficient -- faster execution and lower memory
+use -- in the future.
 
 
-\subsection{rankSample}
-\label{sec:ranksample}
+%% \subsection{rankSample}
+%% \label{sec:ranksample}
 
-TODO:  Need to write.
+%% TODO:  Need to write.
 
-\subsection{DSL vectors and arrays}
-\label{sec:vectors-and-arrays}
+%% \subsection{DSL vectors and arrays}
+%% \label{sec:vectors-and-arrays}
 
-TODO: FILL THIS IN
+%% TODO: FILL THIS IN
 
-DSL functions: nimVector(), nimArray().
+%% DSL functions: nimVector(), nimArray().
 
-Can use in run function:
+%% Can use in run function:
 
-nimVector(value, length)
+%% nimVector(value, length)
 
-nimArray(value, nrow, ncol)
+%% nimArray(value, nrow, ncol)
 
