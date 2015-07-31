@@ -12,7 +12,8 @@
 \usepackage{longtable}
 \usepackage{enumitem}
 \usepackage{color}
-\setlist{nolistsep}
+%\setlist{nosep}
+\setlist{noitemsep}
 
 \geometry{tmargin = 1in, bmargin = 1in, lmargin = 1in, rmargin = 1in}
 

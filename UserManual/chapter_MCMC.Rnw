@@ -20,21 +20,21 @@ require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
 
 Using the MCMC engine provided with NIMBLE consists of several steps:
 \begin{itemize}
-\item Building an MCMC configuration and an MCMC function from it.  These can be done in one step, but when a user wants to customize the MCMC, they can be done by: 
+\item Building an MCMC function specialized to a particular model.  This can be done in one step, but when a user wants to customize the MCMC, it can be done in several steps: 
 \begin{itemize}
-\item Creating a configuration for the MCMC algorithm for a specific model
-\item Customizing the choices of samplers or ordering, including new samplers 
-\item Building the MCMC function from the configuration
+\item Creating an MCMC configuration consisting of a set of sampler choices;
+\item Customizing the sampler choices in the configuration, which may include providing new samplers written as nimbleFunctions; and 
+\item Building the MCMC function from the configuration.
 \end{itemize}
-\item Compiling and running the MCMC function
-\item Extracting the posterior samples
+\item Compiling and running the MCMC function.
+\item Extracting the posterior samples.
 \end{itemize}
 
 This chapter also discusses:
 
 \begin{itemize}
-\item Sampling algorithms provided with NIMBLE
-\item Default sampler assignments in an MCMC configuration
+\item Sampling algorithms provided with NIMBLE.
+\item Default sampler assignments in an MCMC configuration.
 \item Writing new samplers that conform to NIMBLE's MCMC system.
 \item Using \cd{MCMCsuite} to automatically run WinBUGS, OpenBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model.
 \item Using NIMBLE's algorithm to search blocks of nodes for efficient joint (block) sampling.
@@ -103,7 +103,7 @@ The default configuration may be replaced by that generated from an automated pa
 autoBlockSpec <- configureMCMC(Rmodel, autoBlock = TRUE)
 @
 
-In this usage, the additional control argument \cd{autoIt} may also be provided to indicate the number of MCMC samples to be used in the automated blocking procedure (default 20,000).
+In this usage, the additional control argument \cd{autoIt} may also be provided to indicate the number of MCMC samples to be used in the automated blocking procedure (default 20,000).  Note that this function compiles and runs MCMCs, progressively exploring different sampler assignments, so it takes some time and generates some output.
 
 
 
@@ -315,7 +315,7 @@ code <- nimbleCode({
 \subsection{Terminal node \cd{end} sampler}
 The \cd{end} sampler is only appropriate for use on terminal stochastic nodes (that is, those having no stochastic dependencies).  Note that such nodes play no role in inference but have often been included in BUGS models to accomplish posterior predictive checks.  NIMBLE allows posterior predictive values to be simulated independently of running MCMC, for example by writing a \cd{nimbleFunction} to do so.  This means that in many cases where terminal stochastic nodes have been included in BUGS models, they are not needed when using NIMBLE.
 
-The \cd{end} sampler functions by calling the \cd{simulate} method of relevant node, then updating model probabilities and deterministic dependent nodes.  The application of an \cd{end} sampler to any non-terminal node will result in invalid posterior inferences.  The \cd{end} sampler will automatically be assigned to all terminal, non-data stochastic nodes in a model by the default MCMC configuration, so it is uncommon to manually assign this sampler.  The \cd{end} sampler accepts no control list arguments.
+The \cd{end} sampler functions by calling the \cd{simulate} method of the relevant node, then updating model probabilities and deterministic dependent nodes.  The \cd{end} sampler will automatically be assigned to all terminal, non-data stochastic nodes in a model by the default MCMC configuration, so it is uncommon to manually assign this sampler.  The \cd{end} sampler accepts no control list arguments.
 
 Example usage:
 <<terminal-sampler, eval=FALSE>>=
@@ -420,7 +420,7 @@ Gibbs samplers can be provided for nodes in conjugate relationships, as specifie
 
 A model may be checked for conjugate relationships using \cd{model\$checkConjugacy}.  This returns a named list describing all conjugate nodes.  \cd{checkConjugacy} can also accept a character vector argument specifying a subset of model node names to check for conjugacy.
 
-The current release of NIMBLE supports conjugate sampling of the conjugate relationships listed in Table~\ref{table:conjugaciesSupported}.
+The current release of NIMBLE supports conjugate sampling of the relationships listed in Table~\ref{table:conjugaciesSupported}.
 
 \input{conjugacyTable.tex}
 
@@ -735,7 +735,7 @@ Full details of the arguments and customization of the MCMC Suite is available t
 
 \subsection{Custom sampler functions}
 
-The following code illustrates how a NIMBLE developer would concisely implement, and instantiate a Metropolis-Hastings random walk sampler with fixed proposal standard deviation.  The comments accompanying the code explain the necessary characteristics of all sampler functions.
+The following code illustrates how a NIMBLE developer would implement and use a Metropolis-Hastings random walk sampler with fixed proposal standard deviation.  The comments accompanying the code explain the necessary characteristics of all sampler functions.
 
 <<custom-sampler, eval=FALSE>>=
 ## the name of this sampler function, for the purposes of 

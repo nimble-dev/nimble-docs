@@ -21,25 +21,26 @@ introduce more about NIMBLE's components.
 \section{NIMBLE adopts and extends the BUGS language for specifying models}
 
 We adopted the BUGS language, and we have extended it to make it more
-flexible. The BUGS language originally appeared in WinBUGS, then in
+flexible. The BUGS language became widely used in WinBUGS, then in
 OpenBUGS and JAGS.  These systems all provide automatically-generated
 MCMC algorithms, but we have adopted only the language for describing
-models, not their systems for generating MCMCs. In fact, if you want
-to use MCMCs run in BUGS, JAGS, or other systems in combination with NIMBLE's other algorithms,
-you can\footnote{And you will be able to do so more thoroughly in the future.}.  We adopted BUGS
-because it has been so successful, with over 30,000 registered users
-by the time they stopped counting, and
-with many papers and books that provide BUGS code as a way to document
-their statistical models. To learn the basics of BUGS, we refer you to
-the OpenBUGS or JAGS websites.  For the most part, if you have BUGS code, you can try
-NIMBLE.
+models, not their systems for generating MCMCs.  We adopted BUGS
+because it has been so successful, with over 30,000 users by the time
+they stopped counting \footnote{D. Lunn, D. Spiegelhalter, A. Thomas,
+  and N. Best. 2009. The BUGS Project: Evolution, Critique and Future
+  Directions. Statistics in Medicine 28 (25):
+  3049–67. doi:10.1002/sim.3680.}, and with many papers and books that
+provide BUGS code as a way to document their statistical models. We
+provide a brief introduction to BUGS later, but we refer you to the
+OpenBUGS or JAGS websites for more material.  For the most part, if
+you have BUGS code, you can try NIMBLE.
 
   NIMBLE takes BUGS code and does several things with it:
   \begin{enumerate}
   \item NIMBLE extracts all the declarations in the BUGS code to
     create a \nm{model definition}.  This includes a directed acyclic graph (DAG)
     representing the model and functions that can 
-    inspect the graph and model relationships.  Usually you'll ignore the \nm{model definition}
+   query model relationships from the graph.  Usually you'll ignore the \nm{model definition}
     and let NIMBLE's default options take you directly to the next step.
   \item From the \nm{model definition}, NIMBLE builds a working model
     in R.  This can be used to manipulate variables and operate the
@@ -89,9 +90,8 @@ Programming in NIMBLE involves a fundamental distinction between:
 once, at the beginning, such as inspecting the model; and
 \item the steps that need to happen each time a function is called, such as MCMC iterations.
 \end{enumerate}
-Programming in NIMBLE allows, and indeed requires, these steps to be
-given separately.  When one writes a \cd{nimbleFunction}, each of
-these parts can be provided.  The former, if needed, are given in a \nm{setup
+When one writes a \cd{nimbleFunction}, each of
+these parts can be provided separately.  The former, if needed, are given in a \nm{setup
   function}, and they are executed directly in R, allowing any feature
 of R to be used.  The latter are in one or more \nm{run-time functions}, and they
 are turned into C++.  Run-time code is written in the NIMBLE language,
@@ -106,11 +106,12 @@ with a BUGS model:
   which you can use with an R-model or a C-model.
 \item NIMBLE generates C++ code for the run-time function(s), compiles
   it, and loads it back into R with an interface nearly identical to
-  the R version of the \cd{nimbleFunction}.   As for models, we refer
+  the R version of the \cd{nimbleFunction}.   As with models, we refer
   to the uncompiled and compiled versions as R-nimbleFunctions and
   C-nimbleFunctions, respectively.   In v\ver, the behavior
   of \cd{nimbleFunction}s is usually very similar, but not identical,
-  between the two versions.
+  between the two versions.  The primary purpose of uncompiled
+  execution is to facilitate debugging.
 \end{enumerate}
 
   More about writing algorithms is in Chapter \ref{cha:progr-with-models}.
@@ -118,7 +119,7 @@ with a BUGS model:
 \section{The NIMBLE algorithm library}
 \label{sec:nimble-algor-libr}
 
-In v\ver, the NIMBLE algorithm library is fairly limited.  It includes:
+In v\ver, the NIMBLE algorithm library includes:
 
 \begin{enumerate}
 \item MCMC with samplers including conjugate, slice, adaptive random

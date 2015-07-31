@@ -136,12 +136,16 @@ On Windows, you should download and install \file{Rtools.exe} available from
 executable corresponding to your version of R.  (We strongly recommend
 using the most recent version of R, currently 3.2.1, and hence
 \file{Rtools33.exe}).  This installer leads you through several
-``pages''. You can accept all of the defaults. It is essential the
-checkbox for the ``R 2.15+ toolchain'' (page 4) is enabled in order to
-have \nm{gcc}/\nm{g++}, \nm{make}, etc. installed.  Also, we recommend that you check
-the PATH checkbox (page 5).  This will ensure that R can locate these
-commands.
+``pages''.  We think you can accept the defaults with one exception: check the PATH checkbox (page 5) so
+that the installer will add the location of the C++ compiler to your
+system's PATH, ensuring that R can find them.  After you click ``Next'', you will get a page with a
+window for customizing the new PATH variable.  You shouldn't need to
+do this, so you can simply click ``Next'' again.
 
+We note that it is essential the
+checkbox for the ``R 2.15+ toolchain'' (page 4) be enabled in order to
+have \nm{gcc}/\nm{g++}, \nm{make}, etc. installed.  This should be
+checked by default.
 
 Advanced users may wish to change their default compilers. This can be done
 by editing the \nm{Makevars} file, see Writing R Externsions: 1.2.1. 

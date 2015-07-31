@@ -73,7 +73,7 @@ CpumpMCMC$run(niter)
 
 samples <- as.matrix(CpumpMCMC$mvSamples)
 
-par(mfrow = c(1, 4), mai = c(.5, .5, .1, .2))
+par(mfrow = c(1, 4), mai = c(.6, .5, .1, .2))
 plot(samples[ , 'alpha'], type = 'l', xlab = 'iteration',
      ylab = expression(alpha))
 plot(samples[ , 'beta'], type = 'l', xlab = 'iteration',
@@ -125,7 +125,7 @@ pumpMCEM <- buildMCEM(model = pump2, latentNodes = 'theta[1:10]',
 pumpMLE <- pumpMCEM()
 # Note: buildMCEM returns an R function that contains a
 # nimbleFunction rather than a nimble function. That is why
-# pumpMCEM() is used instead of pumpMCEM$run().
+# pumpMCEM() is used instead of pumpMCEM\$run().
 
 pumpMLE
 
