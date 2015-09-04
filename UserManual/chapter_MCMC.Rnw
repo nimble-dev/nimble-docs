@@ -36,7 +36,7 @@ This chapter also discusses:
 \item Sampling algorithms provided with NIMBLE.
 \item Default sampler assignments in an MCMC configuration.
 \item Writing new samplers that conform to NIMBLE's MCMC system.
-\item Using \cd{MCMCsuite} to automatically run WinBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model.\footnote{We haven't added OpenBUGS support yet.}
+\item Using \cd{MCMCsuite} to automatically run WinBUGS, OpenBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model.
 \item Using NIMBLE's algorithm to search blocks of nodes for efficient joint (block) sampling.
 \end{itemize}
 
@@ -364,6 +364,17 @@ mcmcspec$addSampler(target = 'y[2]', type = 'slice',
      control = list(adaptive = TRUE, sliceMaxSteps = 1))
 @
 
+\subsection{Elliptical slice sampling: \cd{ess} sampler}
+The \cd{ess} sampler performs elliptical slice sampling of a single node, which must follow a multivariate normal distribution \citep{2010arXiv1001.0175M}.  The algorithm is an extension of slice sampling \citep{Neal2003}, generalized to the multivariate normal context.  An auxilliary variable is used to identify points on an ellipse (which passes through the current node value) as candidate samples, which are accepted contingent upon a likelihood evaluation at that point.  This algorithm requires no tuning parameters and therefore no period of adaptation, and may result in very efficient sampling from multivariate Gaussian distributions.
+
+The \cd{ess} sampler accepts no control list arguments.  See \cd{help(samplers)} for details.
+
+Example usage:
+<<ess-sampler, eval=FALSE>>=
+## assuming node 'x[1:10]' follows a multivariate normal distribution
+mcmcspec$addSampler(target = 'x[1:10]', type = 'ess')
+@
+
 \subsection{Hierarchical \cd{crossLevel} sampler}
 This sampler is constructed to perform simultaneous updates across two levels of stochastic dependence in the model structure.  This is possible when all stochastic descendents of node(s) at one level have conjugate relationships with their own stochastic descendents.  In this situation, a Metropolis-Hastings algorithm may be used, in which a multivariate normal proposal distribution is used for the higher-level nodes, and the corresponding proposals for the lower-level nodes undergo Gibbs (conjugate) sampling.  The joint proposal is either accepted or rejected for all nodes involved based upon the Metropolis-Hastings ratio.
 
@@ -437,6 +448,7 @@ buildConjugateSamplerFunctions()
 
 Here is a detailed example of specifying, building, compiling, and running two MCMC algorithms.  We use the \cd{litters} example from the BUGS examples.
 
+%%<<MCMC-litters, eval=FALSE>>=
 <<MCMC-litters>>=
 
 ###############################
@@ -551,7 +563,7 @@ mean(cSamplesMatrix_CL[, 'mu[1]'])
 
 \section{Comparing different MCMC engines with \cd{MCMCsuite}}
 
-NIMBLE's \cd{MCMCsuite} function automatically runs WinBUGS, JAGS, Stan, and/or multiple NIMBLE configurations on the same model.  Note that the BUGS code must be compatible with whichever BUGS packages are included, and separate Stan code must be provided.
+NIMBLE's \cd{MCMCsuite} function automatically runs WinBUGS, OpenBUGS, JAGS, Stan, and/or multiple NIMBLE configurations on the same model.  Note that the BUGS code must be compatible with whichever BUGS packages are included, and separate Stan code must be provided.
 
 We show how to use \cd{MCMCsuite} for the same \cd{litters} example used in \ref{sec:mcmc-example-litters}.  Subsequently, additional details of the \cd{MCMCsuite} are given.
 
@@ -573,7 +585,7 @@ output <- MCMCsuite(
     data = data,
     inits = inits,
     monitors = 'mu',
-    MCMCs = c('bugs', 'jags', 'nimble', 'nimble_slice', 'nimble_CL'),
+    MCMCs = c('winbugs', 'jags', 'nimble', 'nimble_slice', 'nimble_CL'),
     MCMCdefs = list(
         nimble_CL = quote({
             mcmcspec <- configureMCMC(Rmodel, nodes = NULL)
@@ -587,7 +599,7 @@ output <- MCMCsuite(
 
 \subsection{MCMC Suite outputs}
 
-Executing the MCMC Suite returns a named list containing three elements, as well as generates and saves traceplots and posterior density plots.  The elements of this return list object are:
+Executing the MCMC Suite returns a named list containing various outputs, as well as generates and saves traceplots and posterior density plots.  The default elements of this return list object are:
 
 \subsubsection{Samples}
 
@@ -601,7 +613,7 @@ The MCMC suite output contains a variety of pre-computed summary statistics, whi
 output$summary
 # , , mu[1]
 #                   mean    median         sd  quant025  quant975
-# bugs         0.8795868 0.8889000 0.04349589 0.7886775 0.9205025
+# winbugs      0.8795868 0.8889000 0.04349589 0.7886775 0.9205025
 # jags         0.8872778 0.8911989 0.02911325 0.8287991 0.9335317
 # nimble       0.8562232 0.8983763 0.12501395 0.4071524 0.9299781
 # nimble_slice 0.8975283 0.9000483 0.02350363 0.8451926 0.9367147
@@ -609,7 +621,7 @@ output$summary
 # 
 # , , mu[2]
 #                   mean    median         sd  quant025  quant975
-# bugs         0.7626974 0.7678000 0.04569705 0.6745975 0.8296025
+# winbugs      0.7626974 0.7678000 0.04569705 0.6745975 0.8296025
 # jags         0.7635539 0.7646913 0.03803033 0.6824946 0.8313314
 # nimble       0.7179094 0.7246935 0.06061116 0.6058669 0.7970130
 # nimble_slice 0.7665562 0.7683093 0.04051432 0.6641368 0.8350716
@@ -618,7 +630,13 @@ output$summary
 
 \subsubsection{Timing}
 
-\cd{timing} contains a named vector of the runtime for each MCMC algorithm, the total compile time for the NIMBLE model and MCMC algorithms, and the compile time for Stan (if specified).  All run- and compile- times are given in minutes.
+\cd{timing} contains a named vector of the runtime for each MCMC algorithm, the total compile time for the NIMBLE model and MCMC algorithms, and the compile time for Stan (if specified).  All run- and compile- times are given in seconds.
+
+\subsubsection{Efficiency}
+
+Using the MCMC Suite option \cd{calculateEfficiency = TRUE} will also provide several measures of MCMC sampling efficiency.  Additional summary statistics are provided for each node: the total number of samples collected (\nm{n}), the effective sample size resulting from these samples (\nm{ess}), and the effective sample size per second of algorithm runtime (\nm{efficiency}).
+
+In addition to these per-node measures of efficiency, an additional return list element is also provided.  This element, \nm{efficiency}, is itself a named list containing two elements: \nm{min} and \nm{mean}, which contain the minimal and mean efficiencies (effective sample size per second of algorithm runtime) across all monitored nodes for each algorithm.
 
 \subsubsection{Plots}
 
@@ -631,7 +649,7 @@ Note that the generation of MCMC Suite plots \emph{in Rstudio} may result in sev
 An MCMC Suite is customizable in terms of all of the following: \\
 
 \begin{itemize}
-\item MCMC algorithms to execute, optionally including WinBUGS, JAGS, Stan, and various flavours of NIMBLE's MCMC
+\item MCMC algorithms to execute, optionally including WinBUGS, OpenBUGS, JAGS, Stan, and various flavours of NIMBLE's MCMC
 \item Custom-specified NIMBLE MCMC algorithms
 \item Automated parameter blocking for efficienct MCMC sampling
 \item Nodes to monitor
@@ -639,6 +657,7 @@ An MCMC Suite is customizable in terms of all of the following: \\
 \item Thinning interval
 \item Burn-in
 \item Summary statistics to report
+\item Calculating sampling efficiency (effective sample size per second of algorithm runtime)
 \item Generating and saving plots
 \end{itemize}
 \ \\  % to fix spacing 
@@ -646,7 +665,8 @@ An MCMC Suite is customizable in terms of all of the following: \\
 NIMBLE MCMC algorithms may be specified using the \cd{MCMCs} argument to \cd{MCMCsuite}, which is character vector defining the MCMC algorithms to run.  The \cd{MCMCs} argument may include any of the following algorithms: \\
 
 \begin{description}
-\item[\cd{`bugs'}] WinBUGS MCMC algorithm 
+\item[\cd{`winbugs'}] WinBUGS MCMC algorithm 
+\item[\cd{`openbugs'}] OpenBUGS MCMC algorithm 
 \item[\cd{`jags'}] JAGS MCMC algorithm 
 \item[\cd{`Stan'}] Stan MCMC algorithm 
 \item[\cd{`nimble'}] NIMBLE MCMC using the default configuration 
