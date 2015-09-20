@@ -31,6 +31,7 @@
 \begin{document}
 %\SweaveOpts{concordance=TRUE}
 %\SweaveOpts{concordance=TRUE}
+%\SweaveOpts{concordance=TRUE}
 
 <<setup, include=FALSE, cache=FALSE>>=
 ## replace.assign replaces "=" with "<-"; 
@@ -45,7 +46,7 @@ options(replace.assign=TRUE, width=65)
 \date{Version \ver}
 \maketitle
 
-<<chunk0, echo = FALSE>>=
+<<chunk0, echo = FALSE, warning=FALSE>>=
 ## source the code
 require(nimble, warn.conflicts = FALSE, quietly = TRUE)
 #source(file.path('..', '..', 'examples', 'demos', 'loadAllCode.R'))

@@ -443,6 +443,9 @@ nimbleOptions(verifyConjugatePosteriors = TRUE)
 buildConjugateSamplerFunctions()
 @
 
+\subsection{Particle MCMC sampler}
+For state space models, a particle MCMC sampler can be specified for top-level parameters.  This sampler is described in greater detail in \ref{sec:particle-mcmc}
+
 \section{Detailed MCMC example: \cd{litters}}
 \label{sec:mcmc-example-litters}
 
