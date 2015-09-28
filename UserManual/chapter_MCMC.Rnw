@@ -636,7 +636,7 @@ output$summary
 
 Using the MCMC Suite option \cd{calculateEfficiency = TRUE} will also provide several measures of MCMC sampling efficiency.  Additional summary statistics are provided for each node: the total number of samples collected (\nm{n}), the effective sample size resulting from these samples (\nm{ess}), and the effective sample size per second of algorithm runtime (\nm{efficiency}).
 
-In addition to these per-node measures of efficiency, an additional return list element is also provided.  This element, \nm{efficiency}, is itself a named list containing two elements: \nm{min} and \nm{mean}, which contain the minimal and mean efficiencies (effective sample size per second of algorithm runtime) across all monitored nodes for each algorithm.
+In addition to these node-by-node measures of efficiency, an additional return list element is also provided.  This element, \nm{efficiency}, is itself a named list containing two elements: \nm{min} and \nm{mean}, which contain the minimal and mean efficiencies (effective sample size per second of algorithm runtime) across all monitored nodes, separately for each algorithm.
 
 \subsubsection{Plots}
 
@@ -670,6 +670,7 @@ NIMBLE MCMC algorithms may be specified using the \cd{MCMCs} argument to \cd{MCM
 \item[\cd{`jags'}] JAGS MCMC algorithm 
 \item[\cd{`Stan'}] Stan MCMC algorithm 
 \item[\cd{`nimble'}] NIMBLE MCMC using the default configuration 
+\item[\cd{`nimble\_noConj'}] NIMBLE MCMC using the default configuration with \cd{useConjugacy = FALSE} 
 \item[\cd{`nimble\_RW'}] NIMBLE MCMC using the default configuration with \cd{onlyRW = TRUE}
 \item[\cd{`nimble\_slice'}] NIMBLE MCMC using the default configuration with \cd{onlySlice= TRUE}
 \item[\cd{`autoBlock'}] NIMBLE MCMC algorithm with block sampling of dynamically determined parameter groups attempting to maximize sampling efficiency 
