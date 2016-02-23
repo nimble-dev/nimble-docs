@@ -232,7 +232,8 @@ the NIMBLE language in more detail.
   functions for \cd{calculate}, \cd{calculateDiff}, \cd{simulate}, and
   \cd{getLogProb}.  There are also member functions for obtaining
   the value of each parameter or alternative parameters (e.g. rate =
-  1/scale).  
+  1/scale) and a more generic way to do so using the function
+  \cd{getParam}.  
 
 \end{itemize}
 
@@ -259,6 +260,44 @@ should use R's \cd{c} function if \cd{nDim} $>1$ (e.g. \cd{double(2,
   c(4, 5))} declareds a \cd{4-$\times$-5} matrix).  If sizes
 are omitted, they will either be set when the entire object is
 assigned to, or an explicit call to \cd{setSize} is needed.
+
+\subsection{Declaring local variables}
+\label{sec:decl-local-vars}
+
+Generally one does not need to declare local variables.  They will be
+created from the code, and their types will be determined.  For
+example, \cd{x <- A \%*\% B} will create \cd{x} as a matrix.  However,
+if a variable is first constructed by assignments that do not make
+clear its type and size, these must be declared before using it.  For
+example, the code
+
+<<exampleDeclare, eval=FALSE>>=
+for(i in 1:10)
+    for(j in 1:5)
+    x[i, j] <- foo(y[i, j])
+@ 
+
+represents the creation of \cd{x} by construction.  This works in R,
+but not in compiled nimbleFunctions.  For a compiled nimbleFunction,
+prior to the above block of code, one
+would need to declare \cd{x} by either 
+
+<<exampleDeclare2, eval=FALSE>>=
+declare(x, double(2, 10, 5))
+@ 
+ 
+or
+
+<<exampleDeclare2, eval=FALSE>>=
+declare(x, double(2))
+setSize(x, 10, 5)
+@ 
+
+Each of these declares \cd{x} to have 2 dimensions and then sets its
+sizes to 10 and 5, respectively.  In either case the sizes can be
+provided as variables, and \cd{x} can have its sizes changed by a
+subsequent call to \cd{setSize} (which does not guarantee that its
+contents will be preserved).
 
 \subsection{Driving models: \cd{calculate}, \cd{calculateDiff}, \cd{simulate}, and \cd{getLogProb}}
 \label{sec:driv-models:-calc}
