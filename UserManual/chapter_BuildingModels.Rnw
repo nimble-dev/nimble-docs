@@ -276,10 +276,10 @@ indicate indices explicitly (or provide a dimensions argument).  (In a
 nimbleFunction explicit indices are not required if the operation
 should use all elements of a variable, similarly to R).
 
-There is an important difference in the model that is created by the
+There is an important difference between the models that are created by the
 above two methods.  The first creates 10 scalar nodes, \cd{logY[1]}
 $\ldots$ \cd{logY[10]}.  The second creates one vector node,
-\cd{logY[1:10]}.  If each \cd{logY[i]} is used separately, it may be
+\cd{logY[1:10]}.  If each \cd{logY[i]} is used separately by an algorithm, it may be
 beneficial to declare them as scalars.  If they are all used together,
 it will often make sense to declare them as a vector.
 

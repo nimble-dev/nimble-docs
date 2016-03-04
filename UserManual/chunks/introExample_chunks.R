@@ -45,13 +45,13 @@ pump$getDependencies(c('alpha', 'beta'), determOnly = TRUE)
 pump[["lifted_d1_over_beta"]] ## It was.
 ## Now let's simulate new theta values
 set.seed(0) ## This makes the simulations here reproducible
-simulate(pump, 'theta')
+pump$simulate('theta')
 pump$theta   ## the new theta values
 ## lambda and logProb_x haven't been re-calculated yet
 pump$lambda ## these are the same values as above
 pump$logProb_x
-getLogProb(pump, 'x') ## The sum of logProb_x
-calculate(pump, pump$getDependencies(c('theta')))
+pump$getLogProb('x') ## The sum of logProb_x
+pump$calculate(pump$getDependencies(c('theta')))
 pump$lambda  ## Now they have.
 pump$logProb_x
 
@@ -140,8 +140,8 @@ simNodesMany <- nimbleFunction(
     run = function(n = integer()) {
         resize(mv, n)
         for(i in 1:n) {
-            simulate(model, nodes)
-            calculate(model, deps)
+            model$simulate(nodes)
+            model$calculate(deps)
             copy(from = model, nodes = allNodes,
                  to = mv, rowTo = i, logProb = TRUE)
         }
@@ -155,7 +155,7 @@ set.seed(0)  ## make the calculation repeatable
 pump$alpha <- pumpMLE[1]
 pump$beta <- pumpMLE[2]
 ## make sure to update deterministic dependencies of the altered nodes
-calculate(pump, pump$getDependencies(c('alpha','beta'), determOnly = TRUE))
+pump$calculate(pump$getDependencies(c('alpha','beta'), determOnly = TRUE))
 saveTheta <- pump$theta
 simNodesTheta1to5$run(10)
 simNodesTheta1to5$mv[['theta']][1:2]
@@ -166,7 +166,7 @@ CsimNodesTheta1to5 <- compileNimble(simNodesTheta1to5,
                                     project  = pump, resetFunctions = TRUE)
 Cpump$alpha <- pumpMLE[1]
 Cpump$beta <- pumpMLE[2]
-calculate(Cpump, Cpump$getDependencies(c('alpha','beta'), determOnly = TRUE))
+Cpump$calculate(Cpump$getDependencies(c('alpha','beta'), determOnly = TRUE))
 Cpump$theta <- saveTheta
 
 set.seed(0)

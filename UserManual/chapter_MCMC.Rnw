@@ -36,7 +36,7 @@ This chapter also discusses:
 \item Sampling algorithms provided with NIMBLE.
 \item Default sampler assignments in an MCMC configuration.
 \item Writing new samplers that conform to NIMBLE's MCMC system.
-\item Using \cd{MCMCsuite} to automatically run WinBUGS, OpenBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model.
+\item Using \cd{MCMCsuite} and \cd{compareMCMCs} to automatically run WinBUGS, OpenBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model.
 \item Using NIMBLE's algorithm to search blocks of nodes for efficient joint (block) sampling.
 \end{itemize}
 
@@ -312,16 +312,6 @@ code <- nimbleCode({
 })
 @
 
-\subsection{Terminal node \cd{end} sampler}
-The \cd{end} sampler is only appropriate for use on terminal stochastic nodes (that is, those having no stochastic dependencies).  Note that such nodes play no role in inference but have often been included in BUGS models to accomplish posterior predictive checks.  NIMBLE allows posterior predictive values to be simulated independently of running MCMC, for example by writing a \cd{nimbleFunction} to do so.  This means that in many cases where terminal stochastic nodes have been included in BUGS models, they are not needed when using NIMBLE.
-
-The \cd{end} sampler functions by calling the \cd{simulate} method of the relevant node, then updating model probabilities and deterministic dependent nodes.  The \cd{end} sampler will automatically be assigned to all terminal, non-data stochastic nodes in a model by the default MCMC configuration, so it is uncommon to manually assign this sampler.  The \cd{end} sampler accepts no control list arguments.
-
-Example usage:
-<<terminal-sampler, eval=FALSE>>=
-mcmcspec$addSampler(target = 'y[1]', type = 'end')
-@
-
 \subsection{Scalar Metropolis-Hastings random walk \cd{RW} sampler}
 
 The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler can be applied to any scalar continuous-valued stochastic node.
@@ -338,6 +328,23 @@ mcmcspec$addSampler(target = 'b', type = 'RW',
 @
 
 Note that because we use a simple normal proposal distribution on all nodes, negative proposals may be simulated for non-negative random variables. These will be rejected, so the only downsides to this are some inefficiency and the presence of warnings during uncompiled (but not compiled) execution indicating \cd{NA} or \cd{NaN} values. 
+
+\subsection{Conjugate (Gibbs) samplers}
+Gibbs samplers can be provided for nodes in conjugate relationships, as specified by the system-level \cd{conjugacyRelationshipsInputList}.  Conjugate samplers should not, in general, be manually added or modified by a user, since the control list requisites and syntax are lengthy, and determining conjugacy and assigning conjugate samplers is fully handled by the default MCMC configuration.
+
+A model may be checked for conjugate relationships using \cd{model\$checkConjugacy}.  This returns a named list describing all conjugate nodes.  \cd{checkConjugacy} can also accept a character vector argument specifying a subset of model node names to check for conjugacy.
+
+The current release of NIMBLE supports conjugate sampling of the relationships listed in Table~\ref{table:conjugaciesSupported}.
+
+\input{conjugacyTable.tex}
+
+Conjugate sampler functions may (optionally) dynamically check that their own posterior likelihood calculations are correct.  If incorrect, a warning is issued.  However, this functionality will roughly double the run-time required for conjugate sampling.  By default, this option is disabled in NIMBLE.  This option may be enabled by executing the following:
+
+<<enable-conjugate-checking, eval=FALSE>>=
+nimbleOptions(verifyConjugatePosteriors = TRUE)
+
+buildConjugateSamplerFunctions()
+@
 
 \subsection{Multivariate Metropolis-Hastings \cd{RW\_block} sampler}
 
@@ -426,22 +433,16 @@ mcmcspec$addSampler(target = 'p', type = 'RW_llFunction',
 Rmcmc <- buildMCMC(mcmcspec)
 @
 
-\subsection{Conjugate (Gibbs) samplers}
-Gibbs samplers can be provided for nodes in conjugate relationships, as specified by the system-level \cd{conjugacyRelationshipsInputList}.  Conjugate samplers should not, in general, be manually added or modified by a user, since the control list requisites and syntax are lengthy, and determining conjugacy and assigning conjugate samplers is fully handled by the default MCMC configuration.
+\subsection{Terminal node \cd{end} sampler}
+The \cd{end} sampler is only appropriate for use on terminal stochastic nodes (that is, those having no stochastic dependencies).  Note that such nodes play no role in inference but have often been included in BUGS models to accomplish posterior predictive checks.  NIMBLE allows posterior predictive values to be simulated independently of running MCMC, for example by writing a \cd{nimbleFunction} to do so.  This means that in many cases where terminal stochastic nodes have been included in BUGS models, they are not needed when using NIMBLE.
 
-A model may be checked for conjugate relationships using \cd{model\$checkConjugacy}.  This returns a named list describing all conjugate nodes.  \cd{checkConjugacy} can also accept a character vector argument specifying a subset of model node names to check for conjugacy.
+The \cd{end} sampler functions by calling the \cd{simulate} method of the relevant node, then updating model probabilities and deterministic dependent nodes.  The \cd{end} sampler will automatically be assigned to all terminal, non-data stochastic nodes in a model by the default MCMC configuration, so it is uncommon to manually assign this sampler.  The \cd{end} sampler accepts no control list arguments.
 
-The current release of NIMBLE supports conjugate sampling of the relationships listed in Table~\ref{table:conjugaciesSupported}.
-
-\input{conjugacyTable.tex}
-
-Conjugate sampler functions may (optionally) dynamically check that their own posterior likelihood calculations are correct.  If incorrect, a warning is issued.  However, this functionality will roughly double the run-time required for conjugate sampling.  By default, this option is disabled in NIMBLE.  This option may be enabled by executing the following:
-
-<<enable-conjugate-checking, eval=FALSE>>=
-nimbleOptions(verifyConjugatePosteriors = TRUE)
-
-buildConjugateSamplerFunctions()
+Example usage:
+<<terminal-sampler, eval=FALSE>>=
+mcmcspec$addSampler(target = 'y[1]', type = 'end')
 @
+
 
 \section{Detailed MCMC example: \cd{litters}}
 \label{sec:mcmc-example-litters}
@@ -561,11 +562,11 @@ mean(cSamplesMatrix_CL[, 'mu[1]'])
 @
 
 
-\section{Comparing different MCMC engines with \cd{MCMCsuite}}
+\section{Comparing different MCMC engines with \cd{MCMCsuite} and \cd{compareMCMCs}}
 
-NIMBLE's \cd{MCMCsuite} function automatically runs WinBUGS, OpenBUGS, JAGS, Stan, and/or multiple NIMBLE configurations on the same model.  Note that the BUGS code must be compatible with whichever BUGS packages are included, and separate Stan code must be provided.
+NIMBLE's \cd{MCMCsuite} function automatically runs WinBUGS, OpenBUGS, JAGS, Stan, and/or multiple NIMBLE configurations on the same model.  Note that the BUGS code must be compatible with whichever BUGS packages are included, and separate Stan code must be provided.  NIMBLE's \cd{compareMCMCs} manages calls to \cd{MCMCsuite} for multiple sets of comparisons and organizes the output(s) for generating html pages summarizing results.  It also allows multiple results to be combined and allows some different options for how results are processed, such as how effective sample size is estimated.
 
-We show how to use \cd{MCMCsuite} for the same \cd{litters} example used in \ref{sec:mcmc-example-litters}.  Subsequently, additional details of the \cd{MCMCsuite} are given.
+We show how to use \cd{MCMCsuite} for the same \cd{litters} example used in \ref{sec:mcmc-example-litters}.  Subsequently, additional details of the \cd{MCMCsuite} are given.  Since use of \cd{compareMCMCs} is similar, we refer readers to \cd{help(compareMCMCs)} and the functions listed under ``See also'' on that R help page.
 
 \subsection{MCMC Suite example: \cd{litters}}
 
@@ -752,9 +753,7 @@ Full details of the arguments and customization of the MCMC Suite is available t
 % 
 %Optionally, the Stan initial values file (\cd{`modelName.init.R'}) may also be in this same directory; it will be used if present.
 
-\section{Advanced topics}
-
-\subsection{Custom sampler functions}
+\section{Writing your own samplers as nimbleFunctions}
 
 The following code illustrates how a NIMBLE developer would implement and use a Metropolis-Hastings random walk sampler with fixed proposal standard deviation.  The comments accompanying the code explain the necessary characteristics of all sampler functions.
 

@@ -135,7 +135,7 @@ solution for regression of 100 data points on 4 explanatory variables,
 all generated randomly\footnote{Of course in general, explicitly
   calculating the inverse is not the recommended numerical recipe for
   least squares.}.  Such functions can be called from other
-nimbleFunctions or used in BUGS code. \footnote{On the machine this is
+nimbleFunctions or used in BUGS code.\footnote{On the machine this is
   being written on, the compiled version runs a few times faster than
   the uncompiled version.  However we refrain from formal speed tests.}
 
@@ -229,11 +229,8 @@ the NIMBLE language in more detail.
   list with the nimbleFunction's return value as the last element.)
 
 \item BUGS model nodes are implemented as nimbleFunctions with member
-  functions for \cd{calculate}, \cd{calculateDiff}, \cd{simulate}, and
-  \cd{getLogProb}.  There are also member functions for obtaining
-  the value of each parameter or alternative parameters (e.g. rate =
-  1/scale) and a more generic way to do so using the function
-  \cd{getParam}.  
+  functions for \cd{calculate}, \cd{calculateDiff}, \cd{simulate}, 
+  \cd{getLogProb}, and \cd{getParam}. 
 
 \end{itemize}
 
@@ -257,9 +254,16 @@ don't need to include that because it is the default if no
 \cd{nDim} is the number of dimensions, with 0 indicating scalar.
 \cd{sizes} is an optional vector of fixed, known sizes.  These
 should use R's \cd{c} function if \cd{nDim} $>1$ (e.g. \cd{double(2,
-  c(4, 5))} declareds a \cd{4-$\times$-5} matrix).  If sizes
+  c(4, 5))} declares a \cd{4-$\times$-5} matrix).  If sizes
 are omitted, they will either be set when the entire object is
 assigned to, or an explicit call to \cd{setSize} is needed.
+
+In the case of scalar arguments only, a default value can be
+provided.  For example, to provide 1.2 as a default:
+
+\begin{itemize}
+\item \cd{double(0, default = 1.2)}
+\end{itemize}
 
 \subsection{Declaring local variables}
 \label{sec:decl-local-vars}
@@ -277,36 +281,52 @@ for(i in 1:10)
     x[i, j] <- foo(y[i, j])
 @ 
 
-represents the creation of \cd{x} by construction.  This works in R,
-but not in compiled nimbleFunctions.  For a compiled nimbleFunction,
-prior to the above block of code, one
-would need to declare \cd{x} by either 
+represents the creation of \cd{x} by construction.  For a compiled
+nimbleFunction, prior to the above block of code, one would need to
+declare \cd{x} before filling it with values.  If the sizes are known
+beforehand, they can be included when declaring \cd{x}. Either of the
+following are valid and equivalent.
 
 <<exampleDeclare2, eval=FALSE>>=
 declare(x, double(2, 10, 5))
+declare(x, double(2, c(10, 5)))
 @ 
  
-or
+The 2 indicates the number of dimensions.  The sizes of 10 and 5 can
+be given as separate arguments or concatenated with \cd{c()}.
 
-<<exampleDeclare2, eval=FALSE>>=
+If the sizes need to be set after the variable has been declared (or
+created by assignment), the following will work:
+
+<<exampleDeclare3, eval=FALSE>>=
 declare(x, double(2))
 setSize(x, 10, 5)
 @ 
 
+or 
+
+<<exampleDeclare2b, eval=FALSE>>=
+declare(x, double(2))
+setSize(x, c(10, 5))
+@ 
+
 Each of these declares \cd{x} to have 2 dimensions and then sets its
-sizes to 10 and 5, respectively.  In either case the sizes can be
+sizes to 10 and 5.  In either method the sizes can be
 provided as variables, and \cd{x} can have its sizes changed by a
 subsequent call to \cd{setSize} (which does not guarantee that its
 contents will be preserved).
 
-\subsection{Driving models: \cd{calculate}, \cd{calculateDiff}, \cd{simulate}, and \cd{getLogProb}}
+\subsection{Driving models: \cd{calculate}, \cd{calculateDiff},
+  \cd{simulate}, \cd{getLogProb}}
 \label{sec:driv-models:-calc}
 
 These four functions are the primary ways to operate a model.  Their
 syntax was explained in Section \ref{sec:cdcalc-cdsim-cdgetl}. Except
 for \cd{getLogProb}, it is usually important for the \cd{nodes}
 object to be created in \cd{setup} code such that they are sorted in
-topological order.
+topological order, and functions such as \cd{getDependencies} and
+\cd{expandNodeNames} will
+always do so.
 
 \subsection{Accessing model and modelValues variables and using \cd{copy}}
 \label{sec:access-model-modelv}
@@ -360,7 +380,7 @@ difference in log probability (density) between the model and the
 @
 
 Once the nimbleFunction is built, the modelValues object can be accessed
-using using \cd{\$}, which is shown in more detail below.  In
+using \cd{\$}, which is shown in more detail below.  In
 fact, since modelValues, like most NIMBLE objects, are reference class
 objects, one can get a reference to them before the function is
 executed and then use that reference afterwards.
@@ -408,13 +428,12 @@ one time.  For example, one might want a nimbleFunction that will
 serve as the objective function for an optimizer.  The input to the
 nimbleFunction would be a vector, which should be used to fill a
 collection of nodes in the model before calculating their log
-probabilities.  NIMBLE has two ways to do this, one of which was set
-up during development and may be deprecated in the future.
-
-The recommended newer way is:
+probabilities.  This can be done using \cd{values()}:
 
 <<eval=FALSE>>=
+## get values from a set of model nodes into a vector
 P <- values(model, nodes)
+## or put values from a vector into a set of model nodes
 values(model, nodes) <- P
 @ 
 
@@ -423,17 +442,7 @@ into P, and the second would to the inverse.  In both cases, values
 from nodes with 2 or more dimensions are flattened into a vector in
 column-wise order.
 
-The older syntax, which may be deprecated in the future, is
-
-<<eval=FALSE>>=
-getValues(P, model, nodes)
-setValues(P, model, nodes)
-@ 
-
-These are equivalent to the two previous lines.  Note that
-\cd{getValues} modifies P in the calling environment.
-
-With the new notation, \cd{values(model, nodes)} may appear as a
+\cd{values(model, nodes)} may be used as a
 vector in other expressions, e.g. \cd{Y <- A \%*\% values(model,
   nodes) + b}. 
 
@@ -490,11 +499,8 @@ In other cases you must declare the type.  The rules are as follows:
   
 \item If the first uses of a variable involves indexing, the type must
   be declared explicitly, using \cd{declare}, before using it.  In addition, its size must
-  be set before assigning into it.  Sizes can be included in the
-  \cd{declare()} statement, but if so they should not subsequently change.
-  If a variable may have its size changed during execution, then the
-  declare statement should omit the size argument, and a separate call
-  to \cd{setSize} should be used to set the initial size(s).
+  be set before assigning into it.  This can be done either as part of
+  the \cd{declare} statement or by \cd{setSize}.  See (\ref{sec:decl-local-vars}).
 \end{itemize}
 
 \subsection{Querying and changing sizes}
@@ -522,12 +528,8 @@ Sizes can be queried as follows:
   \end{itemize}
 \end{itemize}
 
-Sizes can be changed using:
-\begin{itemize}
-\item setSize(X, size1, size2, ...)
-\end{itemize}
-where \cd{size1}, \cd{size2} etc. provide the sizes of as many
-dimensions as needed by \cd{X}.
+Sizes can be changed using \cd{setSize(X, size1, size2, ...)} or
+\cd{setSize(X, c(size1, size2, ...))} as described in section (\ref{sec:decl-local-vars}).
 
 \subsection{Basic math and linear algebra}
 \label{sec:basic-math-linear}
@@ -568,7 +570,8 @@ v1 is promoted to a 1-row matrix.
 
 \item \cd{ v1 \%*\% v2} promotes v1 to a 1-row matrix and v2 to a
 1-column matrix, so the returned values is a 1x1 matrix with the inner
-product of v1 and v2.
+product of v1 and v2.  If you want the inner product as a scalar, use
+\cd{inprod(v1, v2)}. 
 
 \item \cd{asRow(v1)} explicitly promotes v1 to a 1-row matrix.
   Therefore \cd{v1 \%*\% asRow(v2)} gives the outer product of
@@ -580,13 +583,18 @@ product of v1 and v2.
   Therefore, \cd{v1 \%*\% t(v2)} is equivalent to \cd{v1 \%*\% asRow(v2)} .
 
 \item When indexing, dimensions with scalar indices will be dropped.
-  For example, \cd{M1[1,]} and \cd{M1[,1]} are both vectors.
+  For example, \cd{M1[1,]} and \cd{M1[,1]} are both vectors.  If you
+  do not want this behavior, use \cd{drop=FALSE} just as in R.  For
+  example, \cd{M1[1,,drop=FALSE]} is a matrix.
   
 \item The left-hand side of an assignment can use indexing, but if so
   it must already be correctly sized for the result.  For example,
   \cd{Y[5:10, 20:30] <- model\$x} will not work -- and could crash
   your R session with a segmentation fault --  if Y is not
-  already at least 10x30 in size.
+  already at least 10x30 in size.  This can be done by \cd{setSize(Y,
+    c(10, 30))}.  See section (\ref{sec:decl-local-vars}) for more
+  details.  Note that non-indexed assignment to \cd{Y}, such as \cd{Y
+    <- model\$x}, will automatically set \cd{Y} to the necessary size. 
   
 \end{itemize}
 

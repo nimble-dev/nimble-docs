@@ -27,7 +27,7 @@ model$z[1,]
 ## @knitr usingModelLogProbs
 
 model$logProb_y
-calculate(model, 'y')
+model$calculate('y')
 model$logProb_y
 
 ## @knitr usingNodeNames
@@ -59,6 +59,7 @@ multiVarModel$expandNodeNames("X[1,1:5]")
 
 model$y
 simulate(model, 'y[1:3]')
+## model$simulate('y[1:3]') does the same thing
 model$y
 simulate(model, 'y')
 model$y
