@@ -20,7 +20,7 @@ require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
 
 Using the MCMC engine provided with NIMBLE consists of several steps:
 \begin{itemize}
-\item Building an MCMC function specialized to a particular model.  This can be done in one step, but when a user wants to customize the MCMC, it can be done in several steps: 
+\item Building an MCMC function specialized to a particular model.  This can be done in one step, but when a user wants to customize the MCMC, it can be done in several steps:  
 \begin{itemize}
 \item Creating an MCMC configuration consisting of a set of sampler choices;
 \item Customizing the sampler choices in the configuration, which may include providing new samplers written as nimbleFunctions; and 
@@ -677,7 +677,7 @@ NIMBLE MCMC algorithms may be specified using the \cd{MCMCs} argument to \cd{MCM
 \end{description}
 \ \\  % to fix spacing 
 
-The default value for the \cd{MCMCs} argument is \cd{c(`jags',`nimble', `nimble\_RW', `nimble\_slice', `autoBlock')}.  
+The default value for the \cd{MCMCs} argument is \cd{`nimble'}, which specifies only the default NIMBLE MCMC algorithm.  
  
 The names of additional, custom, MCMC algorithms may also be provided in the \cd{MCMCs} argument, so long as these custom algorithms are defined in the \cd{MCMCdefs} argument.  An example of this usage is given with the \cd{crossLevel} algorithm in the \cd{litters} MCMC Suite example.
 
