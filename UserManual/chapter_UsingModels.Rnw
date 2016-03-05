@@ -17,7 +17,7 @@ be able to speak about NIMBLE clearly.
 
 Say we have the following BUGS code
 
-<<echo=FALSE>>=
+<<echo=FALSE,message=FALSE>>=
 read_chunk(file.path('chunks', 'usingBugsModels_chunks.R'))
 @ 
 
@@ -141,7 +141,7 @@ dimensionality of the variable in which it is embedded.  This is particularly
 useful for NIMBLE, which resolves how to access a particular node
 during the compilation process.
 
-\section{\cd{calculate}, \cd{simulate}, and \cd{getLogProb}}
+\section{\cd{calculate}, \cd{calculateDiff}, \cd{simulate}, and \cd{getLogProb}}
 \label{sec:cdcalc-cdsim-cdgetl}
 
 The four basic ways to operate a model are to calculate nodes,
@@ -176,18 +176,22 @@ There are two ways to access \cd{calculate}, \cd{calculateDiff},
 functions with those names, which accept arbitrary collections of
 nodes as input.  In that case, \cd{calculate} and \cd{getLogProb} return the
 sum of the log probabilities from each node, while \cd{calculateDiff}
-returns the sum of the new values minus the old values.  The other way
+returns the sum of the new values minus the old values. These can be
+used as member functions of the model object, or equivalently they can
+take the model object as the first argument.  The other way
 is to directly access the corresponding function for each node in a
 model.  Normally you'll use the first way, but we'll show you both.
 
 \subsection{For arbitrary collections of nodes}
 \label{sec:arbitr-coll-nodes}
 
-<<calcSimGLPdemos>>=
+<<calcSimGLPdemos,results='markup;$=\\$'>>=
 @ 
 
 Notice the following.
 \begin{enumerate}
+\item \cd{simulate(model, nodes)} is equivalent to
+  \cd{model\$simulate(nodes)}. You can use either.
 \item Inputs like \cd{`y[1:3]'} are automatically expanded into
   \cd{c(`y[1]', `y[2]', `y[3]')}.  In fact, simply \cd{`y'} will be
   expanded into all nodes within \cd{y}.
@@ -209,7 +213,8 @@ except that they return a value (described above) and they have no \cd{includeDa
 \label{sec:direct-access-each}
 
 Access to the underlying \cd{calculate}, \cd{calculateDiff}, \cd{simulate}, and
-\cd{getLogProb} functions built by NIMBLE can be had as follows:
+\cd{getLogProb} functions built by NIMBLE can be obtained (in R only,
+not in compiled code) as follows:
 
 <<calcSimGLPdirect>>=
 @ 
@@ -220,6 +225,33 @@ Access to the underlying \cd{calculate}, \cd{calculateDiff}, \cd{simulate}, and
 %% including parameters from alternative parameterizations.  In v\ver,
 %% this is an advanced topic to be described later.  
 
+\section{Accessing distribution parameter values}
+\label{sec:getParam}
+The function \cd{getParam} provides access to values of the parameters
+of a distribution.  Like the above functions, \cd{getParam} can be
+used as  global function taking a model as the first argument, or it
+can be used as a model member function.  The next two arguments must
+be the name of one (stochastic) node and the name of a parameter for the
+distribution followed by that node.  The parameter does not have to be
+one of the parameters used when the node was declared.  Alternative
+parameterization values can also be obtained. See
+section(\ref{subsec:distributions}) for available parameterizations.
+(These can also be seen via \cd{distributionsInputList}.) 
+
+Here is an example:
+<<getParamExample, message=FALSE>>=
+gammaModel <- nimbleModel(
+    nimbleCode({
+        a ~ dlnorm(0, 1)
+        x ~ dgamma(shape = 2, scale = a)
+    }), data = list(x = 2.4), inits = list(a = 1.2))
+getParam(gammaModel, 'x', 'scale')
+getParam(gammaModel, 'x', 'rate')
+gammaModel$getParam('x','rate')
+@ 
+
+\cd{getParam} also works in compiled nimbleFunctions.
+
 \section{Querying model structure}
 \label{sec:query-model-struct}
 
@@ -229,7 +261,7 @@ a \cd{nimbleFunction} (setup code is described in Chapter \ref{cha:progr-with-mo
 
 Here we demonstrate this functionality using the \nm{pump} example because it has a few more interesting components than the example above. 
 
-<<reinitPumpModel,echo=FALSE>>=
+<<reinitPumpModel,echo=FALSE,message=FALSE>>=
 @ 
 
 \subsection{\cd{getNodeNames}, \cd{getVarNames}, and \cd{expandNodeNames}}

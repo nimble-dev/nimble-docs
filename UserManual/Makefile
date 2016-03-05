@@ -1,6 +1,7 @@
 NimbleUserManual.pdf :	NimbleUserManual.Rnw
-	Rscript -e "library(knitr);  knit2pdf('NimbleUserManual.Rnw')"
+	Rscript -e "library(nimble); library(knitr);  knit2pdf('NimbleUserManual.Rnw')"
 # should we remove the compiled .o/.so in model1 too?
+# loading library(nimble) externally to knitr prevents library-loading messages from getting into the final pdf, I think
 
 includesMCMConly.pdf :	includesMCMConly.Rnw chapter_MCMC.Rnw
 	Rscript -e "library(knitr);  knit2pdf('includesMCMConly.Rnw')"

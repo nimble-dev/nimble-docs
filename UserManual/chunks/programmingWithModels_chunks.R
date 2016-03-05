@@ -5,15 +5,15 @@ logProbCalcPlus <- nimbleFunction(
         dependentNodes <- model$getDependencies(node)
         valueToAdd <- 1
     },
-    
     run = function(P = double(0)) {
         model[[node]] <<- P + valueToAdd
-        return(calculate(model, dependentNodes))
+        return(model$calculate(dependentNodes))
         returnType(double(0))
     })
 
 code <- nimbleCode({
-    a ~ dnorm(0, 1); b ~ dnorm(a, 1)
+    a ~ dnorm(0, 1)
+    b ~ dnorm(a, 1)
 })
 testModel <- nimbleModel(code, check = FALSE)
 logProbCalcPlusA <- logProbCalcPlus(testModel, 'a')
@@ -90,7 +90,7 @@ runFunction = function(){
         nimCopy(from = propModelValues, to = model, row = i,
                 nodes = modelNodes, logProb = FALSE)
         ## calculates the log likelihood of the model
-        targLL <- calculate(model)
+        targLL <- model$calculate()
         ## retreaves the saved log likelihood from the proposed model
         propLL <- propModelValues['propLL',i][1]
         ## saves the importance weight for the i-th sample 
@@ -135,9 +135,9 @@ PropSamp_Gen <- nimbleFunction(
     run = function(m = integer() ){
         resize(mv, m)
         for(i in 1:m){
-            simulate(propModel)
+            propModel$simulate()
             nimCopy(from = propModel, to = mv, nodes = nodeNames, row = i)
-            mv['propLL', i][1] <<- calculate(propModel)
+            mv['propLL', i][1] <<- propModel$calculate()
         }
     }
     )

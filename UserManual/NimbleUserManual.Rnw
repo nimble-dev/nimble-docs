@@ -24,7 +24,7 @@
 
 \def\cd#1{\texttt{#1}}
 \def\nm#1{\textit{#1}}
-\newcommand{\ver}{0.4-1}
+\newcommand{\ver}{0.5}
 
 \hypersetup{colorlinks=true, linkcolor=red}
 
@@ -44,8 +44,9 @@ options(replace.assign=TRUE, width=65)
 \author{NIMBLE Development Team}
 \date{Version \ver}
 \maketitle
-
-<<chunk0, echo = FALSE>>=
+% load these prior to building the manual, because otherwise they
+% generate package loading messages that I don't know how to stop.
+<<chunk0, echo = FALSE, message = FALSE>>=
 ## source the code
 require(nimble, warn.conflicts = FALSE, quietly = TRUE)
 #source(file.path('..', '..', 'examples', 'demos', 'loadAllCode.R'))
@@ -77,6 +78,9 @@ require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
 
 \Sexpr{knit_child('chapter_writingNimbleFunctions.Rnw')}
 
+% When building individual chapters that have no refs, knitr
+% gets unhappy to see a bibliography command since there are no \citations
+% but it seems to still generate the pdf
 \bibliographystyle{chicago}
 \bibliography{UserManualRefs.bib}
 
