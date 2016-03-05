@@ -61,10 +61,10 @@ Cpump <- compileNimble(pump)
 Cpump$theta
 
 ## ---- mcmcPump
-pumpSpec <- configureMCMC(pump, print = TRUE)
-pumpSpec$addMonitors(c('alpha', 'beta', 'theta'))
+pumpConf <- configureMCMC(pump, print = TRUE)
+pumpConf$addMonitors(c('alpha', 'beta', 'theta'))
 
-pumpMCMC <- buildMCMC(pumpSpec)
+pumpMCMC <- buildMCMC(pumpConf)
 CpumpMCMC <- compileNimble(pumpMCMC, project = pump)
 
 niter <- 1000
@@ -87,10 +87,10 @@ acf(samples[, 'alpha']) ## plot autocorrelation of alpha sample
 acf(samples[, 'beta'])  ## plot autocorrelation of beta  sample
 
 ## ---- mcmcPump2
-pumpSpec$addSampler(target = c('alpha', 'beta'), type = 'RW_block',
+pumpConf$addSampler(target = c('alpha', 'beta'), type = 'RW_block',
                     control = list(adaptInterval = 100))
                                      
-pumpMCMC2 <- buildMCMC(pumpSpec)
+pumpMCMC2 <- buildMCMC(pumpConf)
 
 # need to reset the nimbleFunctions in order to add the new MCMC
 CpumpNewMCMC <- compileNimble(pumpMCMC2, project  = pump,

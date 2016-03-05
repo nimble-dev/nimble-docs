@@ -27,9 +27,9 @@ In this ``lightning introduction'' we will:
 \begin{enumerate}
 \item Create the model for the pump example.
 \item Compile the model.
-\item Create a basic MCMC specification for the pump model.
+\item Create a basic MCMC configuration for the pump model.
 \item Compile and run the MCMC
-\item Customize the MCMC specification and compile and run that.
+\item Customize the MCMC configuration and compile and run that.
 \item Create, compile and run a Monte Carlo Expectation Maximization (MCEM)
   algorithm, which illustrates some of the flexibility NIMBLE
   provides to combine R and NIMBLE.
@@ -89,7 +89,7 @@ about its graph.
 Notice that the first \cd{getDependencies} call returned dependencies
 from \cd{alpha} and \cd{beta} down to the next stochastic nodes in the
 model.  The second call requested only deterministic dependencies.
-The call to \cd{calculate(pump, `theta')}
+The call to \cd{pump\$simulate(`theta')}
 expands \cd{`theta'} to include all nodes in \cd{theta}.  After
 simulating into \cd{theta}, we can see that \cd{lambda} and the log
 probabilities of \cd{x} still reflect the old values of \cd{theta}, so
@@ -110,7 +110,7 @@ subsequent changes in one will not be reflected in the other.
 
 Note that the compiled model is used when running any NIMBLE algorithms via C++, so the model needs to be compiled before (or at the same time as) any compilation of algorithms, such as the compilation of the MCMC done in the next section.
 
-\section{Creating, compiling and running a basic MCMC specification}
+\section{Creating, compiling and running a basic MCMC configuration}
 
 At this point we have initial values for all of the nodes in the model
 and we have both the original and compiled versions of the model. As a first algorithm
