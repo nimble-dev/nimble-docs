@@ -132,7 +132,7 @@ Note that when adding individual samplers (next), the default control list can b
 
 \subsubsection{Adding samplers to the configuration}
 
-Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCspec} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object.   Valid character strings include `end', `RW', `RW\_block', `slice', `crossLevel', and `RW\_llFunction', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{getSamplers}.
+Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCspec} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object.   Valid character strings include `end', `RW', `RW\_block', `slice', `crossLevel', and `RW\_llFunction', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{printSamplers}.
 
 When a \cd{control} argument is provided in a call to \cd{addSampler}, the \cd{control} list elements specified will have the highest priority.  The hierarchy of precedence for control list elements for samplers is:
 
@@ -146,7 +146,17 @@ A call to \cd{addSampler} results in a single instance of the specified sampler,
 
 \subsubsection{Printing, re-ordering, and removing samplers}
 
-The current, ordered, list of all samplers in the MCMC configuration may be printed by calling the \cd{getSamplers} method. When you want to see only samplers acting on specific model nodes or variables, provide those names as an argument to \cd{getSamplers}.
+The current, ordered, list of all samplers in the MCMC configuration may be printed by calling the \cd{printSamplers} method. When you want to see only samplers acting on specific model nodes or variables, provide those names as an argument to \cd{printSamplers}.
+
+The \cd{nimbleFunction} definition underlying a particular sampler may be viewed using the \cd{getSamplerDefinition} method, using the sampler index as an argument.  A node name argument may also be supplied, in which case the definiton of the first sampler acting on that node is returned.  In all cases, \cd{getSamplerDefinition} only returns the definition of the \emph{first} sampler specified either by index or node name.
+<<getSamplerDefinition, eval=FALSE>>=
+## Return the definition of the third sampler in the mcmcConf object
+mcmcConf$getSamplerDefinition(3)
+
+## Return the definition of the first sampler acting on node 'x',
+## or the first of any indexed nodes comprising the variable 'x'
+mcmcConf$getSamplerDefinition('x')
+@
 
 The existing samplers may be re-ordered using the \cd{setSamplers} method. The \cd{ind} argument is a vector of sampler indices, or a character vector of model node or variable names.  The samplers in the MCMC configuration will be replaced by the samplers corresponding to the indices provided, or those samplers acting on the target nodes specified.  Here are a few examples. Each example assumes the \cd{MCMCspec} object initially contains 10 samplers, and each example is independent of the others.
 <<setSamplers2, eval=FALSE>>=
@@ -192,6 +202,32 @@ mcmcConf$removeSamplers('x')
 
 ## Default: providing no argument removes all samplers
 mcmcConf$removeSamplers()
+@
+
+The \cd{getSamplers} method may also be used to return a list of \cd{samplerSpec} objects.  Each \cd{samplerSpec} is a reference class object containing the following (required) fields: name (a character string), samplerFunction (a valid nimbleFunction sampler), target (the model node to be sampled), and control (list of control arguments).  The list returned by \cd{getSamplers} can be modified using the access functions provided, then passed as an argument to \cd{setSamplers} to over-write the current list of samplers in the MCMC configuration object.  However, no checking of the validity of this modified list is performed; if the list of samplerSpec objects is corrupted to be invalid, incorrect behaviour will result at the time of calling \cd{buildMCMC}.  The fields of a samplerSpec object can be modified using the access functions \cd{setName(name)}, \cd{setSamplerFunction(fun)}, \cd{setTarget(target, model)}, and \cd{setControl(control)}.
+
+<<getSetSamplers, eval=FALSE>>=
+## retrieve samplerSpec list
+samplerSpecList <- mcmcConf$getSamplers()
+
+## change the name of the first sampler
+samplerSpecList[[1]]$setName('newNameForThisSampler')
+
+## change the sampler function of the second sampler,
+## assuming existance of a nimbleFunction 'anotherSamplerNF',
+## which represents a valid nimbleFunction sampler.
+samplerSpecList[[2]]$setSamplerFunction(anotherSamplerNF)
+
+## change the 'adaptive' element of the control list of the third sampler
+control <- samplerSpecList[[3]]$control
+control$adaptive <- FALSE
+samplerSpecList[[3]]$setControl(control)
+
+## change the target node of the fourth sampler
+samplerSpecList[[4]]$setTarget('y', model)   ## model argument required
+
+## use this modified list of samplerSpec objects in the MCMC configuration
+mcmcConf$setSamplers(samplerSpecList)
 @
 
 \subsubsection{Monitors and thinning intervals}
@@ -505,7 +541,7 @@ Rmodel <- nimbleModel(litters_code,
 mcmcConf <- configureMCMC(Rmodel, monitors = 'mu')
 
 ## check the samplers assigned by default MCMC configuration
-mcmcConf$getSamplers()
+mcmcConf$printSamplers()
 
 ## double-check our monitors, and thinning interval
 mcmcConf$getMonitors()
@@ -527,7 +563,7 @@ mcmcConf_CL$addSampler(target = c('a[1]', 'b[1]'), type = 'crossLevel')
 mcmcConf_CL$addSampler(target = c('a[2]', 'b[2]'), type = 'crossLevel')
 
 ## let's check the samplers
-mcmcConf_CL$getSamplers()
+mcmcConf_CL$printSamplers()
 
 ## build this second executable R MCMC function
 mcmc_CL <- buildMCMC(mcmcConf_CL)
