@@ -707,7 +707,7 @@ NIMBLE MCMC algorithms may be specified using the \cd{MCMCs} argument to \cd{MCM
 \item[\cd{`jags'}] JAGS MCMC algorithm 
 \item[\cd{`Stan'}] Stan MCMC algorithm 
 \item[\cd{`nimble'}] NIMBLE MCMC using the default configuration 
-\item[\cd{`nimble\_noConj'}] NIMBLE MCMC using the default configuration with \cd{useConjugacy = FALSE} 
+\item[\cd{`nimble_noConj'}] NIMBLE MCMC using the default configuration with \cd{useConjugacy = FALSE} 
 \item[\cd{`nimble\_RW'}] NIMBLE MCMC using the default configuration with \cd{onlyRW = TRUE}
 \item[\cd{`nimble\_slice'}] NIMBLE MCMC using the default configuration with \cd{onlySlice= TRUE}
 \item[\cd{`autoBlock'}] NIMBLE MCMC algorithm with block sampling of dynamically determined parameter groups attempting to maximize sampling efficiency 
