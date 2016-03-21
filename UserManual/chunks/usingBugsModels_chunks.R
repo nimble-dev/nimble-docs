@@ -46,8 +46,8 @@ multiVarCode <- nimbleCode({
     X[6:10, 3] ~ dmnorm(mu[], cov[,])
 })
 
-multiVarModel <- nimbleModel(multiVarCode, dimensions = list(mu = 5, cov = c(5,5)),
-                             check = FALSE)
+multiVarModel <- nimbleModel(multiVarCode, dimensions = list(mu = 5,
+                   cov = c(5,5)), check = FALSE)
 
 multiVarModel$getNodeNames()
 

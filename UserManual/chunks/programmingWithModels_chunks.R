@@ -315,7 +315,8 @@ useDataNF <- nimbleFunction(
 
 myDataNF <- dataNF()
 myUseDataNF <- useDataNF(myDataNF)
-myUseDataNF$run(as.numeric(100), as.numeric(100:110), matrix(as.numeric(101:120), nrow = 2))
+myUseDataNF$run(as.numeric(100), as.numeric(100:110),
+                matrix(as.numeric(101:120), nrow = 2))
 myDataNF$X
 myDataNF$Y
 myDataNF$Z
