@@ -68,7 +68,8 @@ The default sampling algorithm assigned to each stochastic node is determined by
 \begin{enumerate}
 \item If the node has no stochastic dependents, a predictive \nm{end} sampler is assigned.  The \nm{end} sampling algorithm merely calls \cd{simulate} on the particular node.
 \item The node is checked for presence of a conjugate relationship between its prior distribution and the distributions of its stochastic dependents.  If it is determined to be in a conjugate relationship, then the corresponding \nm{conjugate} (Gibbs) sampler is assigned.
-\item If the node is discrete-valued, then a \nm{slice} sampler is assigned \citep{Neal2003}.
+\item If the node is binary-valued (strictly taking values 0 or 1), then a \nm{binary} Gibbs sampler is assigned.
+\item If the node is otherwise discrete-valued, then a \nm{slice} sampler is assigned \citep{Neal2003}. 
 \item If the node follows a multivariate distribution, then a \nm{RW\_block} sampler is assigned for all elements.  This is a Metropolis-Hastings adaptive random-walk sampler with a multivariate normal proposal \citep{Roberts_Sahu_1997}.
 \item If none of the above criteria are satisfied, then a \nm{RW} sampler is assigned.  This is a Metropolis-Hastings adaptive random-walk sampler with a univariate normal proposal distribution.
 \end{enumerate}
@@ -132,7 +133,7 @@ Note that when adding individual samplers (next), the default control list can b
 
 \subsubsection{Adding samplers to the configuration}
 
-Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCspec} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object.   Valid character strings include `end', `RW', `RW\_block', `slice', `crossLevel', and `RW\_llFunction', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{printSamplers}.
+Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCspec} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object.   Valid character strings include `end', `RW', `RW\_block', `binary', `slice', `crossLevel', and `RW\_llFunction', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{printSamplers}.
 
 When a \cd{control} argument is provided in a call to \cd{addSampler}, the \cd{control} list elements specified will have the highest priority.  The hierarchy of precedence for control list elements for samplers is:
 
@@ -343,24 +344,33 @@ code <- nimbleCode({
     a ~ dgamma(1, 1)
     b ~ dgamma(1, 1)
     p ~ dbeta(a, b)
-    y1 ~ dbinom(prob = p, size = 10)
-    y2 ~ dbinom(prob = p, size = 20)
+    y1 ~ dbinom(prob = p, size = 1)
+    y2 ~ dbinom(prob = p, size = 2)
 })
+@
+
+\subsection{\cd{binary} Gibbs sampler}
+
+The \cd{binary} sampler performs direct Gibbs sampling from the posterior distribution for binary-valued (discrete 0/1) nodes.  This can only be used for nodes following either a \cd{dbern(p)} or \cd{dbinom(p, size=1)} distribution.  The \cd{binary} sampler accepts no control list arguments.
+
+Example usage:
+ <<binary-sampler, eval=FALSE>>=
+mcmcConf$addSampler(target = 'y[1]', type = 'binary')  
 @
 
 \subsection{Scalar Metropolis-Hastings random walk \cd{RW} sampler}
 
-The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler can be applied to any scalar continuous-valued stochastic node.
+The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler can be applied to any scalar continuous-valued stochastic node. 
 
 The \cd{RW} sampler can be customized using the \cd{control} list argument to set the initial proposal distribution scale, and the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
 
 Example usage:
 <<RW-sampler, eval=FALSE>>=
 mcmcConf$addSampler(target = 'a', type = 'RW',
-     control = list(adaptive = FALSE, scale = 3))
+     control = list(adaptive = FALSE, scale = 3)) 
 
 mcmcConf$addSampler(target = 'b', type = 'RW',
-     control = list(adaptive = TRUE, adaptInterval = 200))
+     control = list(adaptive = TRUE, adaptInterval = 200)) 
 @
 
 Note that because we use a simple normal proposal distribution on all nodes, negative proposals may be simulated for non-negative random variables. These will be rejected, so the only downsides to this are some inefficiency and the presence of warnings during uncompiled (but not compiled) execution indicating \cd{NA} or \cd{NaN} values. 
@@ -401,10 +411,10 @@ The \cd{slice} sampler can be customized using the \cd{control} list argument to
 Example usage:
 <<slice-sampler, eval=FALSE>>=
 mcmcConf$addSampler(target = 'y[1]', type = 'slice',
-     control = list(adaptive = FALSE, sliceWidth = 3))
+     control = list(adaptive = FALSE, sliceWidth = 3)) 
 
 mcmcConf$addSampler(target = 'y[2]', type = 'slice',
-     control = list(adaptive = TRUE, sliceMaxSteps = 1))
+     control = list(adaptive = TRUE, sliceMaxSteps = 1)) 
 @
 
 \subsection{Elliptical slice sampling: \cd{ess} sampler}
