@@ -68,7 +68,7 @@ The default sampling algorithm assigned to each stochastic node is determined by
 \begin{enumerate}
 \item If the node has no stochastic dependents, a predictive \nm{end} sampler is assigned.  The \nm{end} sampling algorithm merely calls \cd{simulate} on the particular node.
 \item The node is checked for presence of a conjugate relationship between its prior distribution and the distributions of its stochastic dependents.  If it is determined to be in a conjugate relationship, then the corresponding \nm{conjugate} (Gibbs) sampler is assigned.
-\item If the node is binary-valued (strictly taking values 0 or 1), then a \nm{binary} Gibbs sampler is assigned.
+\item If the node is binary-valued (strictly taking values 0 or 1), then a \nm{binary} (Gibbs) sampler is assigned.
 \item If the node is otherwise discrete-valued, then a \nm{slice} sampler is assigned \citep{Neal2003}. 
 \item If the node follows a multivariate distribution, then a \nm{RW\_block} sampler is assigned for all elements.  This is a Metropolis-Hastings adaptive random-walk sampler with a multivariate normal proposal \citep{Roberts_Sahu_1997}.
 \item If none of the above criteria are satisfied, then a \nm{RW} sampler is assigned.  This is a Metropolis-Hastings adaptive random-walk sampler with a univariate normal proposal distribution.
@@ -349,9 +349,9 @@ code <- nimbleCode({
 })
 @
 
-\subsection{\cd{binary} Gibbs sampler}
+\subsection{\cd{binary} (Gibbs) sampler}
 
-The \cd{binary} sampler performs direct Gibbs sampling from the posterior distribution for binary-valued (discrete 0/1) nodes.  This can only be used for nodes following either a \cd{dbern(p)} or \cd{dbinom(p, size=1)} distribution.  The \cd{binary} sampler accepts no control list arguments.
+The \cd{binary} sampler performs Gibbs sampling for binary-valued nodes (strictly taking values 0 or 1).  This can only be used for nodes following either a \cd{dbern(p)} or \cd{dbinom(p, size=1)} distribution.  The \cd{binary} sampler accepts no control list arguments.
 
 Example usage:
  <<binary-sampler, eval=FALSE>>=
