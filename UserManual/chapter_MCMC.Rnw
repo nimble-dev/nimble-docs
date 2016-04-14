@@ -360,7 +360,7 @@ mcmcConf$addSampler(target = 'y[1]', type = 'binary')
 
 \subsection{Scalar Metropolis-Hastings random walk \cd{RW} sampler}
 
-The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler can be applied to any scalar continuous-valued stochastic node.  This sampler can optionally sample on a log scale.
+The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler can be applied to any scalar continuous-valued stochastic node, and can optionally sample on a log scale.
 
 The \cd{RW} sampler can be customized using the \cd{control} list argument to set the initial proposal distribution scale, the adaptive properties of the sampler, and whether to sample on a log scale.  See \cd{help(samplers)} for details. 
 
