@@ -362,7 +362,7 @@ mcmcConf$addSampler(target = 'y[1]', type = 'binary')
 
 The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler can be applied to any scalar continuous-valued stochastic node, and can optionally sample on a log scale.
 
-The \cd{RW} sampler can be customized using the \cd{control} list argument to set the initial proposal distribution scale, the adaptive properties of the sampler, and whether to sample on a log scale.  See \cd{help(samplers)} for details. 
+The \cd{RW} sampler can be customized using the \cd{control} list argument to set the initial proposal distribution scale, the adaptive properties of the sampler, the reflective property of proposals, and whether to sample on a log scale.  See \cd{help(samplers)} for details. 
 
 Example usage:
 <<RW-sampler, eval=FALSE>>=
@@ -371,9 +371,12 @@ mcmcConf$addSampler(target = 'a', type = 'RW',
 
 mcmcConf$addSampler(target = 'b', type = 'RW',
      control = list(adaptive = TRUE, adaptInterval = 200))
+
+mcmcConf$addSampler(target = 'p', type = 'RW',
+     control = list(reflective = TRUE))
 @
 
-Note that because we use a simple normal proposal distribution on all nodes, negative proposals may be simulated for non-negative random variables. These will be rejected, so the only downsides to this are some inefficiency and the presence of warnings during uncompiled (but not compiled) execution indicating \cd{NA} or \cd{NaN} values. 
+Note that because we use a simple normal proposal distribution on all nodes, negative proposals may be simulated for non-negative random variables. These will be rejected, so the only downsides to this are some inefficiency and the presence of warnings during uncompiled (but not compiled) execution indicating \cd{NA} or \cd{NaN} values.  This can be avoided in some cases by using the option \cd{reflective = TRUE}, which reflects proposal values to stay within the range of the target node distribution.
 
 \subsection{Conjugate (Gibbs) samplers}
 Gibbs samplers can be provided for nodes in conjugate relationships, as specified by the system-level \cd{conjugacyRelationshipsInputList}.  Conjugate samplers should not, in general, be manually added or modified by a user, since the control list requisites and syntax are lengthy, and determining conjugacy and assigning conjugate samplers is fully handled by the default MCMC configuration.
