@@ -66,7 +66,7 @@ The default configuration will contain a single sampler for each node in the mod
 The default sampling algorithm assigned to each stochastic node is determined by the following, in order of precedence:
 
 \begin{enumerate}
-\item If the node has no stochastic dependents, a predictive \nm{end} sampler is assigned.  The \nm{end} sampling algorithm merely calls \cd{simulate} on the particular node.
+\item If the node has no stochastic dependents, a predictive \nm{posterior\_predictive} sampler is assigned.  The \nm{posterior\_predictive} sampling algorithm merely calls \cd{simulate} on the particular node.
 \item The node is checked for presence of a conjugate relationship between its prior distribution and the distributions of its stochastic dependents.  If it is determined to be in a conjugate relationship, then the corresponding \nm{conjugate} (Gibbs) sampler is assigned.
 \item If the node is binary-valued (strictly taking values 0 or 1), then a \nm{binary} (Gibbs) sampler is assigned.
 \item If the node is otherwise discrete-valued, then a \nm{slice} sampler is assigned \citep{Neal2003}. 
@@ -87,8 +87,8 @@ See \cd{help(configureMCMC)} for usage details.
 
 %% \begin{description}
 %% \item[useConjugacy (default \cd{TRUE})] If \cd{TRUE}, conjugate samplers will be assigned to nodes determined to be in conjugate relationships.  If \cd{FALSE}, no conjugate samplers will be assigned.
-%% \item[onlyRW (default \cd{FALSE})]  If \cd{TRUE}, \cd{RW} samplers will be assigned to all non-terminal, continuous-valued stochastic nodes.  Terminal stochastic nodes are still assigned \cd{end} samplers.
-%% \item[onlySlice (default \cd{FALSE})]  If \cd{TRUE}, \cd{slice} samplers will be assigned to all non-terminal stochastic nodes.  Terminal stochastic nodes are still assigned \nm{end} samplers.
+%% \item[onlyRW (default \cd{FALSE})]  If \cd{TRUE}, \cd{RW} samplers will be assigned to all non-terminal, continuous-valued stochastic nodes.  Terminal stochastic nodes are still assigned \cd{posteriorpredictive} samplers.
+%% \item[onlySlice (default \cd{FALSE})]  If \cd{TRUE}, \cd{slice} samplers will be assigned to all non-terminal stochastic nodes.  Terminal stochastic nodes are still assigned \nm{posteriorpredictive} samplers.
 %% \item[multivariateNodesAsScalars (default \cd{FALSE})]  If \cd{TRUE}, then independent scalar random walk Metropolis-Hastings samplers (\cd{RW}) will be assigned to all scalar components comprising multivariate nodes.  This contrasts the default behavior of a single block sampler being assigned to multivariate nodes.  Regardless of the value of this argument, conjugate samplers will be assigned to conjugate (scalar and multivariate nodes), provided \cd{useConjugacy = TRUE}.
 %% \end{description}
 
@@ -133,7 +133,7 @@ Note that when adding individual samplers (next), the default control list can b
 
 \subsubsection{Adding samplers to the configuration}
 
-Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCspec} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object.   Valid character strings include `end', `RW', `RW\_block', `binary', `slice', `crossLevel', and `RW\_llFunction', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{printSamplers}.
+Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCspec} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object.   Valid character strings include `posterior\_predictive', `RW', `RW\_block', `binary', `slice', `crossLevel', and `RW\_llFunction', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{printSamplers}.
 
 When a \cd{control} argument is provided in a call to \cd{addSampler}, the \cd{control} list elements specified will have the highest priority.  The hierarchy of precedence for control list elements for samplers is:
 
@@ -482,14 +482,14 @@ mcmcConf$addSampler(target = 'p', type = 'RW_llFunction',
 Rmcmc <- buildMCMC(mcmcConf)
 @
 
-\subsection{Terminal node \cd{end} sampler}
-The \cd{end} sampler is only appropriate for use on terminal stochastic nodes (that is, those having no stochastic dependencies).  Note that such nodes play no role in inference but have often been included in BUGS models to accomplish posterior predictive checks.  NIMBLE allows posterior predictive values to be simulated independently of running MCMC, for example by writing a \cd{nimbleFunction} to do so.  This means that in many cases where terminal stochastic nodes have been included in BUGS models, they are not needed when using NIMBLE.
+\subsection{Terminal node \cd{posterior\_predictive} sampler}
+The \cd{posterior\_predictive} sampler is only appropriate for use on terminal stochastic nodes (that is, those having no stochastic dependencies).  Note that such nodes play no role in inference but have often been included in BUGS models to accomplish posterior predictive checks.  NIMBLE allows posterior predictive values to be simulated independently of running MCMC, for example by writing a \cd{nimbleFunction} to do so.  This means that in many cases where terminal stochastic nodes have been included in BUGS models, they are not needed when using NIMBLE.
 
-The \cd{end} sampler functions by calling the \cd{simulate} method of the relevant node, then updating model probabilities and deterministic dependent nodes.  The \cd{end} sampler will automatically be assigned to all terminal, non-data stochastic nodes in a model by the default MCMC configuration, so it is uncommon to manually assign this sampler.  The \cd{end} sampler accepts no control list arguments.
+The \cd{posterior\_predictive} sampler functions by calling the \cd{simulate} method of the relevant node, then updating model probabilities and deterministic dependent nodes.  The \cd{posterior\_predictive} sampler will automatically be assigned to all terminal, non-data stochastic nodes in a model by the default MCMC configuration, so it is uncommon to manually assign this sampler.  The \cd{posterior\_predictive} sampler accepts no control list arguments.
 
 Example usage:
 <<terminal-sampler, eval=FALSE>>=
-mcmcConf$addSampler(target = 'y[1]', type = 'end')
+mcmcConf$addSampler(target = 'y[1]', type = 'posterior_predictive')
 @
 
 
