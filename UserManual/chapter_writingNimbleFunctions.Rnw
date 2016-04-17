@@ -629,6 +629,46 @@ code that will crash is to do things like \cd{Y[5:10, 20:30] <-
 prevent crashes, but in v\ver\ we limit ourselves to trying to provide
 useful information.
 
+
+
+\subsection{Vector and Array utility functions}
+\label{sec:vectors-and-arrays}
+
+NIMBLE provides several utility functions to setup commonly used
+numeric structures.  These include vectors and arrays of constant
+initial value, and the identity matrix.
+
+These functions can be used inside nimbleFunctions to create these
+vector and array objects, and the resulting objects can be used freely
+within the nimbleFunction thereafter.  The elements can be modified,
+objects can be used in algebraic expressions, and the objects can even be used as 
+a return value from a nimbleFunction or as an argument to a nested nimbleFunction.
+
+The syntax for creating a 1-dimensional vector object is:
+\begin{itemize}
+\item \cd{nimVector(value, length)}
+\end{itemize}
+where \cd{value} specifies the initial value for each element, and \cd{length} 
+determines the length of the vector.  The arguments have no default values and 
+must both be provided. 
+
+The syntax for creating a 2-dimensional array object is:
+\begin{itemize}
+\item \cd{nimArray(value, nrow, ncol)}
+\end{itemize}
+where \cd{value} specifies the initial value for each element, and 
+\cd{nrow} and \cd{ncol} are the number of rows and columns in the 
+array. The arguments have no default values and must be provided. 
+
+The syntax for creating an identity matrix is:
+\begin{itemize}
+\item \cd{identityMatrix(d)}
+\end{itemize}
+where \cd{d} specifies the number of rows and columns in the (square)
+identity matrix.  This argument has no default value and must be provided. 
+
+
+
 \subsection{Including other methods in a nimbleFunction}
 \label{sec:incl-other-meth}
 
