@@ -908,18 +908,3 @@ use -- in the future.
 %% \subsection{rankSample}
 %% \label{sec:ranksample}
 
-%% TODO:  Need to write.
-
-%% \subsection{DSL vectors and arrays}
-%% \label{sec:vectors-and-arrays}
-
-%% TODO: FILL THIS IN
-
-%% DSL functions: nimVector(), nimArray().
-
-%% Can use in run function:
-
-%% nimVector(value, length)
-
-%% nimArray(value, nrow, ncol)
-
