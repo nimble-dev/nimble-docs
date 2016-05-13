@@ -239,7 +239,7 @@ The variables specified in \cd{monitors}  and \cd{monitors2} will be recorded (w
 
 Monitors may be added to the MCMC configuration either in the original call to \cd{configureMCMC} or using the \cd{addMonitors} method:
 <<addMonitors, eval=FALSE>>=
-## Using an arguments to configureMCMC
+## Using an argument to configureMCMC
 mcmcConf <- configureMCMC(Rmodel, monitors = c('alpha', 'beta'), monitors2 = 'x')
 
 ## Calling a member method of the mcmcspec object

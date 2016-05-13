@@ -767,7 +767,8 @@ The \cd{dinterval} is not really a distribution but rather a trick: in the above
 % or \cd{x[i] $\sim$ dinterval(c[i], t[i])} with \cd{x[i]} set to 1.
 % WHY - our dinterval code treats the 2nd arg as possibly a vector - the above presumably works for scalars but I think it is clearer if we always use the first arg as the data value and the 2nd as the interval points
 
-Nodes following a \cd{dinterval} distribution should normally be set as \cd{data} with known values. Otherwise, the node may simulated during initialization in some algorithms (e.g., MCMC) and thereby establish a permanent, perhaps unintended, constraint.  
+Nodes following a \cd{dinterval} distribution should normally be set
+as \cd{data} with known values. Otherwise, the node may be simulated during initialization in some algorithms (e.g., MCMC) and thereby establish a permanent, perhaps unintended, constraint.  
 
 Censoring differs from truncation because censoring an observation involves bounds on a random variable that could have taken any value, while in truncation we know a priori that a datum could not have occurred outside the truncation range.  
 
