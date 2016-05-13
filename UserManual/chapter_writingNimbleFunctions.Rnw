@@ -302,6 +302,14 @@ arbitrary DSL expressions (using other variables, or mathematical
 expressions, for example), which evaluate to appropriate values for
 each argument.
 
+After creating a non-scalar variable using one of these functions, or
+through direct (non-indexed) assignment into the variable name, the
+\cd{setSize()} method may still be used to resize the variable, noting
+that the dimension of the variable must remain the same (that is, a
+1-dimensional vector must remain as a vector, and a 2-dimensional
+matrix must remain as a matrix).  Note also that calls to \cd{setSize()}
+do \emph{not} necessarily preserve the contents of the object.
+
 \subsubsection{numeric()}
 
 \cd{numeric(length = 0, value = 0, init = TRUE)}
@@ -316,6 +324,11 @@ whether or not to initialize the elements (default \cd{TRUE}).
 <<exampleNumeric, eval=FALSE>>=
 ## creates a length 10 vector, all elements initialized to 2 
 myNumericVector <- numeric(10, value = 2) 
+
+## resize this numeric vector to be length 20
+## both calls are equivalent
+setSize(myNumericVector, 20)
+setSize(myNumericVector, c(20))
 @
 
 \subsubsection{integer()}
@@ -355,6 +368,12 @@ whether or not to initialize the elements (default \cd{TRUE}).
 <<exampleMatrix, eval=FALSE>>=
 ## creates a 10-by-1 column matrix of 1's
 onesMatrix <- matrix(1, nrow = 10, ncol = 1) 
+
+## resize this matrix to be a 10-by-10 matrix
+## note that contents are not necessarily preserved
+## both calls are equivalent
+setSize(onesMatrix, 10, 10)
+setSize(onesMatrix, c(10, 10))
 @
 
 \subsubsection{array()}
@@ -389,6 +408,11 @@ c <- array(0, dim = c(dim(x)[1], dim(x)[2]))
 
 ## the following creates a 3-dimensional array of 0's 
 d <- array(0, dim = c(x, y, z)) 
+
+## now resize this 3-dimensional array to be (x+1) by (y+1) by (z+1)
+## both calls are equivalent
+setSize(d, x+1, y+1, z+1)
+setSize(d, c(x+1, y+1, z+1))
 @
 
 %represents the creation of \cd{x} by construction.  For a compiled 
