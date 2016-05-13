@@ -265,56 +265,166 @@ provided.  For example, to provide 1.2 as a default:
 \item \cd{double(0, default = 1.2)}
 \end{itemize}
 
-\subsection{Declaring local variables}
+\subsection{Creating non-scalar variables: \cd{numeric}, \cd{integer}, \cd{matrix}, and \cd{array}}
 \label{sec:decl-local-vars}
 
-Generally one does not need to declare local variables.  They will be
-created from the code, and their types will be determined.  For
+Local variables are generally created automatically in NIMBLE functions, and
+their types will be automatically inferred.  For
 example, \cd{x <- A \%*\% B} will create \cd{x} as a matrix.  However,
-if a variable is first constructed by assignments that do not make
-clear its type and size, these must be declared before using it.  For
-example, the code
+if a variable is constructed only through indexed assignment, then it must be
+explicitly created first using one of the variable creation functions.
+For example, in the following code \cd{x} must be created first:
 
 <<exampleDeclare, eval=FALSE>>=
+
+## NOTE: must create x as a matrix here, first
+
 for(i in 1:10)
     for(j in 1:5)
-    x[i, j] <- foo(y[i, j])
-@ 
+        x[i, j] <- foo(y[i, j])
+@
 
-represents the creation of \cd{x} by construction.  For a compiled
-nimbleFunction, prior to the above block of code, one would need to
-declare \cd{x} before filling it with values.  If the sizes are known
-beforehand, they can be included when declaring \cd{x}. Either of the
-following are valid and equivalent.
+Accordingly, scalar variables \emph{never} need to be be
+created in advance.  Since as they are not indexed, they are always
+created in a single (non-indexed) assignment statement.
 
-<<exampleDeclare2, eval=FALSE>>=
-declare(x, double(2, 10, 5))
-declare(x, double(2, c(10, 5)))
-@ 
+NIMBLE provides several functions for creating non-scalar local
+variables.  These functions are very similar to those of R,
+except with additional arguments that provide additional
+functionality.  \cd{numeric()} and \cd{integer()} create
+floating-point and integer vectors (1-dimensional objects).
+\cd{matrix()} creates 2-dimensional matrix
+objects, and \cd{array()} can create 1-dimensional vectors,
+2-dimensional matrices, or arrays of higher dimension.
+
+Note that all arguments to these functions can be
+arbitrary DSL expressions (using other variables, or mathematical
+expressions, for example), which evaluate to appropriate values for
+each argument.
+
+\subsubsection{numeric()}
+
+\cd{numeric(length = 0, value = 0, init = TRUE)}
+\ \\
+
+\cd{numeric()} creates a 1-dimensional vector object of floating-point 
+(non-integer) values.  The \cd{length} argument specifies the vector 
+length (default 0), and the \cd{value} argument specifies the initial 
+value for all vector elements (default 0). The \cd{init} argument specifies 
+whether or not to initialize the elements (default \cd{TRUE}).
+
+<<exampleNumeric, eval=FALSE>>=
+## creates a length 10 vector, all elements initialized to 2 
+myNumericVector <- numeric(10, value = 2) 
+@
+
+\subsubsection{integer()}
+
+\cd{integer(length = 0, value = 0, init = TRUE)}
+\ \\
+
+\cd{integer()} creates a 1-dimensional vector object of integer 
+values.  The \cd{length} argument specifies the vector 
+length (default 0), and the \cd{value} argument specifies the initial 
+value for all vector elements (default 0). The \cd{init} argument specifies 
+whether or not to initialize the elements (default \cd{TRUE}).
+
+<<exampleInteger, eval=FALSE>>=
+## creates a length-100 integer vector, containing 1, 2, ..., 100 
+x <- 100 
+myIntegerVector <- integer(x) 
+for(i in 1:x)
+    myIntegerVector[i] <- i 
+@
+
+\subsubsection{matrix()}
+
+\cd{matrix(value = 0, nrow = 1, ncol = 1, init = TRUE, type = 'double')}
+\ \\
+
+\cd{matrix()} creates a 2-dimensional matrix object.  The resulting matrix can 
+contain floating-point numbers (using the default argument valule of 
+\cd{type = 'double'}), or integer values by specifying the argument 
+\cd{type = 'integer'}. 
+The \cd{nrow} and \cd{ncol} arguments specifiy the size of this 
+matrix, being the number of rows and number of columns, respectively. 
+The \cd{value} argument specifies the initial 
+value for all matrix elements (default 0). The \cd{init} argument specifies 
+whether or not to initialize the elements (default \cd{TRUE}).
+
+<<exampleMatrix, eval=FALSE>>=
+## creates a 10-by-1 column matrix of 1's
+onesMatrix <- matrix(1, nrow = 10, ncol = 1) 
+@
+
+\subsubsection{array()}
+
+\cd{array(value = 0, dim = c(1, 1), init = TRUE, type = 'double')}
+\ \\
+
+\cd{array()} creates a vector or higher-dimensional object, depending on 
+the \cd{dim} argument which specifies the dimensionality.  Similiar to \cd{matrix()},
+\cd{array()} can create objects with floating-point numbers or 
+intergers, depending on the \cd{type} argument.  The \cd{value} argument specifies the initial 
+value for all array elements (default 0). The \cd{init} argument specifies 
+whether or not to initialize the elements (default \cd{TRUE}).
+
+<<exampleArray, eval=FALSE>>=
+## the following three lines are equivalent 
+## each creates a length-10 vector, with elements equal to y 
+a <- numeric(10, value = y) 
+a <- array(y, dim = 10) 
+a <- array(y, dim = c(10)) 
+
+## the following three lines are equivalent 
+## each creates an integer vector of length z[5], with elements equal to x+y 
+b <- integer(z[5], value = x + y) 
+b <- array(x+y, dim = z[5], type = 'integer') 
+b <- array(x+y, dim = c(z[5]), type = 'integer') 
+
+## the following two lines are equivalent 
+## each one creates a matrix of 0's of the same size as matrix x 
+c <- matrix(0, nrow = dim(x)[1], ncol = dim(x)[2]) 
+c <- array(0, dim = c(dim(x)[1], dim(x)[2])) 
+
+## the following creates a 3-dimensional array of 0's 
+d <- array(0, dim = c(x, y, z)) 
+@
+
+%represents the creation of \cd{x} by construction.  For a compiled 
+%nimbleFunction, prior to the above block of code, one would need to 
+%declare \cd{x} before filling it with values.  If the sizes are known
+%beforehand, they can be included when declaring \cd{x}. Either of the
+%following are valid and equivalent.
+
+%%%##<<exampleDeclare2, eval=FALSE>>=
+%%%##declare(x, double(2, 10, 5))
+%%%##declare(x, double(2, c(10, 5)))
+%%%%%@ 
  
-The 2 indicates the number of dimensions.  The sizes of 10 and 5 can
-be given as separate arguments or concatenated with \cd{c()}.
+%The 2 indicates the number of dimensions.  The sizes of 10 and 5 can
+%be given as separate arguments or concatenated with \cd{c()}.
+% 
+%If the sizes need to be set after the variable has been declared (or
+%created by assignment), the following will work:
 
-If the sizes need to be set after the variable has been declared (or
-created by assignment), the following will work:
+%%%##<<exampleDeclare3, eval=FALSE>>=
+%%%##declare(x, double(2))
+%%%##setSize(x, 10, 5)
+%%%%@ 
 
-<<exampleDeclare3, eval=FALSE>>=
-declare(x, double(2))
-setSize(x, 10, 5)
-@ 
+%or 
 
-or 
+%%%##<<exampleDeclare2b, eval=FALSE>>=
+%%%##declare(x, double(2))
+%%%##setSize(x, c(10, 5))
+%%%%%@ 
 
-<<exampleDeclare2b, eval=FALSE>>=
-declare(x, double(2))
-setSize(x, c(10, 5))
-@ 
-
-Each of these declares \cd{x} to have 2 dimensions and then sets its
-sizes to 10 and 5.  In either method the sizes can be
-provided as variables, and \cd{x} can have its sizes changed by a
-subsequent call to \cd{setSize} (which does not guarantee that its
-contents will be preserved).
+%%Each of these declares \cd{x} to have 2 dimensions and then sets its
+%%sizes to 10 and 5.  In either method the sizes can be
+%%provided as variables, and \cd{x} can have its sizes changed by a
+%%subsequent call to \cd{setSize} (which does not guarantee that its
+%%contents will be preserved).
 
 \subsection{Driving models: \cd{calculate}, \cd{calculateDiff},
   \cd{simulate}, \cd{getLogProb}}
@@ -628,44 +738,6 @@ code that will crash is to do things like \cd{Y[5:10, 20:30] <-
   model\$x} without ensuring Y is at least 10x30.  In the future we hope to
 prevent crashes, but in v\ver\ we limit ourselves to trying to provide
 useful information.
-
-
-
-%% \subsection{Vector and Array utility functions}
-%% \label{sec:vectors-and-arrays}
-%%  
-%% NIMBLE provides several utility functions to setup commonly used
-%% numeric structures.  These include vectors and arrays of constant
-%% initial value, and the identity matrix.
-%%  
-%% These functions can be used inside nimbleFunctions to create these
-%% vector and array objects, and the resulting objects can be used freely
-%% within the nimbleFunction thereafter.  The elements can be modified,
-%% objects can be used in algebraic expressions, and the objects can even be used as 
-%% a return value from a nimbleFunction or as an argument to a nested nimbleFunction.
-%%  
-%% The syntax for creating a 1-dimensional vector object is:
-%% \begin{itemize}
-%% \item \cd{nimVector(value, length)}
-%% \end{itemize}
-%% where \cd{value} specifies the initial value for each element, and \cd{length} 
-%% determines the length of the vector.  The arguments have no default values and 
-%% must both be provided. 
-%%  
-%% The syntax for creating a 2-dimensional array object is:
-%% \begin{itemize}
-%% \item \cd{nimArray(value, nrow, ncol)}
-%% \end{itemize}
-%% where \cd{value} specifies the initial value for each element, and 
-%% \cd{nrow} and \cd{ncol} are the number of rows and columns in the 
-%% array. The arguments have no default values and must be provided. 
-%%  
-%% The syntax for creating an identity matrix is:
-%% \begin{itemize}
-%% \item \cd{identityMatrix(d)}
-%% \end{itemize}
-%% where \cd{d} specifies the number of rows and columns in the (square)
-%% identity matrix.  This argument has no default value and must be provided. 
 
 
 
