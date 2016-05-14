@@ -290,8 +290,8 @@ NIMBLE provides several functions for creating non-scalar variables.
 These functions are similar to those of R, but they take additional
 arguments to set an initialization value, indicate floating-point or
 integer elements, and/or indicate no initialization
-is needed \footnote{Skipping initialization is more efficient, but
-  this will typically only be noticeable only for functions called many,
+is needed\footnote{Skipping initialization is more efficient, but
+  this will typically be noticeable only for functions called many,
   many times.}. \cd{numeric()} and \cd{integer()} create floating-point and integer
 vectors (1-dimensional objects), respectively.  \cd{matrix()} creates 2-dimensional
 objects, and \cd{array()} creates objects of 1, 2 or more dimensions.
@@ -344,7 +344,7 @@ for(i in 1:x)
 
 \cd{matrix()} creates a 2-dimensional matrix object of either floating-point (if 
 \cd{type = `double'}, the default) or integer (if \cd{type = `integer'}) values. 
-The \cd{nrow} and \cd{ncol} arguments specifiy the number of rows and columns, respectively. 
+The \cd{nrow} and \cd{ncol} arguments specify the number of rows and columns, respectively. 
 The \cd{value} and \cd{init} argument are used in the same way as for
 \cd{numeric()} and \cd{integer()}.
 
@@ -402,7 +402,7 @@ setSize(d, c(x+1, y+1, z+1))
 %beforehand, they can be included when declaring \cd{x}. Either of the
 %following are valid and equivalent.
 
-\subsubsection{Deprecated method of creating non-scalar objects using \cd{declare)}
+\subsubsection{Deprecated method of creating non-scalar objects using \cd{declare()}}
 
 Previous versions of NIMBLE provided a function \cd{declare()} for
 declaring variables.  The more R-like functions \cd{numeric()},
