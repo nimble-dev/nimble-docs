@@ -259,14 +259,14 @@ cGetLogProbMany$run() #
 \subsection{Particle MCMC}
 \label{sec:particle-mcmc}
 
-In addition to our four particle filters, NIMBLE also has a particle MCMC sampler implemented, which samples top-level parameters, using a bootstrap filter to obtain estimates of the likelihood of a model for use in a Metropolis-Hastings MCMC step.  The PMCMC sampler uses a multivariate normal proposal distribution, and currently can only be used for blocks of top-level parameters.  Our PMCMC sampler also includes an optional algorithm to estimate the optimal number of particles to use in the particle filter at each iteration, based on a trade off between computational time and efficiency.  The PMCMC sampler can be specified with a call to \cd{addSampler} with \cd{type = `RW\char`_PFilter'}, a syntax similar to the other MCMC samplers listed in \ref{sec:samplers-provided}.
+In addition to our four particle filters, NIMBLE also has a particle MCMC sampler implemented, which samples top-level parameters, using a bootstrap filter to obtain estimates of the likelihood of a model for use in a Metropolis-Hastings MCMC step.  The PMCMC sampler uses a multivariate normal proposal distribution, and currently can only be used for blocks of top-level parameters.  Our PMCMC sampler also includes an optional algorithm to estimate the optimal number of particles to use in the particle filter at each iteration, based on a trade off between computational time and efficiency.  The PMCMC sampler can be specified with a call to \cd{addSampler} with \cd{type = 'RW\_PFilter'}, a syntax similar to the other MCMC samplers listed in \ref{sec:samplers-provided}.
 
-The \cd{RW\char`_PFilter} can be customized using the \cd{control} list argument to set the initial proposal covariance, the adaptive properties of the sampler, and options for the particle filter algorithm to be run.  In addition, setting the \cd{optimizeM} control list option to \cd{TRUE} will allow the sampler to estimate the optimal number of particles for the bootstrap filter.   See \cd{help(samplers)} for details. The MCMC configuration for the \cd{timeModel} in the previous section will serve as an example for the use of our PMCMC sampler.  Here we use the identity matrix as our proposal covariance matrix. 
+The \nm{RW\_PF} sampler can be customized using the \cd{control} list argument to set the initial proposal covariance, the adaptive properties of the sampler, and options for the particle filter algorithm to be run.  In addition, setting the \cd{optimizeM} control list option to \cd{TRUE} will allow the sampler to estimate the optimal number of particles for the bootstrap filter.   See \cd{help(samplers)} for details. The MCMC configuration for the \cd{timeModel} in the previous section will serve as an example for the use of our PMCMC sampler.  Here we use the identity matrix as our proposal covariance matrix. 
 
   <<pmcmc_Chunk, results = "hide">>=
   timespec <- configureMCMC(rTimeModel)   # default MCMC configuration
   
-  #Add random walk pmcmc sampler with particle number optimization.
+  # Add random walk pmcmc sampler with particle number optimization.
   timespec$addSampler(target = c('a', 'b', 'c', 'mu_0'), type = 'RW_PFilter',
   control = list(propCov= diag(4),
 				 adaptScaleOnly=F,
@@ -418,7 +418,7 @@ The ascent-based MCEM algorithm has only one run-time argument, \cd{initM}, whic
  NIMBLE has an algorithm to estimate the normalizing constant of a model using importance sampling.  This algorithm first runs MCMC to get an approximation to the posterior distribution. See \cd{help(getNormConst)} for additional information on building the algorithm.  Note that the estimate of the normalizing constant produced by this algorithm is very sensitive to the accuracy of the normal approximation.  For this reason, it is important to ensure that the MCMC used to obtain posterior samples has converged.  We will again use the \nm{pump} example to illustrate NIMBLE's normalizing constant estimation algorithm. 
 
 <<getNormConst>>=
-newPump2 <- newPump$newModel(replicate = T)
+newPump2 <- newPump$newModel(replicate = TRUE)
 compileNimble(newPump2)
 pumpNormConst <- getNormConst(model = newPump2,
                               burnIn = 1000,
