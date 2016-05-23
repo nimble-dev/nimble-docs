@@ -128,9 +128,9 @@ cGetLogProbMany$run() #
 
 \subsection{Filtering Algorithms}
 
-  NIMBLE includes algorithms for four different types of particle filters, which can be used to sample from the latent states and approximate the log likelihood of a state space model.  The particle filters currently implemented in Nimble are the bootstrap filter, the auxiliary particle filter, the Liu-West filter, and the ensemble Kalman filter, which can be built, respectively, with calls to \cd{buildBootF}, \cd{buildAuxF}, \cd{buildLWF}, and \cd{buildENKF}.  Each particle filter requires setup arguments  \cd{model} and \cd{nodes}, which is a character vector specifying latent model nodes.  In addition, each particle filter can be customized using a \cd{control} list argument.  Details on the control options and specifics of the filtering algorithms can be found in R's help pages.  
+  NIMBLE includes algorithms for four different types of particle filters, which can be used to sample from the latent states and approximate the log likelihood of a state space model.  The particle filters currently implemented in Nimble are the bootstrap filter, the auxiliary particle filter, the Liu-West filter, and the ensemble Kalman filter, which can be built, respectively, with calls to \cd{buildBootstrapFilter}, \cd{buildAuxiliaryFilter}, \cd{buildLiuWestFilter}, and \cd{buildEnsembleKF}.  Each particle filter requires setup arguments  \cd{model} and \cd{nodes}, which is a character vector specifying latent model nodes.  In addition, each particle filter can be customized using a \cd{control} list argument.  Details on the control options and specifics of the filtering algorithms can be found in R's help pages.  
   
-  Once built, each filter can be run by specifying the number of particles.  Each filter has a model values object named \cd{mvEWSamp} which is populated with equally-weighted samples from the posterior distribution of the latent states (and in the case of the Liu =West filter, the posterior distribution of the top level parameters as well) as the filter is run.  The bootstrap, auxiliary, and Liu-West filters also have another model values object, \cd{mvWSamp}, which has unequally-weighted samples from the posterior distribution of the latent states, along with weights for each particle.   In addition, the bootstrap and auxiliary particle filters return estimates of the log likelihood of the given state space model.
+  Once built, each filter can be run by specifying the number of particles.  Each filter has a model values object named \cd{mvEWSamples} which is populated with equally-weighted samples from the posterior distribution of the latent states (and in the case of the Liu =West filter, the posterior distribution of the top level parameters as well) as the filter is run.  The bootstrap, auxiliary, and Liu-West filters also have another model values object, \cd{mvWSamples}, which has unequally-weighted samples from the posterior distribution of the latent states, along with weights for each particle.   In addition, the bootstrap and auxiliary particle filters return estimates of the log likelihood of the given state space model.
   
  We first create a linear state-space model to use as an example for our particle filter algorithms. 
   <<particle_Filter_Chunk, results = "hide">>=
@@ -174,12 +174,12 @@ cGetLogProbMany$run() #
 
 
   @
-  Here is an example of building and running the bootstrap filter.  Additional information about the bootstrap filter can be found with \cd{help(buildBootF)}.
+  Here is an example of building and running the bootstrap filter.  Additional information about the bootstrap filter can be found with \cd{help(buildBootstrapFilter)}.
   
 <<boot_Filter_Chunk>>=
 
   #Build bootstrap filter
-  rBootF <- buildBootF(rTimeModel, "x", 
+  rBootF <- buildBootstrapFilter(rTimeModel, "x", 
                        control = list(thresh = 0.8, saveAll = T, smoothing = F))
   #Compile filter   
   cBootF = compileNimble(rBootF,project = rTimeModel)
@@ -188,7 +188,7 @@ cGetLogProbMany$run() #
   #Run bootstrap filter, which returns estimate of model log-likelihood
   bootLLEst <- cBootF$run(parNum)
 @
-  Next, we provide an example of building and running the auxiliary particle filter.  Additional information about the auxiliary particle filter can be found with \cd{help(buildAuxF)}.  Note that a filter cannot be built on a model that already has a filter specialized to it, so we create a new copy of our state space model first
+  Next, we provide an example of building and running the auxiliary particle filter.  Additional information about the auxiliary particle filter can be found with \cd{help(buildAuxiliaryFilter)}.  Note that a filter cannot be built on a model that already has a filter specialized to it, so we create a new copy of our state space model first
   
 <<aux_Filter_Chunk, results = "hide">>=
 
@@ -196,14 +196,14 @@ cGetLogProbMany$run() #
   auxTimeModel <- rTimeModel$newModel(replicate = T)
   compileNimble(auxTimeModel)
   #Build auxiliary filter
-  rAuxF <- buildAuxF(auxTimeModel, "x", 
+  rAuxF <- buildAuxiliaryFilter(auxTimeModel, "x", 
                      control = list(thresh = 0.5, saveAll = T))
   #Compile filter   
   cAuxF = compileNimble(rAuxF,project = auxTimeModel)
   #Run auxliary filter, which returns estimate of model log-likelihood
   auxLLEst <- cAuxF$run(parNum)
 @
-  Below we give an example of building and running the Liu-West filter, which can sample from the posterior distribution of top-level parameters as well as latent states. Additional information can be found with \cd{help(buildLWF)}.
+  Below we give an example of building and running the Liu and West filter, which can sample from the posterior distribution of top-level parameters as well as latent states.  The Liu and West filter accepts an additional \cd{params} argument, specifying the top-level parameters to be sampled.  Additional information can be found with \cd{help(buildLiuWestFilter)}.
 
 <<lw_Filter_Chunk, results = "hide">>=
 
@@ -212,22 +212,21 @@ cGetLogProbMany$run() #
   compileNimble(LWTimeModel)
   #Build Liu-West filter, also 
   #specifying which top level parameters to estimate
-  rLWF <- buildLWF(LWTimeModel, "x",
-                   control = list(params = c("a", "b", "c"),
-                                  saveAll = F))     
+  rLWF <- buildLiuWestFilter(LWTimeModel, "x", params = c("a", "b", "c"),
+                   control = list(saveAll = F))     
   #Compile filter   
   cLWF = compileNimble(rLWF,project = LWTimeModel)
   #Run Liu-West filter
   cLWF$run(parNum)
 @
-  Below we give an example of building and running the ensemble Kalman filter, which can sample from the posterior distribution of latent states. Additional information can be found with \cd{help(buildENKF)}.
+  Below we give an example of building and running the ensemble Kalman filter, which can sample from the posterior distribution of latent states. Additional information can be found with \cd{help(buildEnsembleKF)}.
 
 <<ENKF_Filter_Chunk, results = "hide">>=
   #Copy model
   ENKFTimeModel <- rTimeModel$newModel(replicate = T)
   compileNimble(ENKFTimeModel)
   #Build and compile ensemble Kalman filter
-  rENKF <- buildENKF(ENKFTimeModel, "x",
+  rENKF <- buildEnsembleKF(ENKFTimeModel, "x",
                      control = list(saveAll = F))  
   cENKF = compileNimble(rENKF,project = ENKFTimeModel)
   #Run ensemble Kalman filter
@@ -238,36 +237,36 @@ cGetLogProbMany$run() #
   
   <<particle_Filter_Samples, eval=FALSE>>=
   #Equally-weighted samples (available from all filters)
-  bootEWSamp <- as.matrix(cBootF$mvEWSamp)
-  auxEWSamp <- as.matrix(cAuxF$mvEWSamp)
-  LWFEWSamp <- as.matrix(cLWF$mvEWSamp)
-  ENKFEWSamp <- as.matrix(cENKF$mvEWSamp)
+  bootEWSamp <- as.matrix(cBootF$mvEWSamples)
+  auxEWSamp <- as.matrix(cAuxF$mvEWSamples)
+  LWFEWSamp <- as.matrix(cLWF$mvEWSamples)
+  ENKFEWSamp <- as.matrix(cENKF$mvEWSamples)
   
   #Unequally-weighted samples, along with weights (available 
   #from bootstrap, auxiliary, and Liu and West filters)
-  bootWSamp <- as.matrix(cBootF$mvWSamp, 'x')
-  bootWts <- as.matrix(cBootF$mvWSamp, 'wts')
-  auxWSamp <-  as.matrix(xAuxF$mvWSamp, 'x')
-  auxWts <- as.matrix(cAuxF$mvWSamp, 'wts')
+  bootWSamp <- as.matrix(cBootF$mvWSamples, 'x')
+  bootWts <- as.matrix(cBootF$mvWSamples, 'wts')
+  auxWSamp <-  as.matrix(xAuxF$mvWSamples, 'x')
+  auxWts <- as.matrix(cAuxF$mvWSamples, 'wts')
   
   #Liu and West filter also returns samples 
   #from posterior distribution of top-level parameters:
-  aEWSamp <- as.matrix(cLWF$mvEWSamp, 'a')
+  aEWSamp <- as.matrix(cLWF$mvEWSamples, 'a')
   @
 
     
 \subsection{Particle MCMC}
 \label{sec:particle-mcmc}
 
-In addition to our four particle filters, NIMBLE also has a particle MCMC sampler implemented, which samples top-level parameters, using a bootstrap filter to obtain estimates of the likelihood of a model for use in a Metropolis-Hastings MCMC step.  The PMCMC sampler uses a multivariate normal proposal distribution, and currently can only be used for blocks of top-level parameters.  Our PMCMC sampler also includes an optional algorithm to estimate the optimal number of particles to use in the particle filter at each iteration, based on a trade off between computational time and efficiency.  The PMCMC sampler can be specified with a call to \cd{addSampler} with \cd{type = 'RW\_PFilter'}, a syntax similar to the other MCMC samplers listed in \ref{sec:samplers-provided}.
+In addition to our four particle filters, NIMBLE also has particle MCMC samplers implemented, which samples top-level parameters, using either a bootstrap filter or auxiliary particle filter to obtain estimates of the likelihood of a model for use in a Metropolis-Hastings MCMC step.  The \nm{RW\_PF}  sampler uses a univariate normal proposal distribution, and should be used to sample scalar top-level parameters.  The \nm{RW\_PF\_block} sampler uses a multivariate normal proposal distribution for vectors of top-level parameters.  Each PMCMC sampler also includes an optional algorithm to estimate the optimal number of particles to use in the particle filter at each iteration, based on a trade off between computational time and efficiency.  The PMCMC samplers can be specified with a call to \cd{addSampler} with \cd{type = 'RW\_PF'} or \cd{type = 'RW\_PF\_block'}  , a syntax similar to the other MCMC samplers listed in \ref{sec:samplers-provided}.
 
-The \nm{RW\_PF} sampler can be customized using the \cd{control} list argument to set the initial proposal covariance, the adaptive properties of the sampler, and options for the particle filter algorithm to be run.  In addition, setting the \cd{optimizeM} control list option to \cd{TRUE} will allow the sampler to estimate the optimal number of particles for the bootstrap filter.   See \cd{help(samplers)} for details. The MCMC configuration for the \cd{timeModel} in the previous section will serve as an example for the use of our PMCMC sampler.  Here we use the identity matrix as our proposal covariance matrix. 
+The \nm{RW\_PF} sampler and \nm{RW\_PF\_block} sampler can be customized using the \cd{control} list argument to set the adaptive properties of the sampler and options for the particle filter algorithm to be run.  In addition, setting the \cd{optimizeM} control list option to \cd{TRUE} will allow the sampler to estimate the optimal number of particles for the bootstrap filter.   See \cd{help(samplers)} for details. The MCMC configuration for the \cd{timeModel} in the previous section will serve as an example for the use of our PMCMC sampler.  Here we use the identity matrix as our proposal covariance matrix. 
 
   <<pmcmc_Chunk, results = "hide">>=
   timespec <- configureMCMC(rTimeModel)   # default MCMC configuration
   
   # Add random walk pmcmc sampler with particle number optimization.
-  timespec$addSampler(target = c('a', 'b', 'c', 'mu_0'), type = 'RW_PFilter',
+  timespec$addSampler(target = c('a', 'b', 'c', 'mu_0'), type = 'RW_PF_block',
   control = list(propCov= diag(4),
 				 adaptScaleOnly=F,
 				 latents = 'x',
@@ -399,7 +398,7 @@ Once an MCEM has been built for the model of interest using either \cd{buildMCEM
 
 <<run-MCEM, eval=FALSE>>=
 pumpMCEM(maxit = 20, m1 = 250, m2 = 500)
-pumpAscentMCEM(initM = 1000)
+pumpAscentMCEM(initM = 400)
 @ 
 
 For the user-specified MCEM algorithm, there are three run-time arguments:
