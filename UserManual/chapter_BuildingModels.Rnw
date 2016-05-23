@@ -24,12 +24,12 @@ require(nimble)
 
 
 %% <<cache=TRUE>>=
-%% model1 <- BUGScode({
+%% model1 <- nimbleCode({
 %%     a ~ dnorm(mean = 0, tau = 0.01)
 %%     y ~ dnorm(mean = a, sd = 2)
 %% })
 
-%% Rmodel1 <- BUGSmodel(model1, returnModel = TRUE)
+%% Rmodel1 <- nimbleModel(model1, returnModel = TRUE)
 %% @ 
 
 %% \cd{Rmodel1} is the R-version of the model, and it can be used right away,
@@ -131,7 +131,7 @@ The WinBUGS, OpenBUGS and JAGS manuals are useful resources for
 writing BUGS models.  Here we will just introduce the basics of the
 BUGS language -- and some of NIMBLE's extensions --  with a block of code showing a variety of declarations:
 
-<<didacticBUGScode, eval=FALSE>>=
+<<didacticnimbleCode, eval=FALSE>>=
 exampleCode <- nimbleCode({
     ## 1. normal distribution with BUGS parameter order
     x ~ dnorm(a + b * c, tau) 
@@ -446,7 +446,7 @@ timesTwo <- nimbleFunction(
         return(2*x)
     })
 
-code <- BUGScode({
+code <- nimbleCode({
     for(i in 1:3) {
         mu[i] ~ dnorm(0, 1)
         mu_times_two[i] <- timesTwo(mu[i])
@@ -468,7 +468,7 @@ vectorTimesTwo  <- nimbleFunction(
         return(2*x)
     }
     )
-code <- BUGScode({
+code <- nimbleCode({
     for(i in 1:3) {
         mu[i] ~ dnorm(0, 1)
     }
@@ -574,7 +574,7 @@ registerDistributions(list(
         )
     ))
 
-code <- BUGScode({
+code <- nimbleCode({
      y[1:K] ~ ddirchmulti(alpha[1:K], n)
      for(i in 1:K) {
          alpha[i] ~ T(dmyexp(scale = 3), 0, 100)
