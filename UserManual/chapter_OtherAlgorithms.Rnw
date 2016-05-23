@@ -389,16 +389,3 @@ pumpMCEM(initM = 400)
 @ 
 
 
-\section{Normalizing Constant Estimation}
-
- NIMBLE has an algorithm to estimate the normalizing constant of a model using importance sampling.  This algorithm first runs MCMC to get an approximation to the posterior distribution. See \cd{help(getNormConst)} for additional information on building the algorithm.  Note that the estimate of the normalizing constant produced by this algorithm is very sensitive to the accuracy of the normal approximation.  For this reason, it is important to ensure that the MCMC used to obtain posterior samples has converged.  We will again use the \nm{pump} example to illustrate NIMBLE's normalizing constant estimation algorithm. 
-
-<<getNormConst>>=
-newPump2 <- newPump$newModel(replicate = TRUE)
-compileNimble(newPump2)
-pumpNormConst <- getNormConst(model = newPump2,
-                              burnIn = 1000,
-                              mcmcControl = list(adaptInterval = 100))
-cConstEst <- compileNimble(pumpNormConst, project = newPump2)
-constEst <- cConstEst$run(5000, 5000)
-@   
