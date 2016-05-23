@@ -31,6 +31,7 @@
 \begin{document}
 %\SweaveOpts{concordance=TRUE}
 %\SweaveOpts{concordance=TRUE}
+%\SweaveOpts{concordance=TRUE}
 
 <<setup, include=FALSE, cache=FALSE>>=
 ## replace.assign replaces "=" with "<-"; 
@@ -47,6 +48,7 @@ options(replace.assign=TRUE, width=65)
 % load these prior to building the manual, because otherwise they
 % generate package loading messages that I don't know how to stop.
 <<chunk0, echo = FALSE, message = FALSE>>=
+
 ## source the code
 require(nimble, warn.conflicts = FALSE, quietly = TRUE)
 #source(file.path('..', '..', 'examples', 'demos', 'loadAllCode.R'))

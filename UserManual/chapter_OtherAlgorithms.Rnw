@@ -1,5 +1,6 @@
 %% See http://yihui.name/knitr/demo/child/ for documentation on the parent/child document system of knitr
 
+
 \Sexpr{set_parent('NimbleUserManual.Rnw')}
 
 <<echo=FALSE>>=
@@ -8,6 +9,7 @@ require(nimble)
 
 \chapter{Other algorithms provided by NIMBLE}
 \label{cha:algos-provided}
+
 
 In v\ver, the NIMBLE algorithm library is fairly limited beyond MCMC.
 It includes some basic utilities for calculating and simulating sets
@@ -46,7 +48,7 @@ simpleModelCode <- nimbleCode({
   }
 })
 
-simpleModel <- nimbleModel(simpleModelCode)
+simpleModel <- nimbleModel(simpleModelCode, check = FALSE)
 cSimpleModel <- compileNimble(simpleModel)
 
 #simulates all the x's and y's
@@ -122,65 +124,159 @@ cGetLogProbMany$run() #
   
   
 
-\section{Particle Filter}
+\section{Particle Filters}
 
-  NIMBLE includes an algorithm for a basic particle filter to be used for approximating the
-  log likelihood of a state-space model.  A particle filter can be built
-  for such a model by a call to \cd{buildPF}. This nimbleFunction requires
-  setup arguments \cd{model} and \cd{nodes}, which is a character vector specifying latent model nodes.
-  The particle filter can be run by specifying the number of particles.
+\subsection{Filtering Algorithms}
+
+  NIMBLE includes algorithms for four different types of particle filters, which can be used to sample from the latent states and approximate the log likelihood of a state space model.  The particle filters currently implemented in NIMBLE are the bootstrap filter, the auxiliary particle filter, the Liu-West filter, and the ensemble Kalman filter, which can be built, respectively, with calls to \cd{buildBootstrapFilter}, \cd{buildAuxiliaryFilter}, \cd{buildLiuWestFilter}, and \cd{buildEnsembleKF}.  Each particle filter requires setup arguments  \cd{model} and \cd{nodes}, which is a character vector specifying latent model nodes.  In addition, each particle filter can be customized using a \cd{control} list argument.  Details on the control options and specifics of the filtering algorithms can be found in the help pages for the functions.
   
-  Here is an example, using a linear state-space model for which we
-  can also calculate the likelihood using the Kalman Filter to
-  verify if the particle filter seems to be working.
+  Once built, each filter can be run by specifying the number of particles.  Each filter has a model values object named \cd{mvEWSamples} that is populated with equally-weighted samples from the posterior distribution of the latent states (and in the case of the Liu-West filter, the posterior distribution of the top level parameters as well) as the filter is run.  The bootstrap, auxiliary, and Liu-West filters also have another model values object, \cd{mvWSamples}, which has unequally-weighted samples from the posterior distribution of the latent states, along with weights for each particle.   In addition, the bootstrap and auxiliary particle filters return estimates of the log likelihood of the given state space model.
   
-<<particle_Filter_Chunk>>=
-# Building a simple linear state-space model. 
-# x is latent space, y is observed data
-timeModelCode <- nimbleCode({
+ We first create a linear state-space model to use as an example for our particle filter algorithms. 
+  <<particle_Filter_Chunk, results = "hide">>=
+  # Building a simple linear state-space model. 
+  # x is latent space, y is observed data
+  timeModelCode <- nimbleCode({
   x[1] ~ dnorm(mu_0, 1)
-	y[1] ~ dnorm(x[1], 1)
-	for(i in 2:t){
-		x[i] ~ dnorm(x[i-1] * a + b, 1)
-		y[i] ~ dnorm(x[i] * c, 1)
-	}
+  y[1] ~ dnorm(x[1], 1)
+  for(i in 2:t){
+  x[i] ~ dnorm(x[i-1] * a + b, 1)
+  y[i] ~ dnorm(x[i] * c, 1)
+  }
+  
+  a ~ dunif(0, 1)
+  b ~ dnorm(0, 1)
+  c ~ dnorm(1,1)
+  mu_0 ~ dnorm(0, 1)
+  })
+  
+  #simulate some data
+  t = 25; mu_0 = 1
+  x = rnorm(1 ,mu_0, 1)
+  y = rnorm(1, x, 1)
+  a = 0.5; b = 1; c = 1
+  for(i in 2:t){
+  x[i] = rnorm(1, x[i-1] * a + b, 1)
+  y[i] = rnorm(1, x[i] * c, 1)
+  }
+  
+  #build the model
+  rTimeModel <- nimbleModel(timeModelCode, constants = list(t = t), 
+  data = list(y = y), check = FALSE )
 
-	a ~ dunif(0, 1)
-	b ~ dnorm(0, 1)
-	c ~ dnorm(1,1)
-	mu_0 ~ dnorm(0, 1)
-})
+  #Set parameter values and compile the model
+  rTimeModel$a = 0.5
+  rTimeModel$b = 1
+  rTimeModel$c = 1
+  rTimeModel$mu_0 = 1
 
-#simulate some data
-t = 25; mu_0 = 1
-x = rnorm(1 ,mu_0, 1)
-y = rnorm(1, x, 1)
-a = 0.5; b = 1; c = 1
-for(i in 2:t){
-	x[i] = rnorm(1, x[i-1] * a + b, 1)
-	y[i] = rnorm(1, x[i] * c, 1)
-}
-## build and compile the model
-rTimeModel <- nimbleModel(timeModelCode, constants = list(t = t), 
-                          data = list(y = y), check = FALSE )
-cTimeModel <- compileNimble(rTimeModel)
+  cTimeModel <- compileNimble(rTimeModel)
 
-#Build the particle filter
-rPF <- buildPF(rTimeModel, "x")
-cPF = compileNimble(rPF,project = rTimeModel)
 
-#Set parameter values
-cTimeModel$mu_0 = 1
-cTimeModel$a = 0.5
-cTimeModel$b = 1
-cTimeModel$c = 1
-cTimeModel$mu_0 = 1
+  @
+  Here is an example of building and running the bootstrap filter.  Additional information about the bootstrap filter can be found with \cd{help(buildBootstrapFilter)}.
+  
+<<boot_Filter_Chunk>>=
 
-#Run particle filter with 
-#5000 particles
-cPF$run(m = 5000)
+  #Build bootstrap filter
+  rBootF <- buildBootstrapFilter(rTimeModel, "x", 
+                       control = list(thresh = 0.8, saveAll = TRUE, 
+                                      smoothing = FALSE))
+  #Compile filter   
+  cBootF = compileNimble(rBootF,project = rTimeModel)
+  #Set number of particles
+  parNum <- 5000
+  #Run bootstrap filter, which returns estimate of model log-likelihood
+  bootLLEst <- cBootF$run(parNum)
 @
+  Next, we provide an example of building and running the auxiliary particle filter.  Additional information about the auxiliary particle filter can be found with \cd{help(buildAuxiliaryFilter)}.  Note that a filter cannot be built on a model that already has a filter specialized to it, so we create a new copy of our state space model first
+  
+<<aux_Filter_Chunk, results = "hide">>=
 
+  #Copy our state-space model for use with the auxiliary filter
+  auxTimeModel <- rTimeModel$newModel(replicate = TRUE)
+  compileNimble(auxTimeModel)
+  #Build auxiliary filter
+  rAuxF <- buildAuxiliaryFilter(auxTimeModel, "x", 
+                     control = list(thresh = 0.5, saveAll = TRUE))
+  #Compile filter   
+  cAuxF = compileNimble(rAuxF,project = auxTimeModel)
+  #Run auxliary filter, which returns estimate of model log-likelihood
+  auxLLEst <- cAuxF$run(parNum)
+@
+  Now we give an example of building and running the Liu and West filter, which can sample from the posterior distribution of top-level parameters as well as latent states.  The Liu and West filter accepts an additional \cd{params} argument, specifying the top-level parameters to be sampled.  Additional information can be found with \cd{help(buildLiuWestFilter)}.
+
+<<lw_Filter_Chunk, results = "hide">>=
+
+  #Copy model
+  LWTimeModel <- rTimeModel$newModel(replicate = TRUE)
+  compileNimble(LWTimeModel)
+  #Build Liu-West filter, also 
+  #specifying which top level parameters to estimate
+  rLWF <- buildLiuWestFilter(LWTimeModel, "x", params = c("a", "b", "c"),
+                   control = list(saveAll = FALSE))     
+  #Compile filter   
+  cLWF = compileNimble(rLWF,project = LWTimeModel)
+  #Run Liu-West filter
+  cLWF$run(parNum)
+@
+  Below we give an example of building and running the ensemble Kalman filter, which can sample from the posterior distribution of latent states. Additional information can be found with \cd{help(buildEnsembleKF)}.
+
+<<ENKF_Filter_Chunk, results = "hide">>=
+  #Copy model
+  ENKFTimeModel <- rTimeModel$newModel(replicate = TRUE)
+  compileNimble(ENKFTimeModel)
+  #Build and compile ensemble Kalman filter
+  rENKF <- buildEnsembleKF(ENKFTimeModel, "x",
+                     control = list(saveAll = FALSE))  
+  cENKF = compileNimble(rENKF,project = ENKFTimeModel)
+  #Run ensemble Kalman filter
+  cENKF$run(parNum)
+  @
+  
+  Once each filter has been run, we can extract samples from the posterior distribution of our latent states as follows:
+  
+  <<particle_Filter_Samples, eval=FALSE>>=
+  #Equally-weighted samples (available from all filters)
+  bootEWSamp <- as.matrix(cBootF$mvEWSamples)
+  auxEWSamp <- as.matrix(cAuxF$mvEWSamples)
+  LWFEWSamp <- as.matrix(cLWF$mvEWSamples)
+  ENKFEWSamp <- as.matrix(cENKF$mvEWSamples)
+  
+  #Unequally-weighted samples, along with weights (available 
+  #from bootstrap, auxiliary, and Liu and West filters)
+  bootWSamp <- as.matrix(cBootF$mvWSamples, 'x')
+  bootWts <- as.matrix(cBootF$mvWSamples, 'wts')
+  auxWSamp <-  as.matrix(xAuxF$mvWSamples, 'x')
+  auxWts <- as.matrix(cAuxF$mvWSamples, 'wts')
+  
+  #Liu and West filter also returns samples 
+  #from posterior distribution of top-level parameters:
+  aEWSamp <- as.matrix(cLWF$mvEWSamples, 'a')
+  @
+
+    
+\subsection{Particle MCMC (PMCMC)}
+\label{sec:particle-mcmc}
+
+In addition to our four particle filters, NIMBLE also has particle MCMC samplers implemented. These sample top-level parameters by using either a bootstrap filter or auxiliary particle filter to obtain estimates of the likelihood of a model for use in a Metropolis-Hastings MCMC step.  The \nm{RW\_PF}  sampler uses a univariate normal proposal distribution, and should be used to sample scalar top-level parameters.  The \nm{RW\_PF\_block} sampler uses a multivariate normal proposal distribution for vectors of top-level parameters.  Each PMCMC sampler also includes an optional algorithm to estimate the optimal number of particles to use in the particle filter at each iteration, based on a trade off between computational time and efficiency.  The PMCMC samplers can be specified with a call to \cd{addSampler} with \cd{type = 'RW\_PF'} or \cd{type = 'RW\_PF\_block'}, a syntax similar to the other MCMC samplers listed in \ref{sec:samplers-provided}.
+
+The \nm{RW\_PF} sampler and \nm{RW\_PF\_block} sampler can be customized using the \cd{control} list argument to set the adaptive properties of the sampler and options for the particle filter algorithm to be run.  In addition, setting the \cd{optimizeM} control list option to \cd{TRUE} will allow the sampler to estimate the optimal number of particles for the bootstrap filter.   See \cd{help(samplers)} for details. The MCMC configuration for the \cd{timeModel} in the previous section will serve as an example for the use of our PMCMC sampler.  Here we use the identity matrix as our proposal covariance matrix. 
+
+  <<pmcmc_Chunk, results = "hide">>=
+  timespec <- configureMCMC(rTimeModel)   # default MCMC configuration
+  
+  # Add random walk pmcmc sampler with particle number optimization.
+  timespec$addSampler(target = c('a', 'b', 'c', 'mu_0'), type = 'RW_PF_block',
+  control = list(propCov= diag(4),
+				 adaptScaleOnly=F,
+				 latents = 'x',
+				 optimizeM = TRUE
+				 ))
+	@
+  
+
+    
 \section{Monte Carlo Expectation Maximization (MCEM)}
 
    Suppose we have a model with missing data (or a layer of latent
@@ -194,10 +290,11 @@ cPF$run(m = 5000)
   be implemented in NIMBLE.  The reason we started with MCEM is to
   explore the flexibility of NIMBLE and illustrate the combination of
   R and NIMBLE involved, with R managing the highest-level processing
-  of the algorithm and calling nimbleFunctions for computations.
+  of the algorithm and calling nimbleFunctions for computations.  NIMBLE provides an ascent-based MCEM algorithm that automatically determines when the algorithm has converged by examining 
+  the size of the changes in the likelihood between each iteration (\cd{buildMCEM}). 
   
   We will revisit the \nm{pump} example to illustrate the use of
-  NIMBLE's MCEM algorithm.
+  NIMBLE\'s MCEM algorithm.
   
  %% newPump didn't exist so I'm creating it in some non-echoed code.
 <<echo=FALSE>>=
@@ -220,24 +317,39 @@ pumpData <- list(x = c(5, 1, 5, 14, 3, 19, 1, 1, 4, 22))
 pumpInits <- list(alpha = 1, beta = 1,
                   theta = rep(0.1, pumpConsts$N))
 
-newPump <- nimbleModel(code = pumpCode, name = 'pump', constants = pumpConsts,
-                    data = pumpData, inits = pumpInits)
+
 
 @   
-  
-<<build-MCEM>>=
-pumpMCEM <- buildMCEM(model = newPump,
-                      latentNodes = 'theta',
-                      burnIn = 100,
-                      mcmcControl = list(adaptInterval = 20),
-                      boxConstraints = list( list( c('alpha', 'beta'), 
-                          limits = c(0, Inf) ) ), 
-                      buffer = 1e-6)
+% note that code below doesn't get evaluated because the buildMCEM functions do not work on models which
+% have mcmc's already built for them.  Since building an MCEM requires a MCMC to be built simultaneously,
+% we cant have both mcems at the same time.
+<<build-MCEM, results = "hide">>=
+
+#rebuild and recompile the pump model
+newPump <- nimbleModel(code = pumpCode, name = 'pump',
+                       constants = pumpConsts,
+                       data = pumpData, 
+                       inits = pumpInits,
+                       check = FALSE)
+
+compileNimble(newPump)
+
+#build an MCEM algorithm with Ascent-based convergence criterion
+pumpMCEM <- buildMCEM(model = ascentPump,
+                                  latentNodes = 'theta',
+                                  burnIn = 100,
+                                  mcmcControl = list(adaptInterval = 20),
+                                  boxConstraints =
+                                    list( list( c('alpha', 'beta'), 
+                                     limits = c(0, Inf) ) ), 
+                                  buffer = 1e-6)
+
 @
 
 %  When building the MCEM algorithm, the arguments supplied are \cd{model}, \cd{latentNodes}, \cd{burnIn}, \cd{mcmcControl}, \cd{boxConstraints} and \cd{buffer}. 
-  Here \cd{newPump} was created just like \cd{pump} in Section \ref{sec:creating-model}. The first argument, \cd{model}, is a NIMBLE model, which can be
-  either the uncompiled or compiled version. At the moment, the model provided cannot be part of another MCMC sampler.
+  Here \cd{newPump} was created just like \cd{pump} in Section \ref{sec:creating-model}. The first argument to the MCEM, \cd{model}, is a NIMBLE model, which can be
+  either the uncompiled or compiled version. At the moment, the model provided cannot be part of another MCMC sampler.  The ascent-based MCEM algorithm has a number of control options:
+ 
  
   The \cd{latentNodes} argument should indicate the nodes that will be
   integrated over (sampled via MCMC), rather than
@@ -261,27 +373,19 @@ The  \cd{mcmcControl} argument will be passed to \cd{configureMCMC} to define th
  Each constraint given should be a list
  in which the first element is the names of the nodes or variables
  that the constraint will be applied to and the second element is a
- vector of length 2, in which the first value is the lower limit and
+ vector of length two, in which the first value is the lower limit and
  the second is the upper limit.  Values of \cd{Inf} and \cd{-Inf} are allowed. If a node is not listed, it will be assumed that there are no constraints. These arguments are passed as \cd{lower} and \cd{upper} to R's \cd{optim} function, using \cd{method = `L-BFGS-B'}) 
 
  The value of the  \cd{buffer} argument shrinks the
  \cd{boxConstraints} by this amount.  This can help protect against
- non-finite values occuring when a parameter is on its boundary value. 
+ non-finite values occurring when a parameter is on its boundary value. 
   
-Once the MCEM has been built for the model of interest using \cd{buildMCEM}, it can be run as follows.
+  In addition, the MCEM has some extra control options that can be used to further tune the convergence criterion.  See \cd{help(buildMCEM)} for more information.  
+  
+Once an MCEM has been built for the model of interest, it can be run as follows. There is only one run-time argument, \cd{initM}, which is the number of MCMC iterations to use when the algorithm is initialized.
 
-<<run-MCEM>>=
-pumpMCEM(maxit = 20, m1 = 250, m2 = 500)
-pumpMCEM(maxit = 50, m1 = 1000, m2 = 5000)
+<<run-MCEM, eval=FALSE>>=
+pumpMCEM(initM = 400)
 @ 
 
-There are three run-time arguments:
- 
-The \cd{maxit} argument is the number of total iterations to run the algorithm. More advanced MCEM algorithms have a stopping criteria based on computing the MCMC error. Our current draft implementation of the algorithm merely runs \cd{maxit} iterations and then terminates. 
-  
-  Halfway through the algorithm, the sample size used for the E-step
-  switches from \cd{m1} to \cd{m2}.  This provides smaller MCMC error
-  as the algorithm converges. If \cd{m1} or \cd{m2} is less than or equal to \cd{burnIn} as defined in \cd{build\_MCEM}, the MCEM algorithm will immediately quit.
-
-  When using the MCEM algorithm, we suggest first starting with small values of \cd{m1} and \cd{m2} to get an estimate of how long the algorithm will take for larger MCMC samples. The speed of the algorithm will be linear in \cd{m2} (assuming that $m2 > m1$ as intended).
 

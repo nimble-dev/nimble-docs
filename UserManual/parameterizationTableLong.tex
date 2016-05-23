@@ -35,10 +35,10 @@
      \texttt{dmnorm(mean, cholesky, prec\_param=0)} & canonical (covariance) \\
      \texttt{dmnorm(mean, prec)} & \texttt{dmnorm(mean, cholesky = chol(prec), prec\_param=1)} \\
      \texttt{dmnorm(mean, cov)} & \texttt{dmnorm(mean, cholesky = chol(cov), prec\_param=0)} \\
-     \texttt{dmvt(mean, cholesky, df, prec\_param=1)} & canonical (precision) \\
-     \texttt{dmvt(mean, cholesky, df, prec\_param=0)} & canonical (scale) \\
-     \texttt{dmvt(mean, prec, df)} & \texttt{dmvt(mean, cholesky = chol(prec), df, prec\_param=1)} \\
-     \texttt{dmvt(mean, scale, df)} & \texttt{dmvt(mean, cholesky = chol(scale), df, prec\_param=0)} \\
+     \texttt{dmvt(mu, cholesky, df, prec\_param=1)} & canonical (precision) \\
+     \texttt{dmvt(mu, cholesky, df, prec\_param=0)} & canonical (scale) \\
+     \texttt{dmvt(mu, prec, df)} & \texttt{dmvt(mu, cholesky = chol(prec), df, prec\_param=1)} \\
+     \texttt{dmvt(mu, scale, df)} & \texttt{dmvt(mu, cholesky = chol(scale), df, prec\_param=0)} \\
    \texttt{dnegbin(prob, size)} & canonical \\
      \texttt{dnorm(mean, sd)} & canonical \\
      \texttt{dnorm(mean, tau)} & \verb|dnorm(mean, sd = 1 / sqrt(var))| \\
