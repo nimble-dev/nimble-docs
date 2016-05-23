@@ -220,7 +220,7 @@ cGetLogProbMany$run() #
   #Run Liu-West filter
   cLWF$run(parNum)
 @
-  Below we give an example of building and running the ensemble Kalman filter, which can sample from the posterior distribution of latent states. Additional information can be found with \cd{help(buildAuxF)}.
+  Below we give an example of building and running the ensemble Kalman filter, which can sample from the posterior distribution of latent states. Additional information can be found with \cd{help(buildENKF)}.
 
 <<ENKF_Filter_Chunk, results = "hide">>=
   #Copy model
