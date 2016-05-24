@@ -151,24 +151,24 @@ cGetLogProbMany$run() #
   })
   
   #simulate some data
-  t = 25; mu_0 = 1
-  x = rnorm(1 ,mu_0, 1)
-  y = rnorm(1, x, 1)
-  a = 0.5; b = 1; c = 1
+  t <- 25; mu_0 <- 1
+  x <- rnorm(1 ,mu_0, 1)
+  y <- rnorm(1, x, 1)
+  a <- 0.5; b <- 1; c <- 1
   for(i in 2:t){
-  x[i] = rnorm(1, x[i-1] * a + b, 1)
-  y[i] = rnorm(1, x[i] * c, 1)
+  x[i] <- rnorm(1, x[i-1] * a + b, 1)
+  y[i] <- rnorm(1, x[i] * c, 1)
   }
   
   #build the model
   rTimeModel <- nimbleModel(timeModelCode, constants = list(t = t), 
-  data = list(y = y), check = FALSE )
+  data <- list(y = y), check = FALSE )
 
   #Set parameter values and compile the model
-  rTimeModel$a = 0.5
-  rTimeModel$b = 1
-  rTimeModel$c = 1
-  rTimeModel$mu_0 = 1
+  rTimeModel$a <- 0.5
+  rTimeModel$b <- 1
+  rTimeModel$c <- 1
+  rTimeModel$mu_0 <- 1
 
   cTimeModel <- compileNimble(rTimeModel)
 
@@ -183,7 +183,7 @@ cGetLogProbMany$run() #
                        control = list(thresh = 0.8, saveAll = TRUE, 
                                       smoothing = FALSE))
   #Compile filter   
-  cBootF = compileNimble(rBootF,project = rTimeModel)
+  cBootF <- compileNimble(rBootF,project = rTimeModel)
   #Set number of particles
   parNum <- 5000
   #Run bootstrap filter, which returns estimate of model log-likelihood
@@ -200,7 +200,7 @@ cGetLogProbMany$run() #
   rAuxF <- buildAuxiliaryFilter(auxTimeModel, "x", 
                      control = list(thresh = 0.5, saveAll = TRUE))
   #Compile filter   
-  cAuxF = compileNimble(rAuxF,project = auxTimeModel)
+  cAuxF <- compileNimble(rAuxF,project = auxTimeModel)
   #Run auxliary filter, which returns estimate of model log-likelihood
   auxLLEst <- cAuxF$run(parNum)
 @
@@ -216,7 +216,7 @@ cGetLogProbMany$run() #
   rLWF <- buildLiuWestFilter(LWTimeModel, "x", params = c("a", "b", "c"),
                    control = list(saveAll = FALSE))     
   #Compile filter   
-  cLWF = compileNimble(rLWF,project = LWTimeModel)
+  cLWF <- compileNimble(rLWF,project = LWTimeModel)
   #Run Liu-West filter
   cLWF$run(parNum)
 @
@@ -229,7 +229,7 @@ cGetLogProbMany$run() #
   #Build and compile ensemble Kalman filter
   rENKF <- buildEnsembleKF(ENKFTimeModel, "x",
                      control = list(saveAll = FALSE))  
-  cENKF = compileNimble(rENKF,project = ENKFTimeModel)
+  cENKF <- compileNimble(rENKF,project = ENKFTimeModel)
   #Run ensemble Kalman filter
   cENKF$run(parNum)
   @
@@ -268,7 +268,7 @@ The \nm{RW\_PF} sampler and \nm{RW\_PF\_block} sampler can be customized using t
   
   # Add random walk pmcmc sampler with particle number optimization.
   timespec$addSampler(target = c('a', 'b', 'c', 'mu_0'), type = 'RW_PF_block',
-  control = list(propCov= diag(4),
+  control <- list(propCov= diag(4),
 				 adaptScaleOnly=F,
 				 latents = 'x',
 				 optimizeM = TRUE
