@@ -14,7 +14,7 @@ The following are required to run NIMBLE.
 
 \begin{enumerate}
 \item \href{http://www.cran.r-project.org}{R}, of course.
-\item The \href{http://www.cran.r-project.org/web/packages/igraph/index.html}{igraph} R package.
+\item The \href{http://www.cran.r-project.org/web/packages/igraph/index.html}{igraph} and  \href{http://www.cran.r-project.org/web/packages/coda/index.html}{coda} R packages.
 \item A working C++ compiler that R can use on your system.  There are
   standard open-source C++ compilers that the R community has already
   made easy to install.  You don't need to know anything about C++ to
@@ -37,8 +37,10 @@ Most fairly recent versions of these requirements should work.
 \section{Installation}
 
 Since NIMBLE is an R package, you can install it in the usual way, via
-\cd{install.packages} or related mechanisms.  As of version 0.5, NIMBLE 
-is on CRAN, but previous versions need to be obtained from R-nimble.org. 
+\cd{install.packages} or related mechanisms.  We have not yet put it on
+CRAN (we expect to do so in version 0.6 in early summer 2016), so it needs to be obtained from R-nimble.org. 
+See our \href{http://r-nimble.org/download}{Download page} for the specific invocation of
+\cd{install.packages}.
 
 For most installations, you can ignore low-level details.
 However, there are some options that some users may want to utilize.

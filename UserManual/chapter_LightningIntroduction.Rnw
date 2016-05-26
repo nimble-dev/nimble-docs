@@ -158,7 +158,7 @@ NIMBLE is a system for working with algorithms, not just an MCMC engine. So let'
 @ 
 
 Both estimates are within 0.01 of the values reported by
-\citet{George_Makov_Smith_1993}\footnote{Their numbers were accidentally swapped in Table 2.}. %\footnote{George, E.I., Makov, U.E. \& Smith,
+\citet{George_Makov_Smith_1993}\footnote{Table 2 of the paper accidentally swapped the two estimates.}. %\footnote{George, E.I., Makov, U.E. \& Smith,
 %  A.F.M. 1993. Conjugate likelihood
  % distributions. \textit{Scand. J. Statist.} \textbf{20}:147-156.
  % Their numbers were accidentally swapped in Table 2.}.  

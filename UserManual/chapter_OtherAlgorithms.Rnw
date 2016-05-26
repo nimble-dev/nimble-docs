@@ -294,7 +294,7 @@ The \nm{RW\_PF} sampler and \nm{RW\_PF\_block} sampler can be customized using t
   the size of the changes in the likelihood between each iteration (\cd{buildMCEM}). 
   
   We will revisit the \nm{pump} example to illustrate the use of
-  NIMBLE\'s MCEM algorithm.
+  NIMBLE's MCEM algorithm.
   
  %% newPump didn't exist so I'm creating it in some non-echoed code.
 <<echo=FALSE>>=
@@ -322,27 +322,24 @@ pumpInits <- list(alpha = 1, beta = 1,
 @   
 % note that code below doesn't get evaluated because the buildMCEM functions do not work on models which
 % have mcmc's already built for them.  Since building an MCEM requires a MCMC to be built simultaneously,
-% we cant have both mcems at the same time.
+% we cant have both mcems at the same time. (this comment is from when Nick had the old and the ascent MCEMs in here - CP 5/25/16)
 <<build-MCEM, results = "hide">>=
 
-#rebuild and recompile the pump model
-newPump <- nimbleModel(code = pumpCode, name = 'pump',
+pump <- nimbleModel(code = pumpCode, name = 'pump',
                        constants = pumpConsts,
                        data = pumpData, 
                        inits = pumpInits,
                        check = FALSE)
 
-compileNimble(newPump)
+compileNimble(pump)
 
 #build an MCEM algorithm with Ascent-based convergence criterion
-pumpMCEM <- buildMCEM(model = ascentPump,
-                                  latentNodes = 'theta',
-                                  burnIn = 100,
-                                  mcmcControl = list(adaptInterval = 20),
-                                  boxConstraints =
-                                    list( list( c('alpha', 'beta'), 
-                                     limits = c(0, Inf) ) ), 
-                                  buffer = 1e-6)
+pumpMCEM <- buildMCEM(model = pump,
+                      latentNodes = 'theta', burnIn = 300,
+                      mcmcControl = list(adaptInterval = 100),
+                      boxConstraints = list( list( c('alpha', 'beta'), 
+                                                  limits = c(0, Inf) ) ), 
+                      C = 0.001, alpha = .01, beta = .01, gamma = .01, buffer = 1e-6)
 
 @
 
@@ -385,7 +382,7 @@ The  \cd{mcmcControl} argument will be passed to \cd{configureMCMC} to define th
 Once an MCEM has been built for the model of interest, it can be run as follows. There is only one run-time argument, \cd{initM}, which is the number of MCMC iterations to use when the algorithm is initialized.
 
 <<run-MCEM, eval=FALSE>>=
-pumpMCEM(initM = 400)
+pumpMCEM(initM = 1000)
 @ 
 
 
