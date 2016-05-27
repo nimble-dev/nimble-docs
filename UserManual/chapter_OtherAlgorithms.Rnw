@@ -7,7 +7,7 @@
 require(nimble)
 @ 
 
-\chapter{Sequential Monte Carlo and other algorithms provided by NIMBLE}
+\chapter{Sequential Monte Carlo and other algorithms in NIMBLE}
 \label{cha:algos-provided}
 
 The NIMBLE algorithm library is growing and as of version 0.5-1 includes a suite of Sequential Monte Carlo algorithms as well as a more robust MCEM. It also includes some basic utilities for calculating and simulating sets
