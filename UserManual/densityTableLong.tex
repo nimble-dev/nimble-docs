@@ -87,6 +87,10 @@
       \multirow{2}{*}{
         $(2\pi)^{-\frac{d}{2}}|\Lambda|^{\frac{1}{2}} \exp\{-(x-\mu)^T \Lambda (x-\mu) / 2\}$} \\
       normal & $\Lambda$ positive definite \\
+      Multivariate & \cd{dmvt(mu = $\mu$, prec = $\Lambda$, df = $\nu$)} &
+      \multirow{2}{*}{
+        \frac{\Gamma((\nu+d)/2)}{\Gamma(\nu/2)\nu^{d/2}\pi^{d/2}} |\Lambda|^{1/2} (1+\frac{1}{\nu}(x-\mu)^T\Lambda(x-\mu))^{-(\nu+d)/2}}
+        $(2\pi)^{-\frac{d}{2}}|\Lambda|^{\frac{1}{2}} \exp\{-(x-\mu)^T \Lambda (x-\mu) / 2\}$} \\
        Negative & \verb+dnegbin(prob = p, size = r)+ &
       \multirow{2}{*}{${x + r -1 \choose x} p^r (1-p)^x$} & 0 & \\
       binomial & $0 < p \leq 1$, $r \geq 0$ \\

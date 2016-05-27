@@ -330,11 +330,10 @@ order.  NIMBLE knows that rate is an alternative to scale and that
 
 \input{parameterizationTableLong.tex}
 
-Note that for multivariate normal and Wishart, the canonical
+Note that for multivariate normal, multivariate t, and Wishart, the canonical
 parameterization uses the Cholesky decomposition of either of the
-precision or covariance matrix.  In some cases it may be more
-efficient to use that parameterization directly.  If  \cd{prec\_param}
-is TRUE, the \cd{cholesky} argument is treated as the Cholesky
+precision/inverse scale or covariance/scale matrix.  In some cases it may be more
+efficient to use that parameterization directly. For example, for the multivariate normal, if  \cd{prec\_param=TRUE}, the \cd{cholesky} argument is treated as the Cholesky
 decomposition of a precision matrix.  Otherwise it is treated as the
 Cholesky decomposition of a covariance matrix. 
 

@@ -432,7 +432,7 @@ mcmcConf$addSampler(target = 'x[1:10]', type = 'ess')
 @
 
 \subsection{Hierarchical \cd{crossLevel} sampler}
-This sampler is constructed to perform simultaneous updates across two levels of stochastic dependence in the model structure.  This is possible when all stochastic descendents of node(s) at one level have conjugate relationships with their own stochastic descendents.  In this situation, a Metropolis-Hastings algorithm may be used, in which a multivariate normal proposal distribution is used for the higher-level nodes, and the corresponding proposals for the lower-level nodes undergo Gibbs (conjugate) sampling.  The joint proposal is either accepted or rejected for all nodes involved based upon the Metropolis-Hastings ratio.
+This sampler is constructed to perform simultaneous updates across two levels of stochastic dependence in the model structure.  This is possible when all stochastic descendants of node(s) at one level have conjugate relationships with their own stochastic descendants.  In this situation, a Metropolis-Hastings algorithm may be used, in which a multivariate normal proposal distribution is used for the higher-level nodes, and the corresponding proposals for the lower-level nodes undergo Gibbs (conjugate) sampling.  The joint proposal is either accepted or rejected for all nodes involved based upon the Metropolis-Hastings ratio.
 
 The \cd{crossLevel} sampler can be customized using the \cd{control} list argument to set the initial proposal covariance and the adaptive properties for the Metropolis-Hastings sampling of the higher-level nodes.  See \cd{help(samplers)} for details. 
 
@@ -441,7 +441,7 @@ Example usage:
 mcmcConf$addSampler(target = c('a', 'b', 'c'), type = 'crossLevel')
 @
 
-The requirement that all stochastic descendents of the \cd{target} nodes must themselves have only conjugate descendents will be checked when the MCMC algorithm is built.  This sampler is useful when there is strong dependence across the levels of a model that causes problems with convergence or mixing.
+The requirement that all stochastic descendants of the \cd{target} nodes must themselves have only conjugate descendants will be checked when the MCMC algorithm is built.  This sampler is useful when there is strong dependence across the levels of a model that causes problems with convergence or mixing.
 
 \subsection{Customized log likelihood evaluations using the \cd{RW\_llFunction} sampler}
  
