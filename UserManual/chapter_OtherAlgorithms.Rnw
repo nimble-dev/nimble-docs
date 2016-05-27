@@ -339,7 +339,7 @@ pumpMCEM <- buildMCEM(model = pump,
                       mcmcControl = list(adaptInterval = 100),
                       boxConstraints = list( list( c('alpha', 'beta'), 
                                                   limits = c(0, Inf) ) ), 
-                      C = 0.001, alpha = .01, beta = .01, gamma = .01, buffer = 1e-6)
+                      buffer = 1e-6)
 
 @
 
@@ -381,8 +381,9 @@ The  \cd{mcmcControl} argument will be passed to \cd{configureMCMC} to define th
   
 Once an MCEM has been built for the model of interest, it can be run as follows. There is only one run-time argument, \cd{initM}, which is the number of MCMC iterations to use when the algorithm is initialized.
 
-<<run-MCEM, eval=FALSE>>=
-pumpMCEM(initM = 1000)
+<<run-MCEM>>=
+pumpMLE <- pumpMCEM(initM = 1000)
+pumpMLE
 @ 
 
-
+Direct maximization after analytically integrating over the latent nodes (possible for this model but often not feasible) gives estimates of $\hat\alpha=0.823$ and $\hat\beta = 1.261$, so the MCEM seems to do pretty well. 
