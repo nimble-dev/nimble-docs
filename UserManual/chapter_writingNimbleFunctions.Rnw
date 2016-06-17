@@ -451,6 +451,28 @@ topological order, and functions such as \cd{getDependencies} and
 \cd{expandNodeNames} will
 always do so.
 
+It is possible to use an entire vector of node names, 
+single elements indexed by a variable, or fixed ranges (indexed by constants)
+, but not ranges indexed by a variable.  For
+example
+
+<<eval=FALSE>>=
+myModel$calculate(nodes)
+@ 
+and
+<<eval=FALSE>>=
+myModel$calculate(nodes[i])
+@ 
+and
+<<eval=FALSE>>=
+myModel$calculate(nodes[1:3])
+@ 
+will all compile correctly, but
+<<eval=FALSE>>=
+myModel$calculate(nodes[1:i])
+@ 
+is not allowed.
+
 \subsection{Accessing model and modelValues variables and using \cd{copy}}
 \label{sec:access-model-modelv}
 
