@@ -120,14 +120,15 @@ In v\ver, the NIMBLE algorithm library includes:
 
 \begin{enumerate}
 \item MCMC with samplers including conjugate, slice, adaptive random
-  walk, and adaptive block random walk.  NIMBLE's MCMC system illustrates the
-  flexibility of combining R and C++.  An R function inspects the
-  model object and creates an MCMC specification object representing
-  choices of which kind of sampler to use for each node.  This MCMC
-  specification can be modified in R, such as adding new samplers for
-  particular nodes, before compiling the algorithm.  Since
-  each sampler is written in NIMBLE, you can use its source code or
-  write new samplers to insert into the MCMC.  And if you want to
+  walk (with options for reflection or sampling on a log scale),
+  adaptive block random walk, and elliptical slice.  NIMBLE's MCMC
+  system illustrates the flexibility of combining R and C++.  An R
+  function inspects the model object and creates an MCMC specification
+  object representing choices of which kind of sampler to use for each
+  node.  This MCMC specification can be modified in R, such as adding
+  new samplers for particular nodes, before compiling the algorithm.
+  Since each sampler is written in NIMBLE, you can use its source code
+  or write new samplers to insert into the MCMC.  And if you want to
   build an entire MCMC system differently, you can do that too.
 \item A \cd{nimbleFunction} that provides a likelihood function for
   arbitrary sets of nodes in any model. This can be useful for simple
@@ -138,9 +139,10 @@ In v\ver, the NIMBLE algorithm library includes:
   calculate, or retrieve the summed log probability (density) of many
  sets of values for
   arbitrary sets of nodes.
-\item A \cd{nimbleFunction} that provides a basic particle filter for
-  a state-space model.
-\item A basic Monte Carlo Expectation Maximization (MCEM) algorithm.
+\item A set of particle filter (Sequential Monte Carlo) methods
+  including a basic bootstrap filter, auxiliary particle filter, and
+  Liu-West filter.
+\item An ascent-based Monte Carlo Expectation Maximization (MCEM) algorithm.
   MCEM has its issues as an algorithm, such as potentially slow convergence to the maximum
   likelihood (i.e., empirical Bayes in this context) estimates, but we chose it as a
   good illustration of how NIMBLE can be used.  Each MCMC step uses
