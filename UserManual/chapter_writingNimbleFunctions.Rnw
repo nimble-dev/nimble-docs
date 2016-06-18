@@ -32,7 +32,7 @@ are two kinds of code and two steps of execution:
 \item \cd{Setup} code is provided as a regular R function, but the
   programmer does not control what it returns.  Typically the inputs to
   \cd{setup} code are objects like a model, a vector of nodes,
-  a modelValues object or modelValuesSpec, or another nimbleFunction.  The \cd{setup} code,
+  a modelValues object or modelValuesConf, or another nimbleFunction.  The \cd{setup} code,
   as its name implies, sets up information for run-time code.  It is
   executed in R, so it can use any aspect of R.
 \item \cd{Run} code is provided in the NIMBLE language.  This is

@@ -68,10 +68,10 @@ CsolveLeastSquares(X, y)
 ## Accepting modelValues as a setup argument
 setupFunction = function(propModelValues, model){
     ## Building a modelValues in the setup function 
-    savedWeightsSpec <- modelValuesSpec(vars = 'w',
+    savedWeightsConf <- modelValuesConf(vars = 'w',
                                         types = 'double',
                                         sizes = 1)
-    savedWeights <- modelValues(spec = savedWeightsSpec)
+    savedWeights <- modelValues(conf = savedWeightsConf)
     ## List of nodes to be used in run function
     modelNodes <- model$getNodeNames(stochOnly = TRUE,
                                      includeData = FALSE)
@@ -121,11 +121,11 @@ cTargetModel = compileNimble(targetModel)
 cPropModel = compileNimble(propModel)
 
 
-sampleMVSpec = modelValuesSpec(vars = c('x', 'y', 'propLL'), 
+sampleMVConf = modelValuesConf(vars = c('x', 'y', 'propLL'), 
     types = c('double', 'double', 'double'), 
     sizes = list(x = 1, y = 4, propLL = 1) )
 
-sampleMV <- modelValues(sampleMVSpec)
+sampleMV <- modelValues(sampleMVConf)
 
 ##   nimbleFunction for generating proposal sample
 PropSamp_Gen <- nimbleFunction(

@@ -260,10 +260,10 @@ In addition to our four particle filters, NIMBLE also has particle MCMC samplers
 The \nm{RW\_PF} sampler and \nm{RW\_PF\_block} sampler can be customized using the \cd{control} list argument to set the adaptive properties of the sampler and options for the particle filter algorithm to be run.  In addition, setting the \cd{optimizeM} control list option to \cd{TRUE} will allow the sampler to estimate the optimal number of particles for the bootstrap filter.   See \cd{help(samplers)} for details. The MCMC configuration for the \cd{timeModel} in the previous section will serve as an example for the use of our PMCMC sampler.  Here we use the identity matrix as our proposal covariance matrix. 
 
   <<pmcmc_Chunk, results = "hide">>=
-  timespec <- configureMCMC(rTimeModel)   # default MCMC configuration
+  timeConf <- configureMCMC(rTimeModel)   # default MCMC configuration
   
   # Add random walk pmcmc sampler with particle number optimization.
-  timespec$addSampler(target = c('a', 'b', 'c', 'mu_0'), type = 'RW_PF_block',
+  timeConf$addSampler(target = c('a', 'b', 'c', 'mu_0'), type = 'RW_PF_block',
   control <- list(propCov= diag(4),
 				 adaptScaleOnly=F,
 				 latents = 'x',

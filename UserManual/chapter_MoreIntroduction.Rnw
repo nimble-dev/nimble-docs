@@ -122,9 +122,9 @@ In v\ver, the NIMBLE algorithm library includes:
 \item MCMC with samplers including conjugate, slice, adaptive random
   walk, and adaptive block random walk.  NIMBLE's MCMC system illustrates the
   flexibility of combining R and C++.  An R function inspects the
-  model object and creates an MCMC specification object representing
+  model object and creates an MCMC configuration object representing
   choices of which kind of sampler to use for each node.  This MCMC
-  specification can be modified in R, such as adding new samplers for
+  configuration can be modified in R, such as adding new samplers for
   particular nodes, before compiling the algorithm.  Since
   each sampler is written in NIMBLE, you can use its source code or
   write new samplers to insert into the MCMC.  And if you want to

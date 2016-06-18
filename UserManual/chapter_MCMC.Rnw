@@ -52,14 +52,14 @@ The MCMC configuration contains information needed for building an MCMC.  We wil
 \end{itemize}
 
 \subsection{Default MCMC configuration}
-\label{sec:default-mcmc-spec}
+\label{sec:default-mcmc-conf}
 
 Assuming we have a model named \cd{Rmodel}, the following will generate a default MCMC configuration:
 <<mcmcConf, eval=FALSE>>=
 mcmcConf <- configureMCMC(Rmodel)
 @
 
-The default configuration will contain a single sampler for each node in the model, and the default ordering follows the topological ordering of the model.  \cd{configureMCMC} creates an \nm{MCMCspec} reference class object. The \nm{MCMCspec} reference class has a number of methods, such as \cd{addSampler} that are described later.
+The default configuration will contain a single sampler for each node in the model, and the default ordering follows the topological ordering of the model.  \cd{configureMCMC} creates an \nm{MCMCconf} reference class object. The \nm{MCMCconf} reference class has a number of methods, such as \cd{addSampler} that are described later.
 
 \subsubsection{Default assignment of sampler algorithms}
 
@@ -100,8 +100,8 @@ The default MCMC configuration includes monitors on all top-level stochastic nod
 
 The default configuration may be replaced by that generated from an automated parameter blocking algorithm.  This algorithm determines groupings of model nodes that, when jointly sampled with a \cd{RW\_block} sampler, increase overall MCMC efficiency.  Overall efficiency is defined as the effective sample size of the slowest-mixing node divided by computation time.  This is done by:
 
-<<mcmcspec5, eval=FALSE>>=
-autoBlockSpec <- configureMCMC(Rmodel, autoBlock = TRUE)
+<<mcmcconf5, eval=FALSE>>=
+autoBlockConf <- configureMCMC(Rmodel, autoBlock = TRUE)
 @
 
 In this usage, the additional control argument \cd{autoIt} may also be provided to indicate the number of MCMC samples to be used in the automated blocking procedure (default 20,000).  Note that this function compiles and runs MCMCs, progressively exploring different sampler assignments, so it takes some time and generates some output.
@@ -110,7 +110,7 @@ In this usage, the additional control argument \cd{autoIt} may also be provided 
 
 \subsection{Customizing the MCMC configuration}
 
-The MCMC configuration may be customized in a variety of ways, either through additional named arguments to \cd{configureMCMC} or by calling member methods of an existing \cd{MCMCspec} object.
+The MCMC configuration may be customized in a variety of ways, either through additional named arguments to \cd{configureMCMC} or by calling member methods of an existing \cd{MCMCconf} object.
 
 \subsubsection{Default samplers for particular nodes}
 
@@ -123,9 +123,9 @@ If you plan to customize the choice of all samplers, it can be useful to obtain 
 
 \subsubsection{Overriding the default sampler control list values}
 The default values of control list elements for all sampling algorithms may be overridden through use of the \cd{control} argument to \cd{configureMCMC}, which should be a named list. 
-Named elements in the \cd{control} argument will be used for all default samplers added.  In addition, they are retained in the \cd{MCMCspec} object, and will be used as defaults for any subsequent samplers added to this same \cd{MCMCspec} object.  For example, the following will create the default MCMC configuration, except all \cd{RW} samplers will have their initial \cd{scale} set to 3, and none of the samplers (\nm{RW}, or otherwise) will be adaptive.
+Named elements in the \cd{control} argument will be used for all default samplers added.  In addition, they are retained in the \cd{MCMCconf} object, and will be used as defaults for any subsequent samplers added to this same \cd{MCMCconf} object.  For example, the following will create the default MCMC configuration, except all \cd{RW} samplers will have their initial \cd{scale} set to 3, and none of the samplers (\nm{RW}, or otherwise) will be adaptive.
 
-<<mcmcspec6, eval=FALSE>>=
+<<mcmcconf6, eval=FALSE>>=
 mcmcConf <- configureMCMC(Rmodel, control = list(scale = 3, adaptive = FALSE))
 @
 
@@ -133,7 +133,7 @@ Note that when adding individual samplers (next), the default control list can b
 
 \subsubsection{Adding samplers to the configuration}
 
-Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCspec} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object.   Valid character strings include `posterior\_predictive', `RW', `RW\_block', `binary', `slice', `crossLevel', and `RW\_llFunction', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{printSamplers}.
+Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCconf} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object.   Valid character strings include `posterior\_predictive', `RW', `RW\_block', `binary', `slice', `crossLevel', and `RW\_llFunction', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{printSamplers}.
 
 When a \cd{control} argument is provided in a call to \cd{addSampler}, the \cd{control} list elements specified will have the highest priority.  The hierarchy of precedence for control list elements for samplers is:
 
@@ -159,7 +159,7 @@ mcmcConf$getSamplerDefinition(3)
 mcmcConf$getSamplerDefinition('x')
 @
 
-The existing samplers may be re-ordered using the \cd{setSamplers} method. The \cd{ind} argument is a vector of sampler indices, or a character vector of model node or variable names.  The samplers in the MCMC configuration will be replaced by the samplers corresponding to the indices provided, or those samplers acting on the target nodes specified.  Here are a few examples. Each example assumes the \cd{MCMCspec} object initially contains 10 samplers, and each example is independent of the others.
+The existing samplers may be re-ordered using the \cd{setSamplers} method. The \cd{ind} argument is a vector of sampler indices, or a character vector of model node or variable names.  The samplers in the MCMC configuration will be replaced by the samplers corresponding to the indices provided, or those samplers acting on the target nodes specified.  Here are a few examples. Each example assumes the \cd{MCMCconf} object initially contains 10 samplers, and each example is independent of the others.
 <<setSamplers2, eval=FALSE>>=
 ## Truncate the current list of samplers to the first 5
 mcmcConf$setSamplers(ind = 1:5)
@@ -205,35 +205,35 @@ mcmcConf$removeSamplers('x')
 mcmcConf$removeSamplers()
 @
 
-The \cd{getSamplers} method may also be used to return a list of \cd{samplerSpec} objects.  Each \cd{samplerSpec} is a reference class object containing the following (required) fields: name (a character string), samplerFunction (a valid nimbleFunction sampler), target (the model node to be sampled), and control (list of control arguments).  The list returned by \cd{getSamplers} can be modified using the access functions provided, then passed as an argument to \cd{setSamplers} to over-write the current list of samplers in the MCMC configuration object.  However, no checking of the validity of this modified list is performed; if the list of samplerSpec objects is corrupted to be invalid, incorrect behaviour will result at the time of calling \cd{buildMCMC}.  The fields of a samplerSpec object can be modified using the access functions \cd{setName(name)}, \cd{setSamplerFunction(fun)}, \cd{setTarget(target, model)}, and \cd{setControl(control)}.
+The \cd{getSamplers} method may also be used to return a list of \cd{samplerConf} objects.  Each \cd{samplerConf} is a reference class object containing the following (required) fields: name (a character string), samplerFunction (a valid nimbleFunction sampler), target (the model node to be sampled), and control (list of control arguments).  The list returned by \cd{getSamplers} can be modified using the access functions provided, then passed as an argument to \cd{setSamplers} to over-write the current list of samplers in the MCMC configuration object.  However, no checking of the validity of this modified list is performed; if the list of samplerConf objects is corrupted to be invalid, incorrect behaviour will result at the time of calling \cd{buildMCMC}.  The fields of a samplerConf object can be modified using the access functions \cd{setName(name)}, \cd{setSamplerFunction(fun)}, \cd{setTarget(target, model)}, and \cd{setControl(control)}.
 
 <<getSetSamplers, eval=FALSE>>=
-## retrieve samplerSpec list
-samplerSpecList <- mcmcConf$getSamplers()
+## retrieve samplerConf list
+samplerConfList <- mcmcConf$getSamplers()
 
 ## change the name of the first sampler
-samplerSpecList[[1]]$setName('newNameForThisSampler')
+samplerConfList[[1]]$setName('newNameForThisSampler')
 
 ## change the sampler function of the second sampler,
 ## assuming existance of a nimbleFunction 'anotherSamplerNF',
 ## which represents a valid nimbleFunction sampler.
-samplerSpecList[[2]]$setSamplerFunction(anotherSamplerNF)
+samplerConfList[[2]]$setSamplerFunction(anotherSamplerNF)
 
 ## change the 'adaptive' element of the control list of the third sampler
-control <- samplerSpecList[[3]]$control
+control <- samplerConfList[[3]]$control
 control$adaptive <- FALSE
-samplerSpecList[[3]]$setControl(control)
+samplerConfList[[3]]$setControl(control)
 
 ## change the target node of the fourth sampler
-samplerSpecList[[4]]$setTarget('y', model)   ## model argument required
+samplerConfList[[4]]$setTarget('y', model)   ## model argument required
 
-## use this modified list of samplerSpec objects in the MCMC configuration
-mcmcConf$setSamplers(samplerSpecList)
+## use this modified list of samplerConf objects in the MCMC configuration
+mcmcConf$setSamplers(samplerConfList)
 @
 
 \subsubsection{Monitors and thinning intervals}
 
-An \cd{MCMCspec} object contains two independent lists of variables to monitor, which correspond to two independent thinning intervals: \cd{thin} corresponding to \cd{monitors}, and \cd{thin2} corresponding to \cd{monitors2}.  Monitors operate at the \textit{variable} level.  Only entire model variables may be monitored.  Specifying a monitor on a \textit{node}, e.g., \cd{x[1]}, will result in the entire variable \cd{x} being monitored.
+An \cd{MCMCconf} object contains two independent lists of variables to monitor, which correspond to two independent thinning intervals: \cd{thin} corresponding to \cd{monitors}, and \cd{thin2} corresponding to \cd{monitors2}.  Monitors operate at the \textit{variable} level.  Only entire model variables may be monitored.  Specifying a monitor on a \textit{node}, e.g., \cd{x[1]}, will result in the entire variable \cd{x} being monitored.
 
 The variables specified in \cd{monitors}  and \cd{monitors2} will be recorded (with thinning interval \cd{thin}) into the \cd{mvSamples} and \cd{mvSamples2} -- both \nm{modelValues} objects -- of the MCMC, respectively.  See Section \ref{sec:extracting-samples} for information about extracting these \nm{modelValues} objects from the MCMC algorithm object.
 
@@ -242,7 +242,7 @@ Monitors may be added to the MCMC configuration either in the original call to \
 ## Using an argument to configureMCMC
 mcmcConf <- configureMCMC(Rmodel, monitors = c('alpha', 'beta'), monitors2 = 'x')
 
-## Calling a member method of the mcmcspec object
+## Calling a member method of the mcmcconf object
 ## This results in the same monitors as above
 mcmcConf$addMonitors(c('alpha', 'beta'))
 mcmcConf$addMonitors2('x')
@@ -296,7 +296,7 @@ Cmcmc <- compileNimble(Rmodel, Rmcmc)
 
 \section{Executing the MCMC algorithm}
 
-The MCMC function (either the compiled or uncompiled version) has one required argument, \cd{niter}, representing the number of iterations to run the MCMC algorithm.  We'll assume the function is called \cd{mcmc}. Calling \cd{mcmc(niter)} causes the full list of samplers (as determined from the input \cd{MCMCspec} object) to be executed \cd{niter} times, and the monitored variables to be stored into the internal \cd{mvSamples} and/or \cd{mvSamples2} objects as governed by the corresponding thinning intervals.
+The MCMC function (either the compiled or uncompiled version) has one required argument, \cd{niter}, representing the number of iterations to run the MCMC algorithm.  We'll assume the function is called \cd{mcmc}. Calling \cd{mcmc(niter)} causes the full list of samplers (as determined from the input \cd{MCMCconf} object) to be executed \cd{niter} times, and the monitored variables to be stored into the internal \cd{mvSamples} and/or \cd{mvSamples2} objects as governed by the corresponding thinning intervals.
 
 The \cd{mcmc} function has an optional \cd{reset} argument.  When \cd{reset = TRUE} (the default value), the following occurs at the onset of the call to \cd{mcmc\$run()}:
 \begin{itemize}
@@ -702,7 +702,7 @@ An MCMC Suite is customizable in terms of all of the following: \\
 
 \begin{itemize}
 \item MCMC algorithms to execute, optionally including WinBUGS, OpenBUGS, JAGS, Stan, and various flavours of NIMBLE's MCMC
-\item Custom-specified NIMBLE MCMC algorithms
+\item Custom-configured NIMBLE MCMC algorithms
 \item Automated parameter blocking for efficienct MCMC sampling
 \item Nodes to monitor
 \item Number of MCMC iterations

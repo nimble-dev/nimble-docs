@@ -341,24 +341,24 @@ In this example, \cd{pumpModelValues} has the same variables as
 rows. As you can see, the rows are stored as elements of a list.
   
   Alternatively, one can define a modelValues object manually via the
-  \cd{modelValuesSpec} function, like this:
+  \cd{modelValuesConf} function, like this:
 %%   \begin{itemize}
 %%  \item \cd{vars}, which is a character vector of variable names, 
 %%    \item \cd{type}, which is a character vector of the data types for each variable (`double' for real numbers, `integer' for integers) and 
 %%      \item \cd{size}, which is a list of vectors of the sizes in each dimension of each variable. The names of the list elements must match the names provided in \cd{vars}. 
 %% \end{itemize}
 
-<<mvSpec>>=
-mvSpec = modelValuesSpec(vars = c('a', 'b', 'c'), 
+<<mvConf>>=
+mvConf = modelValuesConf(vars = c('a', 'b', 'c'), 
                          type = c('double', 'int', 'double'), 
                          size = list( a = 2, b =c(2,2)  , c = 1) )
 
-customMV = modelValues(mvSpec, m = 2 )
+customMV = modelValues(mvConf, m = 2 )
 customMV$a
 @
 
-The arguments to \cd{modelValuesSpec} are matching lists of variable
-names, types, and sizes. See \cd{help(modelValuesSpec)} for more
+The arguments to \cd{modelValuesConf} are matching lists of variable
+names, types, and sizes. See \cd{help(modelValuesConf)} for more
 details.  Note that in R execution, the types are not enforced.  But
 they will be the types created in C++ code during compilation, so they
 should be specified carefully.
