@@ -58,23 +58,23 @@ multiVarModel$expandNodeNames("X[1,1:5]")
 ## @knitr calcSimGLPdemos
 
 model$y
-simulate(model, 'y[1:3]')
+model$simulate('y[1:3]')
 ## model$simulate('y[1:3]') does the same thing
 model$y
-simulate(model, 'y')
+model$simulate('y')
 model$y
 model$z
-simulate(model, c('y[1:3]', 'z[1:5, 1:3]'))
+model$simulate(c('y[1:3]', 'z[1:5, 1:3]'))
 model$y
 model$z
-simulate(model, c('z[1:5, 1:3]'), includeData = TRUE)
+model$simulate(c('z[1:5, 1:3]'), includeData = TRUE)
 model$z
 
-## @knitr calcSimGLPdirect
+## ## @knitr calcSimGLPdirect
 
-y2lp <- model$nodes[['y[2]']]$calculate()
-y2lp
-model$nodes[['y[2]']]$getLogProb()
+## y2lp <- model$nodes[['y[2]']]$calculate()
+## y2lp
+## model$nodes[['y[2]']]$getLogProb()
 
 ## @knitr reinitPumpModel
 

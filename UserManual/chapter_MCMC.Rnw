@@ -334,6 +334,16 @@ The column names of the matrices will be the node names of nodes in the monitore
 mean(samplesMatrix[, 'x[2]'])
 @
 
+\section{Measuring sampler computation times}
+
+If you want to obtain the computation time spent in each sampler, you can set \cd{time=TRUE} as a run-time argument and then use the \cd{getTimes()} member function to obtain the times.  For example,
+
+<<eval=FALSE>>=
+Cmcmc$run(niter, time=TRUE)
+Cmcmc$getTimes()
+@ 
+will return a vector of the total time spent in each sampler.
+
 \section{Sampler Algorithms provided with NIMBLE}
 \label{sec:samplers-provided}
 
