@@ -69,6 +69,7 @@ The default sampling algorithm assigned to each stochastic node is determined by
 \item If the node has no stochastic dependents, a predictive \nm{posterior\_predictive} sampler is assigned.  The \nm{posterior\_predictive} sampling algorithm merely calls \cd{simulate} on the particular node.
 \item The node is checked for presence of a conjugate relationship between its prior distribution and the distributions of its stochastic dependents.  If it is determined to be in a conjugate relationship, then the corresponding \nm{conjugate} (Gibbs) sampler is assigned.
 \item If the node is binary-valued (strictly taking values 0 or 1), then a \nm{binary} (Gibbs) sampler is assigned.
+\item If the node follows a multinomial distribution, then a \nm{RW\_multinomial} sampler is assigned.
 \item If the node is otherwise discrete-valued, then a \nm{slice} sampler is assigned \citep{Neal2003}. 
 \item If the node follows a multivariate distribution, then a \nm{RW\_block} sampler is assigned for all elements.  This is a Metropolis-Hastings adaptive random-walk sampler with a multivariate normal proposal \citep{Roberts_Sahu_1997}.
 \item If none of the above criteria are satisfied, then a \nm{RW} sampler is assigned.  This is a Metropolis-Hastings adaptive random-walk sampler with a univariate normal proposal distribution.
@@ -373,7 +374,7 @@ mcmcConf$addSampler(target = 'y[1]', type = 'binary')
 The \cd{RW} sampler executes adaptive Metropolis-Hastings sampling with a normal proposal distribution, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler can be applied to any scalar continuous-valued stochastic node, and can optionally sample on a log scale.
 
 The \cd{RW} sampler can be customized using the \cd{control} list argument to set the initial proposal distribution scale, the adaptive properties of the sampler, the reflective property of proposals, and whether to sample on a log scale.  See \cd{help(samplers)} for details. 
-
+ 
 Example usage:
 <<RW-sampler, eval=FALSE>>=
 mcmcConf$addSampler(target = 'a', type = 'RW',
@@ -405,15 +406,26 @@ nimbleOptions(verifyConjugatePosteriors = TRUE)
 buildConjugateSamplerFunctions()
 @
 
+\subsection{\cd{RW\_multinomial} sampler}
+
+The \cd{RW\_multinomial} sampler operates exclusively on nodes following a multinomial distribution.  The sampler performs a series of Metropolis-Hastings steps between pairs of groups.  Proposals are generated via a draw from a binomial distribution, whereafter the proposed number density is moved from one group to another group.  The acceptance or rejection of these proposals follows a standard Metropolis-Hastings procedure.  Probabilities for the random binomial proposals are adapted to a target acceptance rate of 0.5.
+
+The \cd{RW\_multinomial} sampler can be customized using \cd{control} list arguments to set the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
+ 
+Example usage:
+<<multinomial-sampler, eval=FALSE>>=
+mcmcConf$addSampler(target = 'x[1:5]', type = 'RW_multinomial') 
+@
+
 \subsection{Multivariate Metropolis-Hastings \cd{RW\_block} sampler}
 
-The \cd{RW\_block} sampler performs a simultaneous update of one or more model nodes, using an adaptive Metropolis-Hastings algorithm with a multivariate normal proposal distribution \citep{Roberts_Sahu_1997}, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler may be applied to any set of continuous-valued model nodes, to any single continuous-valued multivariate model node, or to any combination thereof.
+The \cd{RW\_block} sampler performs a simultaneous update of one or more model nodes, using an adaptive Metropolis-Hastings algorithm with a multivariate normal proposal distribution \citep{Roberts_Sahu_1997}, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler may be applied to any set of continuous-valued model nodes, to any single continuous-valued multivariate model node, or to any combination thereof. 
 
 The \cd{RW\_block} sampler can be customized using the \cd{control} list argument to set the initial proposal covariance, and the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
 
 Example usage:
 <<block-sampler, eval=FALSE>>=
-mcmcConf$addSampler(target = c('a', 'b', 'c'), type = 'RW_block')
+mcmcConf$addSampler(target = c('a', 'b', 'c'), type = 'RW_block') 
 @
 
 \subsection{\cd{slice} sampler}
@@ -503,7 +515,7 @@ mcmcConf$addSampler(target = 'y[1]', type = 'posterior_predictive')
 @
 
 \subsection{Particle MCMC sampler}
-For state space models, a particle MCMC (PMCMC) sampler can be specified for top-level parameters.  This sampler is described in greater detail in \ref{sec:particle-mcmc}.
+For state space models, a particle MCMC (PMCMC) sampler can be specified for top-level parameters.  This sampler is described in section \ref{sec:particle-mcmc}.
 
 \section{Detailed MCMC example: \cd{litters}}
 \label{sec:mcmc-example-litters}
