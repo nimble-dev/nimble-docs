@@ -66,13 +66,13 @@ The default configuration will contain a single sampler for each node in the mod
 The default sampling algorithm assigned to each stochastic node is determined by the following, in order of precedence:
 
 \begin{enumerate}
-\item If the node has no stochastic dependents, a predictive \nm{posterior\_predictive} sampler is assigned.  The \nm{posterior\_predictive} sampling algorithm merely calls \cd{simulate} on the particular node.
-\item The node is checked for presence of a conjugate relationship between its prior distribution and the distributions of its stochastic dependents.  If it is determined to be in a conjugate relationship, then the corresponding \nm{conjugate} (Gibbs) sampler is assigned.
-\item If the node is binary-valued (strictly taking values 0 or 1), then a \nm{binary} (Gibbs) sampler is assigned.
-\item If the node follows a multinomial distribution, then a \nm{RW\_multinomial} sampler is assigned.
-\item If the node is otherwise discrete-valued, then a \nm{slice} sampler is assigned \citep{Neal2003}. 
-\item If the node follows a multivariate distribution, then a \nm{RW\_block} sampler is assigned for all elements.  This is a Metropolis-Hastings adaptive random-walk sampler with a multivariate normal proposal \citep{Roberts_Sahu_1997}.
-\item If none of the above criteria are satisfied, then a \nm{RW} sampler is assigned.  This is a Metropolis-Hastings adaptive random-walk sampler with a univariate normal proposal distribution.
+\item If the node has no stochastic dependents, a predictive \cd{posterior\_predictive} sampler is assigned.  The \cd{posterior\_predictive} sampling algorithm merely calls \cd{simulate} on the particular node.
+\item The node is checked for presence of a conjugate relationship between its prior distribution and the distributions of its stochastic dependents.  If it is determined to be in a conjugate relationship, then the corresponding \cd{conjugate} (Gibbs) sampler is assigned.
+\item If the node is binary-valued (strictly taking values 0 or 1), then a \cd{binary} (Gibbs) sampler is assigned.
+\item If the node follows a multinomial distribution, then a \cd{RW\_multinomial} sampler is assigned.
+\item If the node is otherwise discrete-valued, then a \cd{slice} sampler is assigned \citep{Neal2003}.
+\item If the node follows a multivariate distribution, then a \cd{RW\_block} sampler is assigned for all elements.  This is a Metropolis-Hastings adaptive random-walk sampler with a multivariate normal proposal \citep{Roberts_Sahu_1997}.
+\item If none of the above criteria are satisfied, then a \cd{RW} sampler is assigned.  This is a Metropolis-Hastings adaptive random-walk sampler with a univariate normal proposal distribution.
 \end{enumerate}
 
 The control parameters governing each of the default sampling algorithms are defined in the NIMBLE system option \cd{MCMCcontrolDefaultList}.  These default values are described in Section \ref{sec:samplers-provided}, along with the related sampling algorithms.
@@ -124,7 +124,7 @@ If you plan to customize the choice of all samplers, it can be useful to obtain 
 
 \subsubsection{Overriding the default sampler control list values}
 The default values of control list elements for all sampling algorithms may be overridden through use of the \cd{control} argument to \cd{configureMCMC}, which should be a named list. 
-Named elements in the \cd{control} argument will be used for all default samplers added.  In addition, they are retained in the \cd{MCMCconf} object, and will be used as defaults for any subsequent samplers added to this same \cd{MCMCconf} object.  For example, the following will create the default MCMC configuration, except all \cd{RW} samplers will have their initial \cd{scale} set to 3, and none of the samplers (\nm{RW}, or otherwise) will be adaptive.
+Named elements in the \cd{control} argument will be used for all default samplers added.  In addition, they are retained in the \cd{MCMCconf} object, and will be used as defaults for any subsequent samplers added to this same \cd{MCMCconf} object.  For example, the following will create the default MCMC configuration, except all \cd{RW} samplers will have their initial \cd{scale} set to 3, and none of the samplers (\cd{RW}, or otherwise) will be adaptive.
 
 <<mcmcconf6, eval=FALSE>>=
 mcmcConf <- configureMCMC(Rmodel, control = list(scale = 3, adaptive = FALSE))
