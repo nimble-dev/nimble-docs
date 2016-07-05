@@ -297,20 +297,22 @@ Cmcmc <- compileNimble(Rmodel, Rmcmc)
 
 \section{Executing the MCMC algorithm}
 
-The MCMC function (either the compiled or uncompiled version) has one required argument, \cd{niter}, representing the number of iterations to run the MCMC algorithm.  We'll assume the function is called \cd{mcmc}. Calling \cd{mcmc(niter)} causes the full list of samplers (as determined from the input \cd{MCMCconf} object) to be executed \cd{niter} times, and the monitored variables to be stored into the internal \cd{mvSamples} and/or \cd{mvSamples2} objects as governed by the corresponding thinning intervals.
+The MCMC algorithm (either the compiled or uncompiled version) can be executed using the member method \cd{mcmc\$run()}.  The \cd{run} method has one required argument, \cd{niter}, representing the number of iterations to run the MCMC algorithm.  Calling \cd{mcmc\$run(niter)} causes the full list of samplers (as determined by the \cd{MCMCconf} object) to be executed \cd{niter} times, and the monitored variables to be stored into the internal \cd{mvSamples} and/or \cd{mvSamples2} objects as governed by the corresponding thinning intervals.
 
-The \cd{mcmc} function has an optional \cd{reset} argument.  When \cd{reset = TRUE} (the default value), the following occurs at the onset of the call to \cd{mcmc\$run()}:
+The \cd{run} method has an optional \cd{reset} argument.  When \cd{reset = TRUE} (the default value), the following occurs at the onset of the call to \cd{mcmc\$run()}:
 \begin{itemize}
 \item All model nodes are checked that they contain values, and that model log-probabilities are up-to-date with the current node values.  If a stochastic node is missing a value, it is populated using a call to \cd{simulate}.  The values of deterministic nodes are calculated, to be consistent with their parent nodes.  If any right-hand-side-only nodes are missing a value, an error results.
 \item All MCMC sampler functions are reset to their initial state: the initial values of any sampler control parameters (e.g., \cd{scale}, \cd{sliceWidth}, or \cd{propCov}) are reset to their initial values, as were specified by the original MCMC configuration.
 \item The internal \nm{modelValues} objects \cd{mvSamples} and \cd{mvSamples2} are each resized to the appropriate length for holding the requested number of samples (\cd{niter/thin}, and \cd{niter/thin2}, respectively).
 \end{itemize}
 
-When \cd{mcmc\$run(niter, reset = FALSE)} is called, the MCMC algorithm picks up from where it left off.  No values in the model are checked or altered, and sampler functions are not reset to their initial states.  Further, the internal \nm{modelValues} objects containing samples are each increased in size to appropriately accommodate the additional samples.
+When \cd{mcmc\$run(niter, reset = FALSE)} is called, the MCMC algorithm picks up from where it left off, continuing the current run of the MCMC chain.  No values in the model are checked or altered, and sampler functions are not reset to their initial states.  Further, the internal \nm{modelValues} objects containing samples are each increased in size to appropriately accommodate the additional samples.
 
+The \cd{run} method an optional \cd{simulateAll} argument.  When \cd{simulateAll = TRUE}, the \cd{simulate} method of all stochastic nodes is called at the onset of the MCMC algorithm.  This may be used to generate a new set of initial values.  Note there is some danger in doing this when using non-informative priors (such as normal distributions with very large variances or gamma distributions with small parameter values), as one may easily simulate an extreme starting value.
+
+The \cd{run} method has an optional \cd{time} argument.  When \cd{time = TRUE}, runtimes of the individual internal MCMC samplers will be recorded.  See section \ref{sec:sampler-time}.
+ 
 Further arguments and details can be found by \cd{help(buildMCMC)}. 
-
-%% The MCMC function has a second optional argument, \cd{simulateAll}, with default value \cd{FALSE}.  When \cd{mcmc(niter, simulateAll = TRUE)} is called, the \cd{simulate} method of all stochastic nodes in the model is called, prior to beginning MCMC iterations.  This behavior may be thought of as generating a new set of random, initial values for all stochastic nodes in the model. Note that there is some danger in doing this when non-informative priors (such as normal distributions with very large variances or gamma distributions with small parameter values) are used for top-level nodes, as one may easily simulate an extreme value as the starting value for a given node.
 
 \section{Extracting MCMC samples}
 \label{sec:extracting-samples}
@@ -335,15 +337,32 @@ The column names of the matrices will be the node names of nodes in the monitore
 mean(samplesMatrix[, 'x[2]'])
 @
 
-\section{Measuring sampler computation times}
+\section{Recording model log-probabilities}
 
-If you want to obtain the computation time spent in each sampler, you can set \cd{time=TRUE} as a run-time argument and then use the \cd{getTimes()} member function to obtain the times.  For example,
+To record model log-probabilities during the course of an MCMC algorithm, the MCMC configuration object can be customized with monitors on model \emph{logProb variables} (which begin with the prefix \cd{logProb\_}).  During MCMC execution, log-probabilities will be recorded in the same \emph{modelValues} objects as the MCMC samples, either \cd{mvSamples} or \cd{mvSamples2}.
+
+For example, to record and extract log-probabilities for the model variables \cd{alpha}, \cd{sigma\_mu}, and \cd{Y}:
+<<eval=FALSE>>=
+mcmcConf <- configureMCMC(Rmodel)
+mcmcConf$addMonitors(c('logProb_alpha', 'logProb_sigma_mu', 'logProb_Y'))
+Rmcmc <- buildMCMC(mcmcConf)
+Cmodel <- compileNimble(Rmodel)
+Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
+Cmcmc$run(10000)
+samples <- as.matrix(Cmcmc$mvSamples)
+@ 
+
+The \cd{samples} matrix will contain both MCMC samples and model log-probabilities.
+
+\section{Measuring sampler computation times} \label{sec:sampler-time}
+
+If you want to obtain the computation time spent in each sampler, you can set \cd{time=TRUE} as a run-time argument and then use the member method \cd{getTimes()} obtain the times.  For example,
 
 <<eval=FALSE>>=
-Cmcmc$run(niter, time=TRUE)
-Cmcmc$getTimes()
+Cmcmc$run(niter, time=TRUE) 
+Cmcmc$getTimes() 
 @ 
-will return a vector of the total time spent in each sampler.
+will return a vector of the total time spent in each sampler, measured in seconds. 
 
 \section{Sampler Algorithms provided with NIMBLE}
 \label{sec:samplers-provided}
