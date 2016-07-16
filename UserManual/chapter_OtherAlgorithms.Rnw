@@ -257,7 +257,7 @@ cGetLogProbMany$run() #
 
 In addition to our four particle filters, NIMBLE also has particle MCMC samplers implemented. These sample top-level parameters by using either a bootstrap filter or auxiliary particle filter to obtain estimates of the likelihood of a model for use in a Metropolis-Hastings MCMC step.  The \nm{RW\_PF}  sampler uses a univariate normal proposal distribution, and should be used to sample scalar top-level parameters.  The \nm{RW\_PF\_block} sampler uses a multivariate normal proposal distribution for vectors of top-level parameters.  Each PMCMC sampler also includes an optional algorithm to estimate the optimal number of particles to use in the particle filter at each iteration, based on a trade off between computational time and efficiency.  The PMCMC samplers can be specified with a call to \cd{addSampler} with \cd{type = 'RW\_PF'} or \cd{type = 'RW\_PF\_block'}, a syntax similar to the other MCMC samplers listed in \ref{sec:samplers-provided}.
 
-The \nm{RW\_PF} sampler and \nm{RW\_PF\_block} sampler can be customized using the \cd{control} list argument to set the adaptive properties of the sampler and options for the particle filter algorithm to be run.  In addition, setting the \cd{pfOptimizeM} control list option to \cd{TRUE} will allow the sampler to estimate the optimal number of particles for the bootstrap filter.   See \cd{help(samplers)} for details. The MCMC configuration for the \cd{timeModel} in the previous section will serve as an example for the use of our PMCMC sampler.  Here we use the identity matrix as our proposal covariance matrix.
+The \nm{RW\_PF} sampler and \nm{RW\_PF\_block} sampler can be customized using the \cd{control} list argument to set the adaptive properties of the sampler and options for the particle filter algorithm to be run.  In addition, setting the \cd{pfOptimizeNparticles} control list option to \cd{TRUE} will allow the sampler to estimate the optimal number of particles for the bootstrap filter.   See \cd{help(samplers)} for details. The MCMC configuration for the \cd{timeModel} in the previous section will serve as an example for the use of our PMCMC sampler.  Here we use the identity matrix as our proposal covariance matrix.
 
   <<pmcmc_Chunk, results = "hide">>=
   timeConf <- configureMCMC(rTimeModel)   # default MCMC configuration
@@ -265,7 +265,7 @@ The \nm{RW\_PF} sampler and \nm{RW\_PF\_block} sampler can be customized using t
   # Add random walk pmcmc sampler with particle number optimization.
   timeConf$addSampler(target = c('a', 'b', 'c', 'mu_0'), type = 'RW_PF_block',
   control <- list(propCov= diag(4), adaptScaleOnly = FALSE,
-                  latents = 'x', pfOptimizeM = TRUE))
+                  latents = 'x', pfOptimizeNparticles = TRUE))
 @
   
 
