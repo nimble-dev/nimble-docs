@@ -840,8 +840,10 @@ Virtual nimbleFunctions cannot define \cd{setup} values to be inherited.
 \label{sec:print}
 
 As demonstrated above, the NIMBLE function \cd{print}, or equivalently
-\cd{nimPrint}, prints an arbitrary set of outputs in order.  The
-NIMBLE function \cd{stop}, or equivalently \cd{nimStop}, throws
+\cd{nimPrint}, prints an arbitrary set of outputs in order and adds a
+newline character at the end.  \cd{cat} or \cd{nimCat} is identical,
+except without a newline at the end.  The NIMBLE function 
+\cd{stop}, or equivalently \cd{nimStop}, throws
 control to R's error-handling system and can take one string
 (character) argument.
 
@@ -888,6 +890,7 @@ replacements include
 \item \cd{copy} $\rightarrow$ \cd{nimCopy}
 \item \cd{dim}  $\rightarrow$ \cd{nimDim}
 \item \cd{print} $\rightarrow$ \cd{nimPrint}
+\item \cd{cat} $\rightarrow$ \cd{nimCat}
 \item \cd{step} $\rightarrow$ \cd{nimStep}
 \item \cd{equals} $\rightarrow$ \cd{nimEquals}
 \item \cd{round} $\rightarrow$ \cd{nimRound}
