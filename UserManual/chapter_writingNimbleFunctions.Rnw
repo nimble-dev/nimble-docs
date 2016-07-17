@@ -92,6 +92,64 @@ creates a class definition.  Each specialized nimbleFunction is one object
 in the class.  The setup arguments are used to define member data in
 the object.
 
+\subsection{What's allowed in the NIMBLE language}
+\label{sec:nimble-dsl}
+
+Here we briefly outline what is allowed in the NIMBLE DSL (domain
+specific language), which is the augmented subset of R that can be used in
+\cd{nimbleFunction} \cd{run} functions and other member methods.
+
+Additional details of using the NIMBLE DSL appear in section \ref{sec:nimble-lang-comp}.
+
+\subsubsection{Non-scalar variable declarations} 
+Use of \cd{numeric()}, \cd{integer()}, \cd{matrix()} or \cd{array()} to create 
+non-scalar local variables (see \ref{sec:decl-local-vars}).  Scalar-valued local 
+variables need not be declared.
+
+\subsubsection{Mathematical operations}
+Numeric scalar or matrix mathematical operations listed in tables
+\ref{table:functions} and \ref{table:functions-matrix}.  Also see \ref{sec:basic-math-linear}.
+This also includes indexing of non-scalar variables and assignment
+using \cd{<-}.
+
+\subsubsection{Distribution functions}
+Density evaluation, random generation, CDF and inverse-CDF functions for all 
+standard distributions (section \ref{sec:nimble-dist-funs}),
+or any user-defined distributions (see \ref{sec:user-defined}). 
+
+\subsubsection{Control flow}
+Standard control-flow commands including \cd{if()}, \cd{for()},
+\cd{while()}, and \cd{return()} (see \ref{sec:basic-flow-control}).
+
+\subsubsection{Argument and return type declarations}
+Mandatory argument type declarations (which are included as part of the argument 
+list) and a mandatory return type declaration if anything is 
+returned (included as part of the function body) (see \ref{sec:decl-argum-types}). 
+
+\subsubsection{Operations on \cd{model} and \cd{modelValues} objects}
+Functions for interacting with NIMBLE \cd{model}
+objects, including \cd{simulate()}, \cd{calculate()}, \cd{calculateDiff()},
+\cd{getLogProb()} (see \ref{sec:cdcalc-cdsim-cdgetl}), \cd{copy()} (see 
+\ref{sec:access-model-modelv}), \cd{values()} (see 
+\ref{sec:getting-setting-more}), and \cd{getParam()} (see \ref{sec:getParam}). 
+
+Functions for interacting with \cd{modelValues} objects (see \ref{sec:modelValues-struct}).
+
+\cd{model} or \cd{modelValues} objects must originate from 
+\cd{setup} function arguments or a declaration within the \cd{setup} function. 
+
+\subsubsection{Other nimbleFunctions}
+Calls to other (nested) \cd{nimbleFunction}s (see
+\ref{sec:using-other-nimbl}), calls to \cd{nimbleFunctions} in
+nimbleFunctionLists (see \ref{sec:virt-nimbl-nimbl}), 
+and calls to other member methods of the same 
+\cd{nimbleFunction} (see \ref{sec:incl-other-meth}). 
+
+Nested \cd{nimbleFunctions} or \cd{nimbleFunctionLists} must originate from 
+\cd{setup} function arguments or a declaration within the \cd{setup} function. 
+
+
+
 \section{Using and compiling nimbleFunctions}
 \label{sec:using-comp-nimbl}
 
