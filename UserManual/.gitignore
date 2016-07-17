@@ -4,8 +4,9 @@ MCMC.tex
 chapter_*.tex
 .Rhistory
 
-# testing files for MCMC chapter
+# testing files for Daniel
 includesMCMConly*
+includesWritingNFsonly*
 
 # Latex output files
 *.aux
