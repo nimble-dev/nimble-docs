@@ -108,42 +108,42 @@ variables need not be declared.
 
 \subsubsection{Mathematical operations}
 Numeric scalar or matrix mathematical operations listed in tables
-\ref{table:functions} and \ref{table:functions-matrix}.  Also see \ref{sec:basic-math-linear}.
+\ref{table:functions} and \ref{table:functions-matrix}.  Also see Section \ref{sec:basic-math-linear}.
 This also includes indexing of non-scalar variables and assignment
 using \cd{<-}.
 
 \subsubsection{Distribution functions}
 Density evaluation, random generation, CDF and inverse-CDF functions for all 
-standard distributions (section \ref{sec:nimble-dist-funs}),
-or any user-defined distributions (see \ref{sec:user-defined}). 
+standard distributions (Section \ref{sec:nimble-dist-funs}),
+or any user-defined distributions (Section \ref{sec:user-defined}). 
 
 \subsubsection{Control flow}
 Standard control-flow commands including \cd{if()}, \cd{for()},
-\cd{while()}, and \cd{return()} (see \ref{sec:basic-flow-control}).
+\cd{while()}, and \cd{return()} (Section \ref{sec:basic-flow-control}).
 
 \subsubsection{Argument and return type declarations}
 Mandatory argument type declarations (which are included as part of the argument 
 list) and a mandatory return type declaration if anything is 
-returned (included as part of the function body) (see \ref{sec:decl-argum-types}). 
+returned (included as part of the function body) (Section \ref{sec:decl-argum-types}). 
 
 \subsubsection{Operations on \cd{model} and \cd{modelValues} objects}
 Functions for interacting with NIMBLE \cd{model}
 objects, including \cd{simulate()}, \cd{calculate()}, \cd{calculateDiff()},
 \cd{getLogProb()} (see \ref{sec:cdcalc-cdsim-cdgetl}), \cd{copy()} (see 
 \ref{sec:access-model-modelv}), \cd{values()} (see 
-\ref{sec:getting-setting-more}), and \cd{getParam()} (see \ref{sec:getParam}). 
+\ref{sec:getting-setting-more}), and \cd{getParam()} (Section \ref{sec:getParam}). 
 
-Functions for interacting with \cd{modelValues} objects (see \ref{sec:modelValues-struct}).
+Functions for interacting with \cd{modelValues} objects (Section \ref{sec:modelValues-struct}).
 
 \cd{model} or \cd{modelValues} objects must originate from 
 \cd{setup} function arguments or a declaration within the \cd{setup} function. 
 
 \subsubsection{Other nimbleFunctions}
-Calls to other (nested) \cd{nimbleFunction}s (see
+Calls to other (nested) \cd{nimbleFunction}s (Section
 \ref{sec:using-other-nimbl}), calls to \cd{nimbleFunctions} in
-nimbleFunctionLists (see \ref{sec:virt-nimbl-nimbl}), 
+nimbleFunctionLists (Section \ref{sec:virt-nimbl-nimbl}), 
 and calls to other member methods of the same 
-\cd{nimbleFunction} (see \ref{sec:incl-other-meth}). 
+\cd{nimbleFunction} (Section \ref{sec:incl-other-meth}). 
 
 Nested \cd{nimbleFunctions} or \cd{nimbleFunctionLists} must originate from 
 \cd{setup} function arguments or a declaration within the \cd{setup} function. 
