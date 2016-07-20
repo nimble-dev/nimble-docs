@@ -418,12 +418,10 @@ The current release of NIMBLE supports conjugate sampling of the relationships l
 
 \input{conjugacyTable.tex}
 
-Conjugate sampler functions may (optionally) dynamically check that their own posterior likelihood calculations are correct.  If incorrect, a warning is issued.  However, this functionality will roughly double the run-time required for conjugate sampling.  By default, this option is disabled in NIMBLE.  This option may be enabled by executing the following:
+Conjugate sampler functions may (optionally) dynamically check that their own posterior likelihood calculations are correct.  If incorrect, a warning is issued.  However, this functionality will roughly double the run-time required for conjugate sampling.  By default, this option is disabled in NIMBLE.  This option may be enabled by changing the NIMBLE option:
 
 <<enable-conjugate-checking, eval=FALSE>>=
 nimbleOptions(verifyConjugatePosteriors = TRUE)
-
-buildConjugateSamplerFunctions()
 @
 
 \subsection{\cd{RW\_multinomial} sampler}
