@@ -102,8 +102,9 @@ specific language), which is the augmented subset of R that can be used in
 Additional details of using the NIMBLE DSL appear in section \ref{sec:nimble-lang-comp}.
 
 \subsubsection{Non-scalar variable declarations} 
-Use of \cd{numeric()}, \cd{integer()}, \cd{matrix()} or \cd{array()} to create 
-non-scalar local variables (see \ref{sec:decl-local-vars}).  Scalar-valued local 
+Use of \cd{numeric()}, \cd{integer()}, \cd{matrix()} or \cd{array()}
+(see \ref{sec:decl-local-vars}) or \cd{identityMatrix} (see
+\ref{sec:other-non-scalar}) to create non-scalar local variables.  Scalar-valued local 
 variables need not be declared.
 
 \subsubsection{Mathematical operations}
@@ -326,26 +327,26 @@ provided.  For example, to provide 1.2 as a default:
 \subsection{Creating non-scalar variables: \cd{numeric}, \cd{integer}, \cd{matrix}, and \cd{array}}
 \label{sec:decl-local-vars}
 
-When local variables are created by assignment, their types will be
-automatically inferred.  For example, \cd{x <- A \%*\% B} will create
-\cd{x} as a matrix.  However, if a variable is to be filled by indexed
-assignment, then it must be explicitly created or re-sized first.  For
-example, in the following code \cd{x} must be created before being
+When local variables are created by assignment, their types will be 
+automatically inferred.  For example, \cd{x <- A \%*\% B} will create 
+\cd{x} as a matrix.  However, if a variable is to be filled by indexed 
+assignment, then it must be explicitly created or re-sized first.  For 
+example, in the following code \cd{x} must be created before being 
 filled by indexed assignment:
 
 <<exampleDeclare, eval=FALSE>>=
 
-## NOTE: must create x as a matrix here, first
+## NOTE: must create x as a matrix here, first 
 
-for(i in 1:10)
-    for(j in 1:5)
-        x[i, j] <- foo(y[i, j])
+for(i in 1:10) 
+    for(j in 1:5) 
+        x[i, j] <- foo(y[i, j]) 
 @
 
-Scalar variables never need to be be created in advance.
+Scalar variables never need to be be created in advance. 
 
-NIMBLE provides several functions for creating non-scalar variables.
-These functions are similar to those of R, but they take additional
+NIMBLE provides several functions for creating non-scalar variables. 
+These functions are similar to those of R, but they take additional 
 arguments to set an initialization value, indicate floating-point or
 integer elements, and/or indicate no initialization
 is needed\footnote{Skipping initialization is more efficient, but
@@ -496,6 +497,21 @@ compatibility.  In a future version of NIMBLE, \cd{declare()} may be removed.
 %%provided as variables, and \cd{x} can have its sizes changed by a
 %%subsequent call to \cd{setSize} (which does not guarantee that its
 %%contents will be preserved).
+
+\subsection{Other non-scalar variables: \cd{identityMatrix}}
+\label{sec:other-non-scalar}
+
+NIMBLE supports the \cd{identityMatrix} function for quickly creating
+instances of an identity matrix (all 0's with 1's on the main
+diagnol).  This function takes a single
+argument, specifying the number of rows and colums in the resulting matrix.
+
+<<exampleIdentityMatrix, eval=FALSE>>=
+I5 <- identityMatrix(5)
+@
+
+The resulting matrix may have it's elements modified, or be used in
+arbitrary matematical expressions, as any variable in the DSL.
 
 \subsection{Driving models: \cd{calculate}, \cd{calculateDiff},
   \cd{simulate}, \cd{getLogProb}}
