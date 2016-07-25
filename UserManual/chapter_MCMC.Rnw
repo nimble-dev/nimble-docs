@@ -37,6 +37,7 @@ This chapter also discusses:
 \item Sampling algorithms provided with NIMBLE.
 \item Default sampler assignments in an MCMC configuration.
 \item Writing new samplers that conform to NIMBLE's MCMC system.
+\item Using \cd{runMCMC} to run multiple MCMC chains.
 \item Using \cd{MCMCsuite} and \cd{compareMCMCs} to automatically run WinBUGS, OpenBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model.
 \item Using NIMBLE's algorithm to search blocks of nodes for efficient joint (block) sampling.
 \end{itemize}
@@ -111,6 +112,7 @@ In this usage, the additional control argument \cd{autoIt} may also be provided 
 
 
 \subsection{Customizing the MCMC configuration}
+\label{customizing-mcmc-conf}
 
 The MCMC configuration may be customized in a variety of ways, either through additional named arguments to \cd{configureMCMC} or by calling member methods of an existing \cd{MCMCconf} object.
 
@@ -338,6 +340,58 @@ The column names of the matrices will be the node names of nodes in the monitore
 mean(samplesMatrix[, 'x[2]'])
 @
 
+\section{Running multiple MCMC chains}
+\label{sec:runMCMC}
+
+Once an MCMC algorithm has been created using \cd{buildMCMC}, the function \cd{runMCMC} can be used to run multiple chains and extract samples.  \cd{runMCMC} can be used to execute compiled or uncompiled algorithms, although uncompiled algorithms will be much slower.
+
+\cd{runMCMC} has one mandatory argument: the (compiled or uncompiled) MCMC algorithm.  Other arguments to \cd{runMCMC} are available to control:
+
+\begin{itemize}
+\item Number of iterations in each chain
+\item Number of chains
+\item Number of burnin samples to discard from each chain
+\item Inital values, or a function for generating initial values for each chain
+\item Setting the random number seed
+\item Supressing messages and output
+\item Returning the samples as a \cd{coda} \cd{mcmc} object
+\end{itemize}
+
+See \cd{help(runMCMC)} for details of these arguments.
+
+Other features of the MCMC can still be customized when using \cd{runMCMC}, which is done using the MCMC configuration object.  This includes setting monitors, customizing samplers, or setting a thinning interval (see \ref{customizing-mcmc-conf}).  The MCMC configuration object is then used to create an MCMC algorithm, which is compiled and passed as an argument to \cd{runMCMC}.
+
+When running a single chain, \cd{runMCMC} returns a matrix of MCMC samples (as described in \ref{sec:extracting-samples}).  When running multiple chains, a list of sample matrices is returned.  Using the argument \cd{returnCodaMCMC=TRUE}, a \cd{coda} \cd{mcmc} object, or in the case of multiple chains, a \cd{coda} \cd{mcmc.list} object is returned instead.
+
+The following examples demonstrate some uses of \cd{runMCMC}, and assume the existence of \cd{Cmcmc}, a compiled MCMC algorithm.
+
+<<runMCMC, eval=FALSE>>=
+## run a single chain, return a matrix of samples
+samplesMatrix <- runMCMC(Cmcmc)
+
+## run three chains of 10,000 samples, discard a burnin of 1,000,
+## and return of list of sample matrices
+samplesList <- runMCMC(Cmcmc, niter=10000, nburnin=1000, nchains=3)
+
+## run two chains, and provide inital values for each
+initsList <- list(list(mu=1, sigma=1),
+                  list(mu=2, sigma=10))
+samplesList <- runMCMC(Cmcmc, nchains=3, inits=initsList)
+
+## run ten chains of 100,000 iterations,
+## using a function to generate inital valies
+initsFunction <- function()
+    list(mu=rnorm(1,0,1), sigma=runif(1,0,100))
+samplesList <- runMCMC(Cmcmc, niter=100000, nchains=10, inits=initsFunction)
+
+## run three chains, using a fixed random number seed for each chain
+samplesList <- runMCMC(Cmcmc, nchains=3, setSeed=TRUE)
+
+## run three chains, return a coda mcmc.list object
+codaMCMClist <- runMCMC(Cmcmc, nchains=3, returnCodaMCMC=TRUE)
+@
+
+
 \section{Recording model log-probabilities}
 
 To record model log-probabilities during the course of an MCMC algorithm, the MCMC configuration object can be customized with monitors on model \emph{logProb variables} (which begin with the prefix \cd{logProb\_}).  During MCMC execution, log-probabilities will be recorded in the same \emph{modelValues} objects as the MCMC samples, either \cd{mvSamples} or \cd{mvSamples2}.
@@ -483,7 +537,7 @@ mcmcConf$addSampler(target = c('a', 'b', 'c'), type = 'crossLevel')
 
 The requirement that all stochastic descendants of the \cd{target} nodes must themselves have only conjugate descendants will be checked when the MCMC algorithm is built.  This sampler is useful when there is strong dependence across the levels of a model that causes problems with convergence or mixing.
 
-\subsection{Customized log likelihood evaluations using the \cd{RW\_llFunction} sampler}
+\subsection{Customized log likelihood evaluations: \cd{RW\_llFunction} sampler}
  
 Sometimes it is useful to control the log likelihood calculations used for an MCMC updater instead of simply using the model.  For example, one could use a sampler with a log likelihood that analytically (or numerically) integrates over latent model nodes.  Or one could use a sampler with a log likelihood that comes from a stochastic approximation such as a particle filter (see below), allowing composition of a particle MCMC (PMCMC) algorithm \citep{Andrieu_Doucet_Holenstein_2010}.  The \cd{RW\_llFunction} sampler handles this by using a Metropolis-Hastings algorithm with a normal proposal distribution and a user-provided log-likelihood function.  To allow compiled execution, the log-likelihood function must be provided as a specialized instance of a \cd{nimbleFunction}.  The log-likelihood function may use the same model as the MCMC as a setup argument (as does the example below), but if so the state of the model should be unchanged during execution of the function (or you must understand the implications otherwise).
 
@@ -532,7 +586,7 @@ Example usage:
 mcmcConf$addSampler(target = 'y[1]', type = 'posterior_predictive')
 @
 
-\subsection{Particle MCMC sampler}
+\subsection{Particle MCMC \cd{PMCMC} sampler}
 For state space models, a particle MCMC (PMCMC) sampler can be specified for top-level parameters.  This sampler is described in section \ref{sec:particle-mcmc}.
 
 \section{Detailed MCMC example: \cd{litters}}
@@ -650,6 +704,16 @@ mean(cSamplesMatrix[, 'mu[1]'])
 Cmcmc_CL$run(1000)
 cSamplesMatrix_CL <- as.matrix(Cmcmc_CL$mvSamples)
 mean(cSamplesMatrix_CL[, 'mu[1]'])
+
+
+###################################
+#### run multiple MCMC chains #####
+###################################
+
+## run 3 chains of the crossLevel MCMC
+samplesList <- runMCMC(Cmcmc_CL, niter=1000, nchains=3)
+
+lapply(samplesList, dim)
 @
 
 
