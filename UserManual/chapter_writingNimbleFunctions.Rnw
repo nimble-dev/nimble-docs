@@ -510,7 +510,7 @@ argument, specifying the number of rows and colums in the resulting matrix.
 I5 <- identityMatrix(5)
 @
 
-The resulting matrix may have it's elements modified, or be used in
+The resulting matrix may have its elements modified, or be used in
 arbitrary matematical expressions, as any variable in the DSL.
 
 \subsection{Driving models: \cd{calculate}, \cd{calculateDiff},
@@ -1060,9 +1060,9 @@ Supported distributions include:
   \item \cd{dwish\_chol(cholesky, df, scale\_param)}
 \end{itemize}
 
-In the last two, cholesky stands for Cholesky decomposition of the relevant matrix; 
-prec\_param indicates whether the Cholesky is of a precision matrix or covariance
-matrix; and scale\_param indicates whether the Cholesky is of a scale
+In the last two, \cd{cholesky} stands for Cholesky decomposition of the relevant matrix; 
+\cd{prec\_param} indicates whether the Cholesky is of a precision matrix or covariance
+matrix; and \cd{scale\_param} indicates whether the Cholesky is of a scale
 matrix or an inverse scale matrix.
 
 In a future release, we will also extend the

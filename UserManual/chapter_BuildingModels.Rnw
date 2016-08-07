@@ -290,7 +290,7 @@ it will often make sense to declare them as a vector.
 
 NIMBLE supports most of the distributions allowed in BUGS and JAGS. Table \ref{table:distributions} lists the distributions that are currently supported, with their default parameterizations, which match those of BUGS. NIMBLE also allows one to use alternative parameterizations for a variety of distributions as described next.
 
-Note that the same distributions are available for writing \cd{nimbleFunction}s, but in that case the default parameterizations match R's when possible (see Chapter \ref{cha:progr-with-models}).
+Note that the same distributions are available for writing \cd{nimbleFunction}s, but in that case the default parameterizations and function names match R's when possible. Please see Section \ref{sec:nimble-dist-funs} for how to use distributions in \cd{nimbleFunctions}.
 
 
 \input{densityTableLong.tex}
@@ -344,7 +344,7 @@ In addition, we provide alternative distribution names, known as aliases, as in 
 
 %TODO: WHAT IS THE STATUS OF THE NEXT STATEMENT?: CJP - I will not get to this for 0.4 but it is still on my to-do list.  
 
-We plan to, but do not currently, include the following distributions as part of core NIMBLE: double exponential (Laplace), beta-binomial, Dirichlet-multinomial, F, inverse gamma, Pareto, inverse Wishart, and various forms of multivariate t. 
+We plan to, but do not currently, include the following distributions as part of core NIMBLE: double exponential (Laplace), beta-binomial, Dirichlet-multinomial, F, inverse gamma, Pareto, inverse Wishart, or forms of the multivariate t other than the standard one provided. 
 % [F is easy to add as it has R functions]
 
 
@@ -365,7 +365,7 @@ For the most part NIMBLE supports the functions used in BUGS and JAGS,
 with exceptions indicated in the table.  Additional functions provided
 by NIMBLE are also listed. Note that we provide distribution functions
 for use in calculations, namely the ``p'', ``q'', and ``d'' functions.
- See Section \ref{sec:nimble-dist-funs} for details on the syntax for using distribution functions, as only some parameterizations are allowed and the names of some distributions differ from those used to define nodes in a model. 
+ See Section \ref{sec:nimble-dist-funs} for details on the syntax for using distribution functions as functions in deterministic calculations, as only some parameterizations are allowed and the names of some distributions differ from those used to define stochastic nodes in a model. 
 
 % TODO: CJP moved this material to Chap 9 - that's where it is most relevant 
 % so I thought it best to go into the caveats there
