@@ -132,7 +132,7 @@ Functions for interacting with NIMBLE \cd{model}
 objects, including \cd{simulate()}, \cd{calculate()}, \cd{calculateDiff()},
 \cd{getLogProb()} (see \ref{sec:cdcalc-cdsim-cdgetl}), \cd{copy()} (see 
 \ref{sec:access-model-modelv}), \cd{values()} (see 
-\ref{sec:getting-setting-more}), and \cd{getParam()} (Section \ref{sec:getParam}). 
+\ref{sec:getting-setting-more}), \cd{getParam()} (Section \ref{sec:getParam}), and \cd{getBound()} (Section \ref{sec:getBound}). 
 
 Functions for interacting with \cd{modelValues} objects (Section \ref{sec:modelValues-struct}).
 
@@ -289,7 +289,7 @@ the NIMBLE language in more detail.
 
 \item BUGS model nodes are implemented as nimbleFunctions with member
   functions for \cd{calculate}, \cd{calculateDiff}, \cd{simulate}, 
-  \cd{getLogProb}, and \cd{getParam}. 
+  \cd{getLogProb}, \cd{getParam}, and \cd{getBound}.
 
 \end{itemize}
 
