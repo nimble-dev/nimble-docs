@@ -26,7 +26,7 @@
 \def\nm#1{\textit{#1}}
 \newcommand{\ver}{0.6}
 
-\hypersetup{colorlinks=true, linkcolor=red}
+\hypersetup{colorlinks=true, linkcolor=red, urlcolor=blue}
 
 \begin{document}
 %\SweaveOpts{concordance=TRUE}
@@ -43,7 +43,15 @@ options(replace.assign=TRUE, width=65)
 
 \title{NIMBLE User Manual}
 \author{NIMBLE Development Team}
-\date{Version \ver}
+\date{Version \ver\\
+  \vspace{3in}
+\begin{figure}[!h]
+  \begin{center}
+  \includegraphics[width=1.5in]{nimble-icon.png}
+  \end{center}
+  \end{figure}
+  \href{http://r-nimble.org}{R-nimble.org}
+}
 \maketitle
 % load these prior to building the manual, because otherwise they
 % generate package loading messages that I don't know how to stop.
