@@ -337,7 +337,7 @@ pumpMCEM <- buildMCEM(model = pump,
 @
 
 %  When building the MCEM algorithm, the arguments supplied are \cd{model}, \cd{latentNodes}, \cd{burnIn}, \cd{mcmcControl}, \cd{boxConstraints} and \cd{buffer}. 
-  Here \cd{newPump} was created just like \cd{pump} in Section \ref{sec:creating-model}. The first argument to the MCEM, \cd{model}, is a NIMBLE model, which can be
+  The first argument to the MCEM, \cd{model}, is a NIMBLE model, which can be
   either the uncompiled or compiled version. At the moment, the model provided cannot be part of another MCMC sampler.  The ascent-based MCEM algorithm has a number of control options:
  
  
