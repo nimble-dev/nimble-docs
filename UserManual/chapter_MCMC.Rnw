@@ -19,30 +19,46 @@ require(methods, warn.conflicts = FALSE, quietly = TRUE)  # seems to be needed, 
 require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
 @ 
 
-Using the MCMC engine provided with NIMBLE consists of several steps:
+A NIMBLE MCMC algorithm is built to operate on a particular NIMBLE model object.  A high degree of customization is possible for the MCMC algorithm.  There are also two different ways an MCMC algorithm can be run, which provide different options, but both result in the collection of posterior samples from model parameters and latent states.  We first outline the steps and options available for creating and executing an MCMC algorithm.  More details on each step are available through the rest of the chapter.
+
+A NIMBLE model object is necessary to create an MCMC algorithm (see chapter \ref{cha:building-models}).  We'll refer to this object as \cd{model}.
+
+\subsection*{Creating an MCMC algorithm}
+
+A default MCMC algorithm can be created using \cd{buildMCMC(model)}.  See section \ref{sec:build-compile-mcmc}.
+
+To customize properties of the MCMC algorithm -- including the sampling algorithms, joint (block) sampling of dimensions, tuning and adaptive properties of sampling algorithms, variables being monitored (posterior samples are collected), and the thinning interval for sample collection -- an MCMC configuration object (\cd{conf}) must be created using \cd{configureMCMC(model)}.  Properties of the MCMC algorithm can be modified using the \cd{conf} object, after which an MCMC algorithm (\cd{mcmc}) can be created using \cd{buildMCMC(conf)}.  See section \ref{mcmc-configuration}.
+
+Both the \cd{model} and \cd{mcmc} should generally be compiled using \cd{compileNimble}, for significantly faster execution (section \ref{sec:build-compile-mcmc}).  We'll refer to the compiled MCMC algorithm as \cd{Cmcmc}.
+
+\subsection*{Executing an MCMC algorithm and collecting samples}
+
+There are two methods available to execute an MCMC algorithm:
+
 \begin{itemize}
-\item Building an MCMC function specialized to a particular model.  This can be done in one step, but when a user wants to customize the MCMC, it can be done in several steps:  
-\begin{itemize}
-\item Creating an MCMC configuration consisting of a set of sampler choices;
-\item Customizing the sampler choices in the configuration, which may include providing new samplers written as nimbleFunctions; and 
-\item Building the MCMC function from the configuration.
-\end{itemize}
-\item Compiling and running the MCMC function.
-\item Extracting the posterior samples.
+\item \cd{Cmcmc\$run(...)}
+\item \cd{runMCMC(Cmcmc, ...)}
 \end{itemize}
 
-This chapter also discusses:
+Using \cd{Cmcmc\$run(...)} provides lower-level options including extending an MCMC run (collecting additional samples from where it last stopped), and also collecting timing information for the internal sampling algorithms.  After executing an MCMC in this manner, posterior samples are extracted from within the \cd{Cmcmc} object using \cd{as.matrix(Cmcmc\$mvSamples)}.  See sections \ref{executing-the-mcmc-algorithm} and \ref{sec:extracting-samples}.
+
+Using \cd{runMCMC(Cmcmc, ...)} provides higher-level options such as running multiple chains, setting initial values, removing burn-in, and returning posterior samples in the form of a \cd{coda} \cd{mcmc} object.  Running an MCMC in this manner returns an array of samples, a list of sample arrays in the case of multiple chains, or optionally a \cd{coda} object.  See section \ref{sec:runMCMC}.
+
+\subsection*{Other topics}
+
+In addition to details of the steps outlined above, this chapter also includes:
 
 \begin{itemize}
-\item Sampling algorithms provided with NIMBLE.
-\item Default sampler assignments in an MCMC configuration.
-\item Writing new samplers that conform to NIMBLE's MCMC system.
-\item Using \cd{runMCMC} to run multiple MCMC chains.
-\item Using \cd{MCMCsuite} and \cd{compareMCMCs} to automatically run WinBUGS, OpenBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model.
-\item Using NIMBLE's algorithm to search blocks of nodes for efficient joint (block) sampling.
+%%\item NIMBLE's algorithm to search blocks of nodes for efficient joint (block) sampling (section \ref{sec:default-mcmc-conf}) 
+\item Information about the sampling algorithms provided with NIMBLE (section \ref{sec:samplers-provided})
+\item A detailed example of using the MCMC engine (section \ref{sec:mcmc-example-litters})
+\item Methods to automatically run WinBUGS, OpenBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model (section \ref{mcmc-suite-compare-mcmcs}) 
+\item A guide to writing new samping algorithms to use in NIMBLE's MCMC system (section \ref{writing-your-own-sampler}) 
 \end{itemize}
+
 
 \section{The MCMC configuration}
+\label{mcmc-configuration}
 
 The MCMC configuration contains information needed for building an MCMC.  We will show how to create this information as a first step so it can be customized before moving ahead, but when no customization is needed one can jump directly to the \cd{buildMCMC} step below.  An MCMC configuration includes:
 
@@ -299,6 +315,7 @@ Cmcmc <- compileNimble(Rmodel, Rmcmc)
 
 
 \section{Executing the MCMC algorithm}
+\label{executing-the-mcmc-algorithm}
 
 The MCMC algorithm (either the compiled or uncompiled version) can be executed using the member method \cd{mcmc\$run()}.  The \cd{run} method has one required argument, \cd{niter}, representing the number of iterations to run the MCMC algorithm.  Calling \cd{mcmc\$run(niter)} causes the full list of samplers (as determined by the \cd{MCMCconf} object) to be executed \cd{niter} times, and the monitored variables to be stored into the internal \cd{mvSamples} and/or \cd{mvSamples2} objects as governed by the corresponding thinning intervals.
 
@@ -594,6 +611,7 @@ For state space models, a particle MCMC (PMCMC) sampler can be specified for top
 
 Here is a detailed example of specifying, building, compiling, and running two MCMC algorithms.  We use the \cd{litters} example from the BUGS examples.
 
+
 %%<<MCMC-litters, eval=FALSE>>=
 <<MCMC-litters>>=
 
@@ -717,7 +735,9 @@ lapply(samplesList, dim)
 @
 
 
+
 \section{Comparing different MCMC engines with \cd{MCMCsuite} and \cd{compareMCMCs}}
+\label{mcmc-suite-compare-mcmcs}
 
 NIMBLE's \cd{MCMCsuite} function automatically runs WinBUGS, OpenBUGS, JAGS, Stan, and/or multiple NIMBLE configurations on the same model.  Note that the BUGS code must be compatible with whichever BUGS packages are included, and separate Stan code must be provided.  NIMBLE's \cd{compareMCMCs} manages calls to \cd{MCMCsuite} for multiple sets of comparisons and organizes the output(s) for generating html pages summarizing results.  It also allows multiple results to be combined and allows some different options for how results are processed, such as how effective sample size is estimated.
 
@@ -909,6 +929,7 @@ Full details of the arguments and customization of the MCMC Suite is available t
 %Optionally, the Stan initial values file (\cd{`modelName.init.R'}) may also be in this same directory; it will be used if present.
 
 \section{Writing your own samplers as nimbleFunctions}
+\label{writing-your-own-sampler}
 
 The following code illustrates how a NIMBLE developer would implement and use a Metropolis-Hastings random walk sampler with fixed proposal standard deviation.  The comments accompanying the code explain the necessary characteristics of all sampler functions.
 
