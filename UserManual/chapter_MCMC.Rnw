@@ -46,7 +46,7 @@ Using \cd{runMCMC(Cmcmc, ...)} provides higher-level options such as running mul
 
 \subsection*{Other topics}
 
-In additional to more details on the steps outlined above, this chapter also includes:
+In addition to details of the steps outlined above, this chapter also includes:
 
 \begin{itemize}
 %%\item NIMBLE's algorithm to search blocks of nodes for efficient joint (block) sampling (section \ref{sec:default-mcmc-conf}) 
