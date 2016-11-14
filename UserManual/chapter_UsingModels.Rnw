@@ -206,13 +206,60 @@ vector.
 Use of \cd{calculate}, \cd{calculateDiff} and \cd{getLogProb} are similar to \cd{simulate},
 except that they return a value (described above) and they have no \cd{includeData} argument.
 
-\section{Accessing distribution parameter values and distribution bounds}
+\section{Accessing information about nodes and variables}
+\label{sec:nodeInfo}
 
-\subsection{Distribution parameter values}
+\subsection{Getting distributional information about a node}
+
+NIMBLE provides an extensive set of functions to get information about
+one or more nodes or variables. While this functionality can be used
+from R, its primary use is for determining algorithm behavior within the setup code of
+\cd{nimbleFunctions}. We briefly demonstrate some of the functionality here,
+but refer readers to the R help on \cd{modelBaseClass} for full details.
+
+Here is an example model, with use of various functions to determine
+information about nodes or variables.
+
+<<distAPI-example>>=
+code <- nimbleCode({
+    for(i in 1:4) 
+        y[i] ~ dnorm(mu, sd = sigma)
+    mu ~ T(dnorm(0, 5), -20, 20)
+    sigma ~ dunif(0, 10)
+    })
+m <- nimbleModel(code, data = list(y = rnorm(4)),
+                           inits = list(mu = 0, sigma = 1))
+m$isEndNode('y')
+m$getDistribution('sigma')
+m$isDiscrete(c('y', 'mu', 'sigma'))
+m$isDeterm('mu')
+m$getDimension('mu')
+m$getDimension('mu', includeParams = TRUE)
+@ 
+
+Note that any variables provided to these functions are expanded into
+their constituent node names, so the length of results may not be the
+same length as the input vector of node and variable names. However
+the order of the results should be preserved relative to the order of
+the inputs, once the expansion is accounted for. 
+
+\subsection{Getting information about a distribution}
+
+One can also get generic information about a distribution based on the
+name of the distribution. In particular, one can determine whether a distribution
+was provided by the user (\cd{isUserDefined}), whether a distribution provides CDF and
+quantile functions (\cd{pqDefined}), whether a distribution is a
+discrete distribution (\cd{isDiscrete}), the parameter names (include
+alternative parameterizations) for a distribution (\cd{getParamNames}),
+and the dimension of the distribution and its parameters
+(\cd{getDimension}).  For more extensive information, please see the R
+help for \cd{getDistributionInfo}.
+
+\subsection{Getting distribution parameter values for a node}
 \label{sec:getParam}
 
 The function \cd{getParam} provides access to values of the parameters
-of a distribution.  Like the above functions, \cd{getParam} can be
+of a node's distribution.  Like the above functions, \cd{getParam} can be
 used as  global function taking a model as the first argument, or it
 can be used as a model member function.  The next two arguments must
 be the name of one (stochastic) node and the name of a parameter for the
@@ -236,7 +283,7 @@ gammaModel$getParam('x','rate')
 
 \cd{getParam} also works in compiled nimbleFunctions.
 
-\subsection{Distribution bounds}
+\subsection{Getting distribution bounds for a node}
 \label{sec:getBound}
 
 The function \cd{getBound} provides access to the lower and upper
