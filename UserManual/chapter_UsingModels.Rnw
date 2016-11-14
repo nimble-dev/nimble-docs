@@ -247,7 +247,7 @@ Section \ref{subsec:trunc}) is used, the bounds will be determined
 by the truncation. Like the functions described in the previous section, \cd{getBound} can be
 used as  global function taking a model as the first argument, or it
 can be used as a model member function.  The next two arguments must
-be the name of one (stochastic) node and either \code{'lower'} or \code{'upper'}
+be the name of one (stochastic) node and either \cd{'lower'} or \cd{'upper'}
 indicating whether the lower or upper bound is desired. For multivariate nodes
 the bound is a scalar that is the bound for all elements of the node, as we
 do not handle truncation for multivariate nodes. 
