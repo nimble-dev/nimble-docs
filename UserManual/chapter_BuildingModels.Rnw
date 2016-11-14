@@ -481,16 +481,17 @@ At present you cannot provide a scalar argument where a \cd{nimbleFunction} expe
 
 \subsubsection{User-defined distributions}
 
-To provide a user-defined distribution, you need to do the following:
-\begin{enumerate}
-\item define density (``d'') and simulation (``r'') \cd{nimbleFunctions}, without setup code, for your distribution,
-\item register the distribution using \cd{registerDistributions}, and
-\item use your distribution in BUGS code.
-\end{enumerate}
+To provide a user-defined distribution, you need to define density
+(``d'') and simulation (``r'') \cd{nimbleFunctions}, without setup
+code, for your distribution. In some cases you can then
+simply use your distribution in BUGS code as you would any
+distribution already provided by NIMBLE, while in others
+you need to explicitly register your distribution as described below.  
+
 You can optionally provide distribution (``p'') and quantile (``q'')
 functions, which will allow truncation to be applied to a user-defined
 distribution.  You can also provide a list of alternative
-parameterizations.
+parameterizations, but only if you explicitly register the distribution.
 
 Here is an extended example of providing a univariate exponential
 distribution (although this is already provided by NIMBLE) and a
@@ -559,6 +560,57 @@ rdirchmulti <- nimbleFunction(
         return(rmulti(1, size = size, prob = p))
     })
 
+code <- nimbleCode({
+     y[1:K] ~ ddirchmulti(alpha[1:K], n)
+     for(i in 1:K) {
+         alpha[i] ~ dmyexp(1/3)
+      }
+     })
+@ 
+
+The distribution-related functions should take as input the parameters
+for a single parameterization, which will be the canonical
+parameterization that NIMBLE will use. 
+
+Here are more details on the requirements for distribution-related \cd{nimbleFunctions}, which follow R's conventions:
+
+\begin{itemize}
+\item Your distribution-related functions must have names that begin with ``d'', ``r'', ``p'' and ``q''. The name of the distribution must not be identical to any of the NIMBLE-provided distributions.
+\item All simulation (``r'') functions must take \cd{n} as their first argument. Note that you may simply have your function only handle \cd{n=1} and return an warning for other values of \cd{n}.
+\item NIMBLE uses doubles for numerical calculations, so we suggest simply using doubles in general, even for integer-valued parameters or values of random variables.
+  \item All density functions must have as their last argument \cd{log} and implement return of the log probability density. NIMBLE algorithms typically use only \cd{log = 1}, but we recommend you implement the \cd{log = 0} case for completeness. 
+  \item All distribution and quantile functions must have their last two arguments be (in order) \cd{lower.tail} and \cd{log.p}. These functions must work for \cd{lower.tail = 1} (i.e., TRUE) and \cd{log.p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but again we recommend doing so for completeness.
+  \item Define the \cd{nimbleFunctions} in R's global environment.  Don't expect R's standard scoping to work\footnote{NIMBLE can't use R's standard scoping because it doesn't work for R reference classes, and \cd{nimbleFunction}s are implemented as custom-generated reference classes.}.
+\end{itemize}
+
+\paragraph{Using \cd{registerDistributions} for alternative
+  parameterizations and providing other information}
+
+Behind the scenes, NIMBLE uses a function called
+\cd{registerDistributions} to set up new distributions for use in BUGS
+code. In some circumstances, you will need to call
+\cd{registerDistributions} directly to provide information that NIMBLE
+can't obtain directly from the \cd{nimbleFunctions} you write. 
+
+The cases in which you'll need to explicitly call
+\cd{registerDistributions} are when you want to do any of the following:
+\begin{itemize}
+  \item provide alternative parameterizations,
+    \item indicate a distribution is discrete, and
+      \item provide the range of possible values for a distribution.
+        \end{itemize}
+        
+If you would like to allow for
+multiple parameterizations, you can do this via the \cd{Rdist} element
+of the list provided to \cd{registerDistributions} as illustrated.  If
+you provide CDF (``p'') and inverse CDF (quantile, i.e. ``q'')
+functions, be sure to specify \cd{pqAvail = TRUE} when you call
+\cd{registerDistributions}.  Here's an example of using \cd{registerDistributions}
+to provide an alternative parameterization and to provide the range
+for the user-defined exponential distribution. We can then use
+the alternative parameterization in our BUGS code.
+
+<<user-dist-register, eval=FALSE>>=
 registerDistributions(list(
     dmyexp = list(
         BUGSdist = "dmyexp(rate, scale)",
@@ -566,10 +618,6 @@ registerDistributions(list(
         altParams = c("scale = 1/rate", "mean = 1/rate"),
         pqAvail = TRUE, 
         range = c(0, Inf)
-        ),
-    ddirchmulti = list(
-        BUGSdist = "ddirchmulti(alpha, size)",
-        types = c('value = double(1)', 'alpha = double(1)'),
         )
     ))
 
@@ -581,26 +629,15 @@ code <- nimbleCode({
      })
 @ 
 
-The distribution-related functions should take as input the parameters
-for a single parameterization, which will be the canonical
-parameterization that NIMBLE will use. If you would like to allow for
-multiple parameterizations, you can do this via the \cd{Rdist} element
-of the list provided to \cd{registerDistributions} as illustrated.  If
-you provide CDF (``p'') and inverse CDF (quantile, i.e. ``q'') functions, be sure to specify \cd{pqAvail = TRUE} when you call \cd{registerDistributions}.  
+There are a few rules for how you specify the information about a
+distribution that you provide to \cd{registerDistributions}:
 
-Here are more details on the requirements for distribution-related \cd{nimbleFunctions}, which follow R's conventions:
-
-\begin{itemize}
-\item Your distribution-related functions must have names that begin with ``d'', ``r'', ``p'' and ``q''. The name of the distribution must not be identical to any of the NIMBLE-provided distributions.
+     \begin{itemize}
 \item The function name in the \cd{BUGSdist} entry in the list provided to \cd{registerDistributions} will be the name you can use in BUGS code.
 \item The name of your \cd{nimbleFunction}s must match the function name in the \cd{Rdist} entry.  If missing, the \cd{Rdist} entry defaults to be the same as the \cd{BUGSdist} entry.
-\item All simulation (``r'') functions must take \cd{n} as their first argument. Note that you may simply have your function only handle \cd{n=1} and return an warning for other values of \cd{n}.
 \item Your distribution-related functions must take as arguments the
-  parameters in default order, starting as the second argument and in the order used in the parameterizations in the \cd{Rdist} argument to \cd{registerDistributions} or the \cd{BUGSdist} argument if there are no alternative parameterizations. NIMBLE uses doubles for numerical calculations, so we suggest simply using doubles in general, even for integer-valued parameters or values of random variables.
-  \item All density functions must have as their last argument \cd{log} and implement return of the log probability density. NIMBLE algorithms typically use only \cd{log = 1}, but we recommend you implement the \cd{log = 0} case for completeness. 
-  \item All distribution and quantile functions must have their last two arguments be (in order) \cd{lower.tail} and \cd{log.p}. These functions must work for \cd{lower.tail = 1} (i.e., TRUE) and \cd{log.p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but again we recommend doing so for completeness.
-  \item Define the \cd{nimbleFunctions} in R's global environment.  Don't expect R's standard scoping to work\footnote{NIMBLE can't use R's standard scoping because it doesn't work for R reference classes, and \cd{nimbleFunction}s are implemented as custom-generated reference classes.}.
-\end{itemize}
+  parameters in default order, starting as the second argument and in the order used in the parameterizations in the \cd{Rdist} argument to \cd{registerDistributions} or the \cd{BUGSdist} argument if there are no alternative parameterizations. 
+ \end{itemize}
 
 Further details on using \cd{registerDistributions} can be found via \cd{help(registerDistributions)}.  NIMBLE uses the same list format as \cd{registerDistributions} to define its distributions.  This list can be found in the \cd{R/distributions\_inputList.R} file in the package source code directory.
 
