@@ -482,9 +482,11 @@ mcmcConf$addSampler(target = 'p', type = 'RW',
 Note that because we use a simple normal proposal distribution on all nodes, negative proposals may be simulated for non-negative random variables. These will be rejected, so the only downsides to this are some inefficiency and the presence of warnings during uncompiled (but not compiled) execution indicating \cd{NA} or \cd{NaN} values.  This can be avoided in some cases by using the option \cd{reflective = TRUE}, which reflects proposal values to stay within the range of the target node distribution.
 
 \subsection{Conjugate (Gibbs) samplers}
-Gibbs samplers can be provided for nodes in conjugate relationships, as specified by the system-level \cd{conjugacyRelationshipsInputList}.  Conjugate samplers should not, in general, be manually added or modified by a user, since the control list requisites and syntax are lengthy, and determining conjugacy and assigning conjugate samplers is fully handled by the default MCMC configuration.
+By default, \cd{configureMCMC()} and \cd{buildMCMC()} will assign conjugate samplers to all nodes satisfying a conjugate relationship, unless the option \cd{useConjugacy = FALSE} is specified.  The conjugate relationships supported are defined in the system-level variable \cd{conjugacyRelationshipsInputList}.
 
-A model may be checked for conjugate relationships using \cd{model\$checkConjugacy}.  This returns a named list describing all conjugate nodes.  \cd{checkConjugacy} can also accept a character vector argument specifying a subset of model node names to check for conjugacy.
+Subsequently, conjugate samplers can be added to particular nodes in an MCMC configuration object (\cd{conf}) using \cd{conf\$addSampler(target = 'x', type = 'conjugate')}, to add a conjugate sampler for model node \cd{'x'}.  If the specified node does not satisfy any conjugate relationship, then an error occurs and no sampler is added to the configuration object.
+
+A model may be checked for conjugate relationships using \cd{model\$checkConjugacy()}.  This returns a named list describing all conjugate nodes.  The \cd{checkConjugacy()} method can also accept a character vector argument specifying a subset of model node names to check for conjugacy.
 
 The current release of NIMBLE supports conjugate sampling of the relationships listed in Table~\ref{table:conjugaciesSupported}.
 
