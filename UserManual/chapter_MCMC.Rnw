@@ -1,4 +1,5 @@
 %% NOTE -- to build and view MCMC chapter only, execute from R:
+%% > setwd("~/github/nimble/nimble-docs/UserManual")
 %% > library(knitr);   knit2pdf('includesMCMConly.Rnw');   system('open includesMCMConly.pdf')
 %% > library(knitr);   knit2pdf('includesWritingNFsonly.Rnw');   system('open includesWritingNFsonly.pdf')
 
