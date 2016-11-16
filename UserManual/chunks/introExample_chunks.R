@@ -33,7 +33,7 @@ pump$lambda
 
 ## ---- plotPump
 
-plot(pump$graph)
+pump$plotGraph()
 
 ## ---- manipPump
 
