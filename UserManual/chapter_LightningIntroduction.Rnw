@@ -154,7 +154,9 @@ include them.  The entire system is written in nimbleFunctions.
 
 NIMBLE is a system for working with algorithms, not just an MCMC engine. So let's try maximizing the marginal likelihood for \cd{alpha} and \cd{beta} using Monte Carlo Expectation Maximization\footnote{Note that for this model, one could analytically integrate over \cd{theta} and then numerically maximize the resulting marginal likelihood.}. 
 
-<<mcemPump>>=
+<<mcemPump, eval = runMCEMs, echo = runMCEMs>>=
+@ 
+<<dont-run-mcemPump, eval = !runMCEMs, echo = !runMCEMs>>=
 @ 
 
 Both estimates are within 0.01 of the values reported by
