@@ -566,6 +566,8 @@ code <- nimbleCode({
          alpha[i] ~ dmyexp(1/3)
       }
      })
+
+model <- nimbleModel(code)
 @ 
 
 The distribution-related functions should take as input the parameters
@@ -627,6 +629,8 @@ code <- nimbleCode({
          alpha[i] ~ T(dmyexp(scale = 3), 0, 100)
       }
      })
+
+model <- nimbleModel(code)
 @ 
 
 There are a few rules for how you specify the information about a
