@@ -497,7 +497,7 @@ Here is an extended example of providing a univariate exponential
 distribution (although this is already provided by NIMBLE) and a
 multivariate Dirichlet-multinomial distribution.
 
-<<user-dist, eval=FALSE>>=
+<<user-dist, eval=TRUE>>=
 dmyexp <- nimbleFunction(
     run = function(x = double(0), rate = double(0, default = 1), 
         log = integer(0, default = 0)) {
@@ -567,7 +567,7 @@ code <- nimbleCode({
       }
      })
 
-model <- nimbleModel(code)
+model <- nimbleModel(code, constants = list(K = 5))
 @ 
 
 The distribution-related functions should take as input the parameters
@@ -612,7 +612,7 @@ to provide an alternative parameterization and to provide the range
 for the user-defined exponential distribution. We can then use
 the alternative parameterization in our BUGS code.
 
-<<user-dist-register, eval=FALSE>>=
+<<user-dist-register, eval=TRUE>>=
 registerDistributions(list(
     dmyexp = list(
         BUGSdist = "dmyexp(rate, scale)",
@@ -630,7 +630,7 @@ code <- nimbleCode({
       }
      })
 
-model <- nimbleModel(code)
+model <- nimbleModel(code, constants = list(K = 5, n = 10))
 @ 
 
 There are a few rules for how you specify the information about a
