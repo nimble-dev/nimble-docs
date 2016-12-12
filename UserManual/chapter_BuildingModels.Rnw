@@ -567,7 +567,7 @@ code <- nimbleCode({
       }
      })
 
-model <- nimbleModel(code, constants = list(K = 5))
+model <- nimbleModel(code, constants = list(K = 5, n = 10))
 @ 
 
 The distribution-related functions should take as input the parameters
@@ -630,7 +630,8 @@ code <- nimbleCode({
       }
      })
 
-model <- nimbleModel(code, constants = list(K = 5, n = 10))
+model <- nimbleModel(code, constants = list(K = 5, n = 10), 
+                     inits = list(alpha = rep(1, 5)))
 @ 
 
 There are a few rules for how you specify the information about a
@@ -641,6 +642,7 @@ distribution that you provide to \cd{registerDistributions}:
 \item The name of your \cd{nimbleFunction}s must match the function name in the \cd{Rdist} entry.  If missing, the \cd{Rdist} entry defaults to be the same as the \cd{BUGSdist} entry.
 \item Your distribution-related functions must take as arguments the
   parameters in default order, starting as the second argument and in the order used in the parameterizations in the \cd{Rdist} argument to \cd{registerDistributions} or the \cd{BUGSdist} argument if there are no alternative parameterizations. 
+\item You must specify a \cd{types} entry in the list provided to \cd{registerDistributions} if the distribution is multivariate or if any parameter is non-scalar.
  \end{itemize}
 
 Further details on using \cd{registerDistributions} can be found via \cd{help(registerDistributions)}.  NIMBLE uses the same list format as \cd{registerDistributions} to define its distributions.  This list can be found in the \cd{R/distributions\_inputList.R} file in the package source code directory.

@@ -167,6 +167,8 @@ When a \cd{control} argument is provided in a call to \cd{addSampler}, the \cd{c
 
 A call to \cd{addSampler} results in a single instance of the specified sampler, which will be specialized to the specified \cd{target} model node or nodes, being added at end of the current sampler ordering.
 
+Note that adding a sampler for a node will \emph{not} remove any existing samplers on that node. In standard practice one would first remove existing samplers on a node and then add the new sampler, though removal is optional from the perspective of having a valid MCMC configuration.
+
 \subsubsection{Printing, re-ordering, and removing samplers}
 
 The current, ordered, list of all samplers in the MCMC configuration may be printed by calling the \cd{printSamplers} method. When you want to see only samplers acting on specific model nodes or variables, provide those names as an argument to \cd{printSamplers}.
@@ -359,6 +361,8 @@ The column names of the matrices will be the node names of nodes in the monitore
 mean(samplesMatrix[, 'x[2]'])
 @
 
+Finally, note that all of the manipulations on \nm{modelValues} objects discussed in Section \ref{sec:modelValues-struct} can be used on \nm{mvSamples} objects that store the MCMC samples.
+
 \section{Running multiple MCMC chains}
 \label{sec:runMCMC}
 
@@ -483,7 +487,7 @@ mcmcConf$addSampler(target = 'p', type = 'RW',
 Note that because we use a simple normal proposal distribution on all nodes, negative proposals may be simulated for non-negative random variables. These will be rejected, so the only downsides to this are some inefficiency and the presence of warnings during uncompiled (but not compiled) execution indicating \cd{NA} or \cd{NaN} values.  This can be avoided in some cases by using the option \cd{reflective = TRUE}, which reflects proposal values to stay within the range of the target node distribution.
 
 \subsection{Conjugate (Gibbs) samplers}
-By default, \cd{configureMCMC()} and \cd{buildMCMC()} will assign conjugate samplers to all nodes satisfying a conjugate relationship, unless the option \cd{useConjugacy = FALSE} is specified.  The conjugate relationships supported are defined in the system-level variable \cd{conjugacyRelationshipsInputList}.
+By default, \cd{configureMCMC()} and \cd{buildMCMC()} will assign conjugate samplers to all nodes satisfying a conjugate relationship, unless the option \cd{useConjugacy = FALSE} is specified.  The conjugate relationships supported are defined in the system-level variable\\ \cd{conjugacyRelationshipsInputList}.
 
 Subsequently, conjugate samplers can be added to particular nodes in an MCMC configuration object (\cd{conf}) using \cd{conf\$addSampler(target = 'x', type = 'conjugate')}, to add a conjugate sampler for model node \cd{'x'}.  If the specified node does not satisfy any conjugate relationship, then an error occurs and no sampler is added to the configuration object.
 
