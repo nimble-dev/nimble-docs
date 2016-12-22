@@ -710,7 +710,7 @@ pumpDataNew$x[c(1, 3)] <- NA
 pumpMiss$setData(pumpDataNew)
 
 pumpMissConf <- configureMCMC(pumpMiss)
-pumpMissConf$addMonitors(c('x', 'alpha', 'beta', 'theta'))
+pumpMissConf$addMonitors('x', 'alpha', 'beta', 'theta')
 
 pumpMissMCMC <- buildMCMC(pumpMissConf)
 Cobj <- compileNimble(pumpMiss, pumpMissMCMC)

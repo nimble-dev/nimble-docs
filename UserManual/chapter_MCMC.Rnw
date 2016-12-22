@@ -268,7 +268,7 @@ mcmcConf <- configureMCMC(Rmodel, monitors = c('alpha', 'beta'), monitors2 = 'x'
 
 ## Calling a member method of the mcmcconf object
 ## This results in the same monitors as above
-mcmcConf$addMonitors(c('alpha', 'beta'))
+mcmcConf$addMonitors('alpha', 'beta')
 mcmcConf$addMonitors2('x')
 @
 
@@ -283,7 +283,7 @@ mcmcConf$setThin(1)
 mcmcConf$setThin2(100)
 @
 
-The current lists of monitors, and thinning intervals, may be displayed using the \cd{getMonitors} method.  Both sets of monitors (\cd{monitors} and \cd{monitors2}) may be reset to empty character vectors by calling the \cd{resetMonitors} method.
+The current lists of monitors and thinning intervals may be displayed using the \cd{printMonitors} method.  Both sets of monitors (\cd{monitors} and \cd{monitors2}) may be reset to empty character vectors by calling the \cd{resetMonitors} method.  The methods \cd{getMonitors}  and \cd{getMonitors2} return the currently specified \cd{monitors} and \cd{monitors2} as character vectors.
 
 \section{Building and compiling the MCMC algorithm}
 \label{sec:build-compile-mcmc}
@@ -422,7 +422,7 @@ To record model log-probabilities during the course of an MCMC algorithm, the MC
 For example, to record and extract log-probabilities for the model variables \cd{alpha}, \cd{sigma\_mu}, and \cd{Y}:
 <<eval=FALSE>>=
 mcmcConf <- configureMCMC(Rmodel)
-mcmcConf$addMonitors(c('logProb_alpha', 'logProb_sigma_mu', 'logProb_Y'))
+mcmcConf$addMonitors('logProb_alpha', 'logProb_sigma_mu', 'logProb_Y')
 Rmcmc <- buildMCMC(mcmcConf)
 Cmodel <- compileNimble(Rmodel)
 Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
@@ -679,7 +679,7 @@ mcmcConf <- configureMCMC(Rmodel, monitors = 'mu')
 mcmcConf$printSamplers()
 
 ## double-check our monitors, and thinning interval
-mcmcConf$getMonitors()
+mcmcConf$printMonitors()
 
 ## build the executable R MCMC function
 mcmc <- buildMCMC(mcmcConf)
