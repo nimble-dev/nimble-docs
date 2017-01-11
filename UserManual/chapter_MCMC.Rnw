@@ -514,6 +514,17 @@ Example usage:
 mcmcConf$addSampler(target = 'x[1:5]', type = 'RW_multinomial') 
 @
 
+\subsection{\cd{RW\_dirichlet} sampler}
+
+The \cd{RW\_dirichlet} sampler operates exclusively on nodes following a Dirichlet distribution, and is designed for the non-conjugate Dirichlet case.  The sampler performs independent adaptive Metropolis-Hastings updates on a reparameterization of the target distribution, expressed in terms of component univariate gamma distributions.
+
+The \cd{RW\_dirichlet} sampler can be customized using \cd{control} list arguments to set the adaptive properties of the sampler.  See \cd{help(samplers)} for details.
+
+Example usage:
+<<dirichlet-sampler, eval=FALSE>>=
+mcmcConf$addSampler(target = 'p[1:5]', type = 'RW_dirichlet')
+@
+
 \subsection{Multivariate Metropolis-Hastings \cd{RW\_block} sampler}
 
 The \cd{RW\_block} sampler performs a simultaneous update of one or more model nodes, using an adaptive Metropolis-Hastings algorithm with a multivariate normal proposal distribution \citep{Roberts_Sahu_1997}, implementing the adaptation routine given in \citep{Shaby2011}.  This sampler may be applied to any set of continuous-valued model nodes, to any single continuous-valued multivariate model node, or to any combination thereof. 
