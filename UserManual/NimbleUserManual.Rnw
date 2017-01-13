@@ -63,6 +63,7 @@ require(nimble, warn.conflicts = FALSE, quietly = TRUE)
 #source(file.path('..', '..', 'examples', 'demos', 'loadAllCode.R'))
 require(methods, warn.conflicts = FALSE, quietly = TRUE)  # seems to be needed, but why?
 require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
+nimbleOptions(MCMCprogressBar = FALSE)
 @ 
 
 \begingroup
