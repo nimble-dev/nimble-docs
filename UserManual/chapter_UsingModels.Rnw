@@ -367,10 +367,9 @@ MCMC, for example.
 
 
 \subsection{\cd{isData}}
-\label{sec:cdisdata}
 
 Finally, you can query whether a node is flagged as data using the \cd{isData} method applied to one or more nodes:
-<<isData>>=
+<<isDataRepeated>>=
 pump$isData('x[1]')
 pump$isData(c('x[1]', 'x[2]', 'alpha'))
 @ 
@@ -378,7 +377,7 @@ pump$isData(c('x[1]', 'x[2]', 'alpha'))
 
 You can also query variables to determine if the nodes that are part of a variable are data nodes.
 
-<<isData2>>=
+<<isData2Repeated>>=
 pump$isData('x')
 pump$isData('x[1:3]')
 @ 

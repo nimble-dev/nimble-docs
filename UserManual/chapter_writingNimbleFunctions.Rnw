@@ -116,7 +116,7 @@ using \cd{<-}.
 \subsubsection{Distribution functions}
 Density evaluation, random generation, CDF and inverse-CDF functions for all 
 standard distributions (Section \ref{sec:nimble-dist-funs}),
-or any user-defined distributions (Section \ref{sec:user-defined}). 
+or any user-defined distributions (Chapter \ref{cha:user-defined}). 
 
 \subsubsection{Control flow}
 Standard control-flow commands including \cd{if()}, \cd{for()},
@@ -1031,7 +1031,7 @@ covariance or precision matrix has been given.
 \end{itemize}
 
 User-defined distributions can also be used from nimbleFunctions. 
-Arguments are matched by order or by name (if given). If omitted, default argument values based on the standard R distribution functions will be used. Standard arguments to distribution functions in R (\cd{log}, \cd{log.p}, \cd{lower.tail}) can be used and take the usual default values as in R. User-supplied distributions are handled analogously with regard to matching by position and  use of defaults (when provided via the nimbleFunction run-time arguments) (Section \ref{sec:user-defined}).
+Arguments are matched by order or by name (if given). If omitted, default argument values based on the standard R distribution functions will be used. Standard arguments to distribution functions in R (\cd{log}, \cd{log.p}, \cd{lower.tail}) can be used and take the usual default values as in R. User-supplied distributions are handled analogously with regard to matching by position and  use of defaults (when provided via the nimbleFunction run-time arguments) (Chapter \ref{cha:user-defined}).
 
 
 Supported distributions include:

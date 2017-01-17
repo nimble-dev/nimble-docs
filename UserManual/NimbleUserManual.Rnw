@@ -37,7 +37,8 @@
 ## replace.assign replaces "=" with "<-"; 
 ## width controls (not perfectly) width of R code lines, hopefully avoiding some of the margin overflow
 options(replace.assign=TRUE, width=65)
-runMCEMs <- TRUE
+runMCEMs <- FALSE
+opts_chunk$set(eval = FALSE)
 ## options(replace.assign=TRUE, cache.rebuild = TRUE, width=65)
 @
 
@@ -72,6 +73,8 @@ nimbleOptions(MCMCprogressBar = FALSE)
 \tableofcontents
 \endgroup
 
+\part{Introduction and building Models in NIMBLE}
+
 \Sexpr{knit_child('chapter_WelcomeToNimble.Rnw')}
 
 \Sexpr{knit_child('chapter_LightningIntroduction.Rnw')}
@@ -82,11 +85,28 @@ nimbleOptions(MCMCprogressBar = FALSE)
 
 \Sexpr{knit_child('chapter_BuildingModels.Rnw')}
 
-\Sexpr{knit_child('chapter_UsingModels.Rnw')}
+
+\part{Algorithms in NIMBLE}
 
 \Sexpr{knit_child('chapter_MCMC.Rnw')}
 
 \Sexpr{knit_child('chapter_OtherAlgorithms.Rnw')}
+
+\part{Programming with NIMBLE}
+
+\Sexpr{knit_child('chapter_RCfunctions.Rnw')}
+
+\Sexpr{knit_child('chapter_UserDefined.Rnw')}
+
+\Sexpr{knit_child('chapter_IntroNimbleFunctions.Rnw')}
+
+\Sexpr{knit_child('chapter_QueryStructure.Rnw')}
+
+\Sexpr{knit_child('chapter_ModelCalculations.Rnw')}
+
+\Sexpr{knit_child('chapter_UserSamplers.Rnw')}
+
+\Sexpr{knit_child('chapter_UsingModels.Rnw')}
 
 \Sexpr{knit_child('chapter_writingNimbleFunctions.Rnw')}
 

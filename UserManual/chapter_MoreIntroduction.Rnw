@@ -2,7 +2,7 @@
 
 \Sexpr{set_parent('NimbleUserManual.Rnw')}
 
-\chapter{More Introduction}
+\chapter{More introduction}
 
 Now that we have shown a brief example, we will introduce more about
 the concepts and design of NIMBLE.  Subsequent chapters will go into
