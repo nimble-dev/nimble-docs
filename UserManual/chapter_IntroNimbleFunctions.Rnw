@@ -5,3 +5,4 @@ require(nimble)
 @ 
 
 \chapter{Introduction to nimbleFunction programming}
+\ref{cha:intro-nf}

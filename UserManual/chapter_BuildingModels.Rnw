@@ -54,6 +54,14 @@ require(nimble)
 %% plot(Rmodel1$graph)
 %% @ 
 
+Models in NIMBLE are specified using a variation on the BUGS language, a language also used in the various BUGS software and in JAGS. Given a model specified in the BUGS language, NIMBLE processes the BUGS code for the model and creates a model object. This model object can then be used in various algorithms, including MCMC. One of the core features of NIMBLE that distinguishes it from the BUGS and JAGS software packages is that NIMBLE provides the user with a model object that the user can manipulate. Having an explicit model object allows for the flexibility that NIMBLE provides in using, writing, and modifying algorithms to operate on a model. 
+
+This chapter describes how to specify and create model objects in NIMBLE using the distributions and functions provided by NIMBLE for use in BUGS code. With NIMBLE you can also define your own distributions and functions for use in BUGS code; discussion of this functionality is deferred to Chapter \ref{cha:user-defined} as it requires the use of nimbleFunctions. 
+
+
+\section{Overview of functionality available to build models}
+\label{sec:supp-feat-bugs}
+
 NIMBLE aims to be compatible with the original BUGS language and also
 the version used by the popular JAGS package, as well as to extend the
 BUGS language.  However, at this point, there are some BUGS
@@ -61,9 +69,6 @@ features not supported by NIMBLE, and there are some extensions that
 are planned but not implemented.
 
 For readers familiar with BUGS, we begin with an overview of supported features and extensions.
-
-\section{Overview of functionality available to build models}
-\label{sec:supp-feat-bugs}
 
 \subsection{Supported features of BUGS and JAGS}
 
@@ -249,6 +254,8 @@ model <- nimbleModel(codeAlt, constants = list(n = 3, K = K,
 \subsection{Vectorized versus scalar declarations}
 \label{subsec:vectorized-versus-scalar-declarations}
 
+{\color{red} [Perry - you mentioned wanting discussion of vectorized calcs and lin algebra; do you want more than this, which was already here, except for the line at the end of this subsection?]}
+
 Suppose you need nodes \cd{logY[i]} that should be the log of the
 corresponding \cd{Y[i]}, say for \cd{i} from 1 to 10.  Conventionally
 this would be created with a for loop:
@@ -267,8 +274,11 @@ exampleCode <- nimbleCode({
 })
 @ 
 
+{[\color{red} do we want to avoid the forward ref to part 3 here?]}
+
 The rules for what is allowed attempt to follow those for R, which
-includes most basic arithmetic functions.  What is allowed is
+includes most basic arithmetic functions and basic linear algebra. Please see Section \ref{subsec:BUGS-lang-fxns} for more details. 
+What is allowed is also
 described more in (\ref{cha:progr-with-models}) about programming with
 nimbleFunctions, since BUGS code is processed similarly.  However in
 BUGS code there are some different rules, including the requirement to
@@ -283,7 +293,9 @@ $\ldots$ \cd{logY[10]}.  The second creates one vector node,
 beneficial to declare them as scalars.  If they are all used together,
 it will often make sense to declare them as a vector.
 
-\subsection{Available distributions and functions}
+
+
+\subsection{Available distributions}
 \label{subsec:dists-and-functions}
 \subsubsection{Distributions}
 \label{subsec:distributions}
@@ -353,13 +365,8 @@ We plan to, but do not currently, include the following distributions as part of
 \label{subsec:BUGS-lang-fxns}
 
 Tables \ref{table:functions}-\ref{table:functions-matrix} show the
-available operators and functions. These are also available for
-\cd{nimbleFunction} programming (see Chapter
-\ref{cha:progr-with-models}).  In fact, BUGS model nodes are
-implemented as \cd{nimbleFunction}s that are custom-generated from
-BUGS declarations, so it would be more correct to say that functions
-and operators available for \cd{nimbleFunction}s are also available
-for the model declarations.
+available operators and functions. 
+% These are also available for \cd{nimbleFunction} programming (see Chapter \ref{cha:progr-with-models}).  In fact, BUGS model nodes are implemented as \cd{nimbleFunction}s that are custom-generated from BUGS declarations, so it would be more correct to say that functions and operators available for \cd{nimbleFunction}s are also available for the model declarations.
 
 For the most part NIMBLE supports the functions used in BUGS and JAGS,
 with exceptions indicated in the table.  Additional functions provided
@@ -384,6 +391,7 @@ for use in calculations, namely the ``p'', ``q'', and ``d'' functions.
 \input{functionTableMatrixLong.tex}
 
 % [NOTE: JAGS source package has the Tex files for Martyn's manual, so we can copy the table formatting - s doc/manual/jags\_user\_manual.tex]
+
 
 \subsection{Available link functions}
 \label{subsec:BUGS-link}
@@ -970,7 +978,7 @@ during the compilation process.
 
 \paragraph{Determining nodes and variables in a model}
 
-First we'll see how to determine the nodes and variables in a model.
+One can determine the nodes and variables in a model using \cd{getNodeNames}:
 
 <<getNodeNames>>=
 @ 
@@ -987,8 +995,8 @@ to illustrate.
 \paragraph{Determining dependencies in a model}
 \label{sec:cdgetdependencies}
 
-Next we'll see how to determine the node dependencies (or
-``descendents'') in a model. There are a variety of arguments to \cd{getDependencies} that
+One can determine the node dependencies (or
+``descendents'') in a model using \cd{getDependencies}. There are a variety of arguments to \cd{getDependencies} that
 allow one to specify whether to include the node itself, whether to
 include deterministic or stochastic or data dependents, etc. By
 default \cd{getDependencies} returns descendants up to the next

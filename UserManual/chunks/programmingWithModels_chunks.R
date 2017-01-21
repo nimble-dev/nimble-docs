@@ -1,3 +1,33 @@
+## @knitr rc-intro
+
+nimExp <- nimbleFunction(
+       # run-time code for our computation
+       run = function(x = double(1)) {
+           returnType(double(1))
+           n <- length(x)
+           # some functions, like numeric, mimic R
+           # but also may have additional/different features
+           out <- numeric(n, init = FALSE)
+           # core computation
+           for( i in 1:n) 
+                out[i] <- exp(x[i])
+           return(out)
+)
+
+x <- rnorm(5)
+exp(x)
+nimExp(x)
+
+## @knitr rc-compiling
+
+CnimExp <- compileNimble(nimExp)
+CnimExp(x)
+
+## @knitr rc-using
+
+CnimExp(x)
+
+
 ## @knitr nf-intro
 
 logProbCalcPlus <- nimbleFunction(

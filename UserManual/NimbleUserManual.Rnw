@@ -73,7 +73,8 @@ nimbleOptions(MCMCprogressBar = FALSE)
 \tableofcontents
 \endgroup
 
-\part{Introduction and building Models in NIMBLE}
+\part{Introduction and Building Models in NIMBLE}
+\label{part:models}
 
 \Sexpr{knit_child('chapter_WelcomeToNimble.Rnw')}
 
@@ -87,12 +88,14 @@ nimbleOptions(MCMCprogressBar = FALSE)
 
 
 \part{Algorithms in NIMBLE}
+\label{part:algorithms}
 
 \Sexpr{knit_child('chapter_MCMC.Rnw')}
 
 \Sexpr{knit_child('chapter_OtherAlgorithms.Rnw')}
 
 \part{Programming with NIMBLE}
+\label{part:programming}
 
 \Sexpr{knit_child('chapter_RCfunctions.Rnw')}
 
