@@ -107,8 +107,6 @@ nimbleOptions(MCMCprogressBar = FALSE)
 
 \Sexpr{knit_child('chapter_ModelCalculations.Rnw')}
 
-\Sexpr{knit_child('chapter_UserSamplers.Rnw')}
-
 \Sexpr{knit_child('chapter_UsingModels.Rnw')}
 
 \Sexpr{knit_child('chapter_writingNimbleFunctions.Rnw')}
