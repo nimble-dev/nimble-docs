@@ -1,0 +1,15 @@
+\Sexpr{set_parent('NimbleUserManual.Rnw')}
+
+<<echo=FALSE>>=
+require(nimble)
+@ 
+
+\chapter{Introduction to programming in NIMBLE}
+\ref{cha:intro-prog}
+
+Part \ref{part:programming} is the programmer's guide to NIMBLE. At the heart of programming in NIMBLE are nimbleFunctions and the NIMBLE language (also called the NIMBLE DSL).
+
+In Chapter X, we describe how to write simple nimbleFunctions (nimbleFunctions that don't interact with models) to compile parts of R for fast calculations. We then show how to use these simple nimbleFunctions to write user-defined distributions and user-defined functions that you can use within the BUGS code of a model to extend the distributions and functions build into NIMBLE.
+
+We then move into the functionality in NIMBLE that allows one to program with models, namely writing nimbleFunctions that interact with models. We first describe how one interacts with models from R. This includes querying the structure of a model (Chapter XXX) and carrying out calculations with a model (Chapter XXX). 
+This functionality is then central to writing nimbleFunctions that interact with models, described in Chapter XXX. In particular one will often query model structure within nimbleFunction setup code and then carry out model calculations based on that structural information within nimbleFunction run code. Together Sections XXX and YYY describe what is allowed within the NIMBLE language, the language used for run code. 

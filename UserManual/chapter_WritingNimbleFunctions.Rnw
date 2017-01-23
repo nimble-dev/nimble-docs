@@ -6,7 +6,7 @@
 require(nimble)
 @ 
 
-\chapter{Writing \cd{nimbleFunction}s  that interact with model}
+\chapter{Writing \cd{nimbleFunction}s  that interact with models}
 \label{cha:progr-with-models}
 
 <<echo=FALSE>>=
@@ -92,41 +92,6 @@ creates a class definition.  Each specialized nimbleFunction is one object
 in the class.  The setup arguments are used to define member data in
 the object.
 
-\section{What's allowed in the NIMBLE language}
-\label{sec:nimble-dsl}
-
-{\color{red} [refer back to chapter on RC functions]}
-
-Here we briefly outline what is allowed in the NIMBLE DSL (domain
-specific language), which is the augmented subset of R that can be used in
-\cd{nimbleFunction} \cd{run} functions and other member methods.
-
-Additional details of using the NIMBLE DSL appear in section \ref{sec:nimble-lang-comp}.
-
-
-\subsubsection{Operations on \cd{model} and \cd{modelValues} objects}
-Functions for interacting with NIMBLE \cd{model}
-objects, including \cd{simulate()}, \cd{calculate()}, \cd{calculateDiff()},
-\cd{getLogProb()} (see \ref{sec:cdcalc-cdsim-cdgetl}), \cd{copy()} (see 
-\ref{sec:access-model-modelv}), \cd{values()} (see 
-\ref{sec:getting-setting-more}), \cd{getParam()} (Section \ref{sec:getParam}), and \cd{getBound()} (Section \ref{sec:getBound}). 
-
-Functions for interacting with \cd{modelValues} objects (Section \ref{sec:modelValues-struct}).
-
-\cd{model} or \cd{modelValues} objects must originate from 
-\cd{setup} function arguments or a declaration within the \cd{setup} function. 
-
-\subsubsection{Other nimbleFunctions}
-Calls to other (nested) \cd{nimbleFunction}s (Section
-\ref{sec:using-other-nimbl}), calls to \cd{nimbleFunctions} in
-nimbleFunctionLists (Section \ref{sec:virt-nimbl-nimbl}), 
-and calls to other member methods of the same 
-\cd{nimbleFunction} (Section \ref{sec:incl-other-meth}). 
-
-Nested \cd{nimbleFunctions} or \cd{nimbleFunctionLists} must originate from 
-\cd{setup} function arguments or a declaration within the \cd{setup} function. 
-
-
 
 \section{Using and compiling nimbleFunctions}
 \label{sec:using-comp-nimbl}
@@ -142,19 +107,9 @@ versions and can be used in the same way:
 <<nf-using>>=
 @ 
 
-\subsection{Accessing and modifying numeric values from setup}
-\label{sec:access-modify-numer}
+\section{Writing setup code}
 
-While models and nodes created during \cd{setup} cannot be
-modified\footnote{Actually, they can be, but only for uncompiled nimbleFunctions},
-numeric values and modelValues (see below) can be.  For example:
-
-<<nf-modifyValueToAdd>>=
-@ 
-
-
-
-\section{Useful tools for \cd{setup} functions}
+\subsection{Useful tools for \cd{setup} functions}
 
 The setup function is typically used to determine information on nodes
 in a model, set up any modelValues objects, set up any nimbleFunctions
@@ -182,6 +137,16 @@ Some of the useful tools and objects to create in \cd{setup} functions include
 If one wants a nimbleFunction that does get specialized but has
 empty setup code, use \cd{setup = function() \{\}} or \cd{setup = TRUE}.
 
+\subsection{Accessing and modifying numeric values from setup}
+\label{sec:access-modify-numer}
+
+While models and nodes created during \cd{setup} cannot be
+modified\footnote{Actually, they can be, but only for uncompiled nimbleFunctions},
+numeric values and modelValues (see below) can be.  For example:
+
+<<nf-modifyValueToAdd>>=
+@ 
+
 
 \subsection{Control of \cd{setup} outputs }
 \label{sec:determ-pers-texttts}
@@ -203,11 +168,10 @@ setupOutputs(X, Y)
 
 anywhere in the \cd{setup} code. 
 
-\section{NIMBLE language components}
+\section{Writing run code}
 \label{sec:nimble-lang-comp}
 
-In addition to the language components used in simple nimbleFunction (Section \ref{sec:nimble-lang-comp-simple}), the NIMBLE language contains a variety of functionality for interacting with models. 
-
+In Section \ref{sec:nimble-lang-comp-simple} we described the functionality of the NIMBLE language that could be used in run code in which models were not used. When writing nimbleFunction run code that interacts with models, one can use that functionality already described as well as the functionality discussed in this section. 
 
 \subsection{Driving models: \cd{calculate}, \cd{calculateDiff},
   \cd{simulate}, \cd{getLogProb}}
@@ -368,7 +332,7 @@ vector in other expressions, e.g. \cd{Y <- A \%*\% values(model,
 Other methods can be included with the \cd{methods} argument to
 \cd{nimbleFunction}.  These methods can use the objects created in
 \cd{setup} code in just the same ways as the \cd{run} function.  In
-fact, the \cd{run} function is just a default main method name.
+fact, the \cd{run} function is just a default main method name. Any method can then call another method.
 
 <<usingMemberFunctions>>=
 @ 
@@ -486,7 +450,7 @@ One important use of nimbleFunctions is to write additional samplers that can be
 
 The following code illustrates how a NIMBLE developer would implement and use a Metropolis-Hastings random walk sampler with fixed proposal standard deviation.  The comments accompanying the code explain the necessary characteristics of all sampler functions.
 
-{\color{red} We may want to move the comments on the requirements into standard text; also don't samplers need to be named 'sampler_{name}'? More extended user-defined samplers are in the user_sampler module of our outreach; should we put more of that here?}
+{\color{red} We may want to move the comments on the requirements into standard text; also don't samplers need to be named 'sampler\_{name}'? More extended user-defined samplers are in the user\_sampler module of our outreach; should we put more of that here?}
 
 <<custom-sampler, eval=FALSE>>=
 ## the name of this sampler function, for the purposes of 

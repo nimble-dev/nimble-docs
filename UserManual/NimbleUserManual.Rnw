@@ -97,19 +97,16 @@ nimbleOptions(MCMCprogressBar = FALSE)
 \part{Programming with NIMBLE}
 \label{part:programming}
 
+\Sexpr{knit_child('chapter_ProgrammingOverview.Rnw')}
+
+
 \Sexpr{knit_child('chapter_RCfunctions.Rnw')}
 
 \Sexpr{knit_child('chapter_UserDefined.Rnw')}
 
-\Sexpr{knit_child('chapter_IntroNimbleFunctions.Rnw')}
-
-\Sexpr{knit_child('chapter_QueryStructure.Rnw')}
-
-\Sexpr{knit_child('chapter_ModelCalculations.Rnw')}
-
 \Sexpr{knit_child('chapter_UsingModels.Rnw')}
 
-\Sexpr{knit_child('chapter_writingNimbleFunctions.Rnw')}
+\Sexpr{knit_child('chapter_WritingNimbleFunctions.Rnw')}
 
 % When building individual chapters that have no refs, knitr
 % gets unhappy to see a bibliography command since there are no \citations

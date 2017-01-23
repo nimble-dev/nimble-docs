@@ -91,6 +91,7 @@ solveLeastSquares <- nimbleFunction(
 X <- matrix(rnorm(400), nrow = 100)
 y <- rnorm(100)
 solveLeastSquares(X, y)
+
 CsolveLeastSquares <- compileNimble(solveLeastSquares)
 CsolveLeastSquares(X, y)
 
