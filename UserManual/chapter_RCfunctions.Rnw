@@ -42,11 +42,50 @@ Use of \cd{numeric()}, \cd{integer()}, \cd{matrix()} or \cd{array()}
 \ref{sec:other-non-scalar}) to create non-scalar local variables.  Scalar-valued local 
 variables need not be declared.
 
+
+
 \subsubsection{Mathematical operations}
 Numeric scalar or matrix mathematical operations listed in tables
-\ref{table:functions} and \ref{table:functions-matrix}.  Also see Section \ref{sec:basic-math-linear}.
+\ref{table:functions-dsl} and \ref{table:functions-matrix-dsl}.  Also see Section \ref{sec:basic-math-linear}.
 This also includes indexing of non-scalar variables and assignment
 using \cd{<-}.
+
+{
+\footnotesize 
+\LTcapwidth=\textwidth
+\begin{longtable}[c]{lllcc}
+ \caption{Functions operating on scalars, many of which can operate on
+   each element (component-wise) of vectors and matrices. Status
+   column indicates if the function is currently provided in
+   NIMBLE.}    \label{table:functions-dsl}\\
+\hline
+ Usage & Description & Comments & Status & Accepts \\
+   &  &  &  & vector input  \\
+  \hline \hline \\
+\endhead
+\input{functionTableLong.tex}
+\end{longtable}
+}
+
+
+{
+\footnotesize
+\LTcapwidth=\textwidth
+
+\begin{longtable}[c]{lllc}
+ \caption{Functions operating on vectors and matrices. Status column
+  indicates if the function is currently provided in
+  NIMBLE.} \label{table:functions-matrix-dsl} \\
+  \hline
+  Usage & Description & Comments & Status   \\
+  \hline \hline \\
+\endhead
+\input{functionTableMatrixLong.tex}
+ \end{longtable}
+}
+
+
+
 
 \subsubsection{Distribution functions}
 Density evaluation, random generation, CDF and inverse-CDF functions for all 
@@ -649,3 +688,38 @@ In a future release, we will also extend the
 alternative parameterizations given in Section \ref{subsec:dists-and-functions}  to \cd{nimbleFunctions}.
 
 
+\section{NIMBLE passes objects by reference}
+
+NIMBLE relies heavily on R's reference class system.  When models,
+modelValues, and nimbleFunctions with setup code are created, NIMBLE
+generates a new, customized reference class definition for each.  As a
+result, objects of these types are passed by reference and hence
+modified in place by most NIMBLE operations. This is necessary to
+avoid a great deal of copying and returning and having to reassign
+large objects, both in processing model and nimbleFunctions  and in
+running algorithms.
+
+One cannot generally copy NIMBLE models or nimbleFunctions
+(specializations or generators) in a safe fashion, because of the
+references to other objects embedded within NIMBLE objects. However,
+the model member function \cd{newModel} will create a new copy of
+the model from the same model definition
+(Section \ref{sub:multiple-instances}). This new model can then be used with
+newly instantiated nimbleFunctions.
+
+%% <<copy-model>>=
+%% newPump <- pumpModel$newModel()
+%% @ 
+
+The reliable way to create new copies of nimbleFunctions is to re-run
+the R function called \cd{nimbleFunction} and record the result in a
+new object.  For example, say you have a \cd{nimbleFunction} called
+\cd{foo} and 1000 instances of \cd{foo} are compiled as part of an
+algorithm related to a model called \cd{model1}.  If you then need to use \cd{foo} in
+an algorithm for another model, \cd{model2}, doing so may work without
+any problems.  However, there are cases where the NIMBLE compiler will
+tell you during compilation that the second set of \cd{foo} instances
+cannot be built from the previous compiled version.  A solution is to
+re-define \cd{foo} from the beginning -- i.e. call \cd{nimbleFunction}
+again -- and then proceed with building and compiling the algorithm
+for \cd{model2}.  

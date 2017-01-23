@@ -1,16 +1,17 @@
-%\begin{table}[!h]
-{
-\footnotesize
-\LTcapwidth=\textwidth
+%%%\begin{table}[!h]
 
-\begin{longtable}[c]{lllc}
- \caption{Functions operating on vectors and matrices. Status column
-  indicates if the function is currently provided in
-  NIMBLE.} \label{table:functions-matrix} \\
-  \hline
-  Usage & Description & Comments & Status   \\
-  \hline \hline \\
-\endhead
+%{
+%\footnotesize
+%\LTcapwidth=\textwidth
+
+%\begin{longtable}[c]{lllc}
+% \caption{Functions operating on vectors and matrices. Status column
+%  indicates if the function is currently provided in
+%  NIMBLE.} \label{table:functions-matrix-dsl} \\
+%  \hline
+%  Usage & Description & Comments & Status   \\
+%  \hline \hline \\
+%\endhead
  \cd{inverse(x)}& matrix inverse & $x$ symmetric, positive definite & \Checkmark  \\
  \cd{chol(x)}& matrix Cholesky factorization & $x$ symmetric, positive definite & \Checkmark   \\
  \cd{eigen(x)}& matrix eigendecomposition  &  &  \\
@@ -34,8 +35,10 @@
  \cd{pmin(x, y)}, \cd{pmax(x, y)} & vector of mins (maxs) of elements of \cd{x} and \cd{y} &  & \Checkmark \\
 
  \cd{interp.lin(x, v1, v2)}& linear interpolation & & \\
- \end{longtable}
-}
-%\end{table}
+% \end{longtable}
+%}
+
+
+%%%\end{table}
 
 

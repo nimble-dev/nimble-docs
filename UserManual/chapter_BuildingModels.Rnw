@@ -364,7 +364,7 @@ We plan to, but do not currently, include the following distributions as part of
 \subsection{Available BUGS language functions}
 \label{subsec:BUGS-lang-fxns}
 
-Tables \ref{table:functions}-\ref{table:functions-matrix} show the
+Tables \ref{table:functions-bugs}-\ref{table:functions-matrix-bugs} show the
 available operators and functions. 
 % These are also available for \cd{nimbleFunction} programming (see Chapter \ref{cha:progr-with-models}).  In fact, BUGS model nodes are implemented as \cd{nimbleFunction}s that are custom-generated from BUGS declarations, so it would be more correct to say that functions and operators available for \cd{nimbleFunction}s are also available for the model declarations.
 
@@ -387,8 +387,41 @@ for use in calculations, namely the ``p'', ``q'', and ``d'' functions.
 %alternative parameterizations with named parameters to
 %\cd{nimbleFunctions}.
 
+{
+\footnotesize 
+\LTcapwidth=\textwidth
+\begin{longtable}[c]{lllcc}
+ \caption{Functions operating on scalars, many of which can operate on
+   each element (component-wise) of vectors and matrices. Status
+   column indicates if the function is currently provided in
+   NIMBLE.}    \label{table:functions-bugs}\\
+\hline
+ Usage & Description & Comments & Status & Accepts \\
+   &  &  &  & vector input  \\
+  \hline \hline \\
+\endhead
 \input{functionTableLong.tex}
+\end{longtable}
+}
+
+
+{
+\footnotesize
+\LTcapwidth=\textwidth
+
+\begin{longtable}[c]{lllc}
+ \caption{Functions operating on vectors and matrices. Status column
+  indicates if the function is currently provided in
+  NIMBLE.} \label{table:functions-matrix-bugs} \\
+  \hline
+  Usage & Description & Comments & Status   \\
+  \hline \hline \\
+\endhead
 \input{functionTableMatrixLong.tex}
+ \end{longtable}
+}
+
+
 
 % [NOTE: JAGS source package has the Tex files for Martyn's manual, so we can copy the table formatting - s doc/manual/jags\_user\_manual.tex]
 
@@ -650,39 +683,6 @@ will enforce \cd{alpha1 $\le$ alpha2 $\le$ alpha3}, but it does not treat the th
 
 NIMBLE does not support the JAGS \cd{sort} syntax.
 
-\subsection{Understanding lifted nodes}
-\label{sec:introduced-nodes}
-
-In some cases, NIMBLE introduces new nodes into the model that were
-not specified in the BUGS code for the model, such as the
-\cd{lifted\_d1\_over\_beta} node in the introductory example.  For
-this reason, it is important that programs written to adapt to
-different model structures use NIMBLE's systems for querying the model
-graph.  For example, a call to \cd{pump\$getDependencies("beta")} will
-correctly include \cd{lifted\_d1\_over\_beta}  in the results.  If one
-skips this step and assumes the nodes are only those that appear in
-the BUGS code, one may not get correct results.
-
-It can be helpful to know the situations in which lifted nodes are
-generated.  These include:
-
-\begin{itemize}
-\item When distribution parameters are expressions, NIMBLE
-  creates a new deterministic node that contains the expression for a
-  given parameter. The node is then a direct descendant of the new
-  deterministic node.  This is an optional feature, but it is
-  currently enabled in all cases.
-\item As discussed in Section \ref{subsec:BUGS-link} the use of link
-  functions causes new nodes to be introduced. This requires care if
-  you need to initialize values in stochastic declarations with link functions.
-\item Use of alternative parameterizations of distributions, described in Section \ref{subsec:dists-and-functions}. For
-  example when a user provides the precision of a normal distribution
-  as \cd{tau}, NIMBLE creates a new node \cd{sd <- 1/sqrt(tau)} and
-  uses \cd{sd} as a parameter in the normal distribution.  If many
-  nodes use the same \cd{tau}, only one new \cd{sd} node will be
-  created, so the computation \cd{1/sqrt(tau)} will not be repeated
-  redundantly.    
-\end{itemize}
 
 \section{Creating model objects}
 
@@ -808,36 +808,6 @@ Note that NIMBLE does not handle formatting such as in some of the
 original BUGS examples in which data was indicated with syntax such as
 \cd{data x in `x.txt'}.
 
-
-\section{NIMBLE models are objects you can query and manipulate}
-
-At the heart of NIMBLE's flexibility is that NIMBLE models are objects (R objects with corresponding compiled versions) that can be modified and manipulated from R. We discuss this in detail in Part \ref{part:prog}, because this usage of NIMBLE model objects is most important when writing algorithms.
-
-However, in this section we provide some details on manipulating model objects that are useful when using NIMBLE's algorithms (particularly MCMC) with your models.
-
-\subsection{Providing data and initial values to an existing model}
-
-
-Whereas the \nm{constants} are a property of the \nm{model definition}
--- since they may help determine the model structure itself --
-\nm{data} nodes can be different in different copies of the model
-generated from the same \nm{model definition}.  For this reason,
-\nm{data} is not required to be provided when the model code is
-processed.  It can be provided later via the model member function
-\cd{setData}. e.g., \cd{pump\$setData(pumpData)}, where \cd{pumpData}
-is a named list of data values.
-
-\cd{setData} does two things: it sets the values of the data nodes,
-and it flags those nodes as containing data.  \cd{nimbleFunction}
-programmers can then use that information to control whether an
-algorithm should over-write data or not.  For example, NIMBLE's
-\cd{simulate} functions by default do not overwrite data values but
-can be told to do so.  Values of data variables can be replaced, and
-the indication of which nodes should be treated as data can be reset
-by using the \cd{resetData} method, e.g. \cd{pump\$resetData()}.
-
-Similarly, one can set initial values for parameters via \cd{setInits}. 
-
 \subsection{Making multiple instances from the same model definition}
 \label{sub:multiple-instances}
   
@@ -873,7 +843,37 @@ different values in any nodes.  They cannot have different values of
 \cd{N} because that is a constant; it must be a constant because
 it helps define the model.
 
-\subsection{Working with variables and nodes in a model}
+\section{NIMBLE models are objects you can query and manipulate}
+
+At the heart of NIMBLE's flexibility is that NIMBLE models are objects (R objects with corresponding compiled versions) that can be modified and manipulated from R. We discuss this in detail in Part \ref{part:prog}, because this usage of NIMBLE model objects is most important when writing algorithms.
+
+However, in this section we provide some details on manipulating model objects that are useful when using NIMBLE's algorithms (particularly MCMC) with your models.
+
+\subsection{Providing data and initial values to an existing model}
+
+
+Whereas the \nm{constants} are a property of the \nm{model definition}
+-- since they may help determine the model structure itself --
+\nm{data} nodes can be different in different copies of the model
+generated from the same \nm{model definition}.  For this reason,
+\nm{data} is not required to be provided when the model code is
+processed.  It can be provided later via the model member function
+\cd{setData}. e.g., \cd{pump\$setData(pumpData)}, where \cd{pumpData}
+is a named list of data values.
+
+\cd{setData} does two things: it sets the values of the data nodes,
+and it flags those nodes as containing data.  \cd{nimbleFunction}
+programmers can then use that information to control whether an
+algorithm should over-write data or not.  For example, NIMBLE's
+\cd{simulate} functions by default do not overwrite data values but
+can be told to do so.  Values of data variables can be replaced, and
+the indication of which nodes should be treated as data can be reset
+by using the \cd{resetData} method, e.g. \cd{pump\$resetData()}.
+
+Similarly, one can set initial values for parameters via \cd{setInits}. 
+
+
+\subsection{Understanding the variables and nodes of a model}
 
 This section discusses how one can determine the names of the variables and nodes in a model, which can be useful when a user wants to choose MCMC samplers that may be different from the default samplers that NIMBLE applies to a model.
 
@@ -913,6 +913,23 @@ In NIMBLE terminology:
   nodes as well as the scalar elements \cd{y.squared[1]} $\ldots$
   \cd{y.squared[5]} of the multivariate node \cd{y.squared[1:5]}.
 \end{itemize}
+
+
+\subsubsection{Determining the nodes and variables in a model}
+
+One can determine the nodes and variables in a model using \cd{getNodeNames}:
+
+<<getNodeNames>>=
+@ 
+
+Note that some of the nodes may be ``lifted'' nodes introduced by
+NIMBLE (Section \ref{sec:introduced-nodes}).
+
+Next note that we can determine the set of nodes contained in one or more nodes or variables using \cd{expandNodeNames}. The \cd{returnScalarComponents} argument also allows us to return all of the scalar components of multivariate nodes. 
+to illustrate.
+
+<<expandNodeNames>>=
+@ 
 
 \subsubsection{Accessing nodes}
 \label{sec:accessing-nodes}
@@ -974,29 +991,14 @@ dimensionality of the variable in which it is embedded.  This is particularly
 useful for NIMBLE, which resolves how to access a particular node
 during the compilation process.
 
-\subsubsection{Querying model structure}
+\subsection{Determining model structure}
 
-\paragraph{Determining nodes and variables in a model}
 
-One can determine the nodes and variables in a model using \cd{getNodeNames}:
-
-<<getNodeNames>>=
-@ 
-
-Note that some of the nodes may be ``lifted'' nodes introduced by
-NIMBLE (Section \ref{sec:introduced-nodes}).
-
-Next note that we can determine the set of nodes contained in one or more nodes or variables using \cd{expandNodeNames}. The \cd{returnScalarComponents} argument also allows us to return all of the scalar components of multivariate nodes. 
-to illustrate.
-
-<<expandNodeNames>>=
-@ 
-
-\paragraph{Determining dependencies in a model}
+\subsubsection{Determining dependencies in a model}
 \label{sec:cdgetdependencies}
 
 One can determine the node dependencies (or
-``descendents'') in a model using \cd{getDependencies}. There are a variety of arguments to \cd{getDependencies} that
+``descendants'') in a model using \cd{getDependencies}. There are a variety of arguments to \cd{getDependencies} that
 allow one to specify whether to include the node itself, whether to
 include deterministic or stochastic or data dependents, etc. By
 default \cd{getDependencies} returns descendants up to the next
@@ -1008,7 +1010,7 @@ MCMC, for example.
 @ 
 
 
-\paragraph{Checking if a node holds data}
+\subsubsection{Checking if a node holds data}
 \label{sec:cdisdata}
 
 Finally, you can query whether a node is flagged as data using the \cd{isData} method applied to one or more nodes:

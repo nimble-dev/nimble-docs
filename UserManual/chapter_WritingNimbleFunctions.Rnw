@@ -210,6 +210,9 @@ is not allowed.
 \subsection{Accessing model and modelValues variables and using \cd{copy}}
 \label{sec:access-model-modelv}
 
+{\color{red} TODO: see what of this info is specific to nf usage and put in good location in this chapter}
+
+
 The \cd{modelValues} structure was introduced in Section
 \ref{sec:modelValues-struct}.  Inside nimbleFunctions, modelValues are
 designed to easily save values from a model object during the running
@@ -444,14 +447,14 @@ valueInCompiledNimbleFunction(CmyDataNF, 'X')
 \end{itemize}
 
 
-\section{Writing user-defined samplers to extend NIMBLE's MCMC engine}
+\section{Example: writing user-defined samplers to extend NIMBLE's MCMC engine}
 \label{sec:user-samplers}
 
 One important use of nimbleFunctions is to write additional samplers that can be used in NIMBLE's MCMC engine. This allows a user to write a custom sampler for one or more nodes in a model, as well as for programmers to provide general samplers for use in addition to the library of samplers provided with NIMBLE. 
 
 The following code illustrates how a NIMBLE developer would implement and use a Metropolis-Hastings random walk sampler with fixed proposal standard deviation.  The comments accompanying the code explain the necessary characteristics of all sampler functions.
 
-{\color{red} We may want to move the comments on the requirements into standard text; also don't samplers need to be named 'sampler\_{name}'? More extended user-defined samplers are in the user\_sampler module of our outreach; should we put more of that here?}
+{\color{red} TODO: move the comments on the requirements into standard text. Also, more extended user-defined samplers are in the user\_sampler module of our outreach - may want more of that here.}
 
 <<custom-sampler, eval=FALSE>>=
 ## the name of this sampler function, for the purposes of 
@@ -552,8 +555,13 @@ mcmcConf$addSampler(target = 'x', type = 'my_RW',
 Rmcmc <- buildMCMC(mcmcConf)   ## etc...
 @
 
+\section{Debugging nimbleFunctions}
+
+{\color{red} TODO: basic info on inserting browser in nf run code and running in R as well as using debug(nf\$run)}
 
 \section{Some options for reducing memory usage}
+
+{\color{red} TODO: needs to be revised so only memory use is covered here and other material is moved as appropriate}
 
 NIMBLE can make a lot of objects in its processing, and some of them
 use R features like reference classes that are not light in memory
