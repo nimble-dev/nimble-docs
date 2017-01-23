@@ -426,9 +426,10 @@ member objects and functions.  In this case, one member object is
 \cd{myUseDataNF\$myDataNF}, which in turn provides access to \cd{X},
 \cd{Y}, and \cd{Z}.  To reduce memory use, NIMBLE defaults to
 \textit{not} providing full interfaces to nested nimbleFunctions like
-\cd{myUseDataNF\$myDataNF}.  In this example we made it provide a full
-interfaces by setting the \cd{useMultiInterfaceForNestedNimbleFunctions} option via \cd{nimbleOptions} as shown.  If
-we had left that option TRUE (its
+\cd{myUseDataNF\$myDataNF}.  In this example we made it provide full
+interfaces by setting the
+\cd{buildInterfacesForCompiledNestedNimbleFunctions} option via
+\cd{nimbleOptions} to TRUE.  If we had left that option FALSE (its
 default value), we could still get to the values of interest using
 
 <<eval=FALSE>>=
@@ -558,13 +559,15 @@ NIMBLE can make a lot of objects in its processing, and some of them
 use R features like reference classes that are not light in memory
 usage.  We have noticed that building large models can use lots of
 memory.  To help alleviate this, we provide two options, which can be
-controlled via \cd{nimbleOptions}.  As noted above, the option
-\cd{useMultiInterfaceForNestedNimbleFunctions} defaults to TRUE, which
-means NIMBLE will not build full interfaces to compiled
+controlled via \cd{nimbleOptions}.
+
+As noted above, the option \cd{buildInterfacesForCompiledNestedNimbleFunctions} 
+defaults to FALSE, which means NIMBLE will not build full interfaces to compiled
 nimbleFunctions that ony appear within other nimbleFunctions.  If you
-want access to all such nimbleFunctionsm use
-\cd{useMultiInterfaceForNestedNimbleFunctions = FALSE}.  The option
-\cd{clearNimbleFunctionsAfterCompiling} is more drastic, and it is
+want access to all such nimbleFunctions, use the option 
+\cd{buildInterfacesForCompiledNestedNimbleFunctions = TRUE}.
+
+The option \cd{clearNimbleFunctionsAfterCompiling} is more drastic, and it is
 experimental, so ``buyer beware''.  This will clear much of the
 contents of an uncompiled nimbleFunction object after it has been
 compiled in an effort to free some memory.  We expect to be able to
