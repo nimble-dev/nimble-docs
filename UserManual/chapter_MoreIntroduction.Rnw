@@ -56,8 +56,14 @@ the most part, if you have BUGS code, you can try NIMBLE.
     the entire process of generating C++ code, compiling it and
     loading it into R.
   \end{enumerate}
+  
+  {\color{red} Not sure we've generally used the term 'C-model' --
+    these only appear in this Chapter: I
+    think 'R model' and 'compiled model' is our standard phrasing;
+    thoughts on whether to reword the above?}
  
-  More about specifying and manipulating models is in Chapter \ref{cha:building-models}-\ref{cha:using-bugs-models}.
+  More information about specifying and manipulating models is in
+  Chapters \ref{cha:building-models} and \ref{cha:using-bugs-models}.
   
   
   \section{The NIMBLE language for writing algorithms}
@@ -105,18 +111,21 @@ with a BUGS model:
   it, and loads it back into R with an interface nearly identical to
   the R version of the \cd{nimbleFunction}.   As with models, we refer
   to the uncompiled and compiled versions as R-nimbleFunctions and
-  C-nimbleFunctions, respectively.   In v\ver, the behavior
+  C-nimbleFunctions, respectively.   In Version \ver, the behavior
   of \cd{nimbleFunction}s is usually very similar, but not identical,
   between the two versions.  The primary purpose of uncompiled
   execution is to facilitate debugging.
 \end{enumerate}
+
+{\color{red} Actually we never use {R,C}-nimbleFunction elsewhere - I
+  vote for taking this out - CJP}
 
   More about writing algorithms is in Chapter \ref{cha:progr-with-models}.
   
 \section{The NIMBLE algorithm library}
 \label{sec:nimble-algor-libr}
 
-In v\ver, the NIMBLE algorithm library includes:
+In Version \ver, the NIMBLE algorithm library includes:
 
 \begin{enumerate}
 \item MCMC with samplers including conjugate, slice, adaptive random
@@ -138,7 +147,8 @@ In v\ver, the NIMBLE algorithm library includes:
 \item A \cd{nimbleFunction} that provides ability to simulate,
   calculate, or retrieve the summed log probability (density) of many
  sets of values for
-  arbitrary sets of nodes.
+  arbitrary sets of nodes. {\color{red} CJP would like to remove this bullet
+    as the nimbleFunctions referred to are really a programming tool and not algorithms}
 \item A set of particle filter (Sequential Monte Carlo) methods
   including a basic bootstrap filter, auxiliary particle filter, and
   Liu-West filter.
@@ -151,5 +161,11 @@ In v\ver, the NIMBLE algorithm library includes:
   \cd{optim} function\footnote{In the future we plan to provide direct
     access to R's optimizers from within \cd{nimbleFunction}s.}.
 \end{enumerate}
+
+{\color{red} CJP - so is the only difference between calculate and
+  calcNodes (and similarly for simNodes, getLogProbNodes) that
+  calcNodes etc. include operations on dependencies? If so, I
+  propose we extend calculate, simulate, getLogProb to have an
+  argument includeDependencies with default FALSE}
   
 More about the NIMBLE algorithm library is in Chapter \ref{cha:algos-provided}.

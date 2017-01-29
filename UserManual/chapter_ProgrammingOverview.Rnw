@@ -5,11 +5,13 @@ require(nimble)
 @ 
 
 \chapter{Introduction to programming in NIMBLE}
-\ref{cha:intro-prog}
+\label{cha:intro-programming}
 
-Part \ref{part:programming} is the programmer's guide to NIMBLE. At the heart of programming in NIMBLE are nimbleFunctions and the NIMBLE language (also called the NIMBLE DSL).
+{\color{red} should this be a chapter or just a blurb before the first chapter of Part 3?}
 
-In Chapter X, we describe how to write simple nimbleFunctions (nimbleFunctions that don't interact with models) to compile parts of R for fast calculations. We then show how to use these simple nimbleFunctions to write user-defined distributions and user-defined functions that you can use within the BUGS code of a model to extend the distributions and functions build into NIMBLE.
+Part \ref{part:programming} is the programmer's guide to NIMBLE. At the heart of programming in NIMBLE are nimbleFunctions, which are written using the NIMBLE language (also called the NIMBLE DSL).
 
-We then move into the functionality in NIMBLE that allows one to program with models, namely writing nimbleFunctions that interact with models. We first describe how one interacts with models from R. This includes querying the structure of a model (Chapter XXX) and carrying out calculations with a model (Chapter XXX). 
-This functionality is then central to writing nimbleFunctions that interact with models, described in Chapter XXX. In particular one will often query model structure within nimbleFunction setup code and then carry out model calculations based on that structural information within nimbleFunction run code. Together Sections XXX and YYY describe what is allowed within the NIMBLE language, the language used for run code. 
+In Chapter \ref{cha:RCfunctions}, we describe how to write simple nimbleFunctions (nimbleFunctions that don't interact with models) to compile parts of R for fast calculations. We then show how to use these simple nimbleFunctions to write user-defined distributions and user-defined functions that you can use within the BUGS code of a model to extend the distributions and functions build into NIMBLE (Chapter \ref{cha:user-defined}.
+
+We then move into the functionality in NIMBLE that allows one to program with models, namely writing nimbleFunctions that interact with models. We first describe how one interacts with models, querying model structure and carrying out model calculation (Chapter \ref{cha:using-bugs-models}). 
+This functionality is central to writing nimbleFunctions that interact with models, described in Chapter {\ref{cha:progr-with-models}. In particular one will often query model structure within nimbleFunction setup code and then carry out model calculations based on that structural information within nimbleFunction run code. Together Sections \ref{sec:nimble-lang-comp-simple} and \ref{sec:nimble-lang-comp} describe what is allowed within the NIMBLE language, the language used for run code. 

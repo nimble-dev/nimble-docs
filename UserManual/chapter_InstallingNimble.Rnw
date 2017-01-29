@@ -73,7 +73,7 @@ This code uses some NIMBLE C++ library classes and functions.
 By default, on Linux the library code is compiled once as a linkable
 library - \nm{libnimble.so}. This single instance of the library is then linked 
 with the code for each generated model. In contrast, the default for Windows and Mac OS X
-is to compile the library code as a static library - \nm{libnimble.a} - that is compiled into each each model's and each algorithm's own dynamically loadable library (DLL). This does repeat the same code across models and so occupies more memory. There may be a marginal speed advantage. 
+is to compile the library code as a static library - \nm{libnimble.a} - that is compiled into each model's and each algorithm's own dynamically loadable library (DLL). This does repeat the same code across models and so occupies more memory. There may be a marginal speed advantage. 
 If one would like to enable the linkable library in place of the static library (do this only on Mac OS X and other UNIX variants and not on Windows), one can install the source package with the configuration argument \cd{--enable-dylib} set to true. First obtain the NIMBLE source package (which will have the extension \cd{.tar.gz} from \href{http://r-nimble.org/download}{our website} and then install as follows, replacing \cd{VERSION} with the appropriate version number:
 
 \verb|R CMD INSTALL --configure-args='--enable-dylib=true' nimble_VERSION.tar.gz|
@@ -81,12 +81,18 @@ If one would like to enable the linkable library in place of the static library 
 
 
 \subsection{LAPACK and BLAS} 
-NIMBLE also uses BLAS and LAPACK for some of its linear algebra (in particular calculating density values and generating random samples from multivariate distributions). NIMBLE will use the same BLAS and LAPACK installed on your system that R uses. Note that a fast (and where appropriate, threaded) BLAS can greatly increase the speed of linear algebra calculations. See Section A.3.1 of the R Installation and Administration manual for more details on providing a fast BLAS for your R installation. 
+NIMBLE also uses BLAS and LAPACK for some of its linear algebra (in
+particular calculating density values and generating random samples
+from multivariate distributions). NIMBLE will use the same BLAS and
+LAPACK installed on your system that R uses. Note that a fast (and
+where appropriate, threaded) BLAS can greatly increase the speed of
+linear algebra calculations. See Section A.3.1 of the R Installation
+and Administration manual available on CRAN for more details on providing a fast BLAS for your R installation. 
 
 
 
 
-\subsection{Problems with Installation}
+\subsection{Problems with installation}
 We have tested the installation on the three commonly used platforms
 -- OS X, Linux, Windows\footnote{We've tested NIMBLE on Windows 7 and 8}.  We don't anticipate problems with installation,
 but we want to hear about any and help resolve them. 
@@ -149,9 +155,10 @@ have \nm{gcc}/\nm{g++}, \nm{make}, etc. installed.  This should be
 checked by default.
 
 Advanced users may wish to change their default compilers. This can be done
-by editing the \nm{Makevars} file, see Writing R Externsions: 1.2.1. 
+by editing the \nm{Makevars} file, see Section 1.2.1 of the Writing R
+Extensions manual available on CRAN. 
 
-\section{Customizing Compilation of the NIMBLE-generated Code}
+\section{Customizing compilation of the NIMBLE-generated code}
 
 For each model or nimbleFunction, the NIMBLE package generates and compiles
 C++ code. This uses classes and routines available through the NIMBLE run-time

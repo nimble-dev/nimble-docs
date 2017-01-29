@@ -54,7 +54,8 @@ require(nimble)
 %% plot(Rmodel1$graph)
 %% @ 
 
-Models in NIMBLE are specified using a variation on the BUGS language, a language also used in the various BUGS software and in JAGS. Given a model specified in the BUGS language, NIMBLE processes the BUGS code for the model and creates a model object. This model object can then be used in various algorithms, including MCMC. One of the core features of NIMBLE that distinguishes it from the BUGS and JAGS software packages is that NIMBLE provides the user with a model object that the user can manipulate. Having an explicit model object allows for the flexibility that NIMBLE provides in using, writing, and modifying algorithms to operate on a model. 
+Models in NIMBLE are specified using a variation on the BUGS language,
+a language also used in the various BUGS software packages and in JAGS. Given a model specified in the BUGS language, NIMBLE processes the BUGS code for the model and creates a model object. This model object can then be used in various algorithms, including MCMC. One of the core features of NIMBLE that distinguishes it from the BUGS and JAGS software packages is that NIMBLE provides the user with a model object that the user can manipulate. Having an explicit model object allows for the flexibility that NIMBLE provides in using, writing, and modifying algorithms to operate on a model. 
 
 This chapter describes how to specify and create model objects in NIMBLE using the distributions and functions provided by NIMBLE for use in BUGS code. With NIMBLE you can also define your own distributions and functions for use in BUGS code; discussion of this functionality is deferred to Chapter \ref{cha:user-defined} as it requires the use of nimbleFunctions. 
 
@@ -101,7 +102,7 @@ NIMBLE extends the BUGS language in the following ways:
  \item Alternative models can be defined from the same model code by
    using if-then-else statements that are evaluated when the model is defined.
 \item More flexible indexing of vector nodes within larger variables is allowed.  For example one can place a multivariate normal vector arbitrarily within a higher-dimensional object, not just in the last index.
-\item More general constraints can be declared using \cd{dconstraint}, which extends the concept of JAGS' \cd{dinterval}. See Section \ref{subsec:trunc}.
+\item More general constraints can be declared using \cd{dconstraint}, which extends the concept of JAGS' \cd{dinterval}.
  \item Link functions can be used in stochastic, as well as
    deterministic, declarations.\footnote{But beware of the possibility
      of needing to set values for ``lifted'' nodes created by NIMBLE.}
@@ -254,7 +255,10 @@ model <- nimbleModel(codeAlt, constants = list(n = 3, K = K,
 \subsection{Vectorized versus scalar declarations}
 \label{subsec:vectorized-versus-scalar-declarations}
 
-{\color{red} [Perry - you mentioned wanting discussion of vectorized calcs and lin algebra; do you want more than this, which was already here, except for the line at the end of this subsection?]}
+{\color{red} [Perry - you mentioned wanting discussion of vectorized
+  calcs and lin algebra; do you want more than this, which was already
+  in the manual (apart from the line at the end of this subsection
+  that I added)?]}
 
 Suppose you need nodes \cd{logY[i]} that should be the log of the
 corresponding \cd{Y[i]}, say for \cd{i} from 1 to 10.  Conventionally
@@ -274,17 +278,15 @@ exampleCode <- nimbleCode({
 })
 @ 
 
-{[\color{red} do we want to avoid the forward ref to part 3 here?]}
-
 The rules for what is allowed attempt to follow those for R, which
 includes most basic arithmetic functions and basic linear algebra. Please see Section \ref{subsec:BUGS-lang-fxns} for more details. 
 What is allowed is also
-described more in (\ref{cha:progr-with-models}) about programming with
-nimbleFunctions, since BUGS code is processed similarly.  However in
+described more in Chapter \ref{cha:progr-with-models} about programming with
+nimbleFunctions, since BUGS code is processed similarly\footnote{However in
 BUGS code there are some different rules, including the requirement to
-indicate indices explicitly (or provide a dimensions argument).  (In a
+indicate indices explicitly (or provide a \cd{dimensions} argument).  (In a
 nimbleFunction explicit indices are not required if the operation
-should use all elements of a variable, similarly to R).
+should use all elements of a variable, similarly to R).}.
 
 There is an important difference between the models that are created by the
 above two methods.  The first creates 10 scalar nodes, \cd{logY[1]}
@@ -300,9 +302,9 @@ it will often make sense to declare them as a vector.
 \subsubsection{Distributions}
 \label{subsec:distributions}
 
-NIMBLE supports most of the distributions allowed in BUGS and JAGS. Table \ref{table:distributions} lists the distributions that are currently supported, with their default parameterizations, which match those of BUGS. NIMBLE also allows one to use alternative parameterizations for a variety of distributions as described next.
+NIMBLE supports most of the distributions allowed in BUGS and JAGS. Table \ref{table:distributions} lists the distributions that are currently supported, with their default parameterizations, which match those of BUGS\footnote{Note that the same distributions are available for writing \cd{nimbleFunction}s, but in that case the default parameterizations and function names match R's when possible. Please see Section \ref{sec:nimble-dist-funs} for how to use distributions in \cd{nimbleFunctions}.}. NIMBLE also allows one to use alternative parameterizations for a variety of distributions as described next.
 
-Note that the same distributions are available for writing \cd{nimbleFunction}s, but in that case the default parameterizations and function names match R's when possible. Please see Section \ref{sec:nimble-dist-funs} for how to use distributions in \cd{nimbleFunctions}.
+
 
 
 \input{densityTableLong.tex}
@@ -310,7 +312,7 @@ Note that the same distributions are available for writing \cd{nimbleFunction}s,
 \subsubsection{Alternative parameterizations for distributions}
 \label{subsec:alternative-params}
 
-NIMBLE allows one to specify distributions in model code using a variety of parameterizations, including the BUGS parameterizations. Behind the scenes, NIMBLE uses a single parameterization (NIMBLE's `canonical' parameterization) when definining nodes and relationships between nodes and when doing calculations. 
+NIMBLE allows one to specify distributions in model code using a variety of parameterizations, including the BUGS parameterizations. Behind the scenes, NIMBLE uses a single parameterization (NIMBLE's `canonical' parameterization) when defining nodes and relationships between nodes and when doing calculations. 
 
 The full set of parameterizations that one can used in model code is listed in Table \ref{table:distributions-alternates}.
 To understand how NIMBLE handles alternative parameterizations, it is
@@ -641,7 +643,7 @@ with \cd{constraint\_data} set (as \cd{data}) to 1.  This is equivalent to a hal
 
 %If one simulates from the model using the \cd{simulate} functions and the condition is not satisfied, then \cd{const} will be 0 and the log probability of \cd{const} (and therefore of the model as whole) will be $-\infty$.
 
-Formally, \cd{dconstraint(condition)} is a probability distribution on $\left\{ 0, 1 \right\}$ such that $P(1) = 1$ if \cd{cond} is \cd{TRUE} and $P(0) = 1$ if \cd{cond} is \cd{FALSE}. 
+Formally, \cd{dconstraint(cond)} is a probability distribution on $\left\{ 0, 1 \right\}$ such that $P(1) = 1$ if \cd{cond} is \cd{TRUE} and $P(0) = 1$ if \cd{cond} is \cd{FALSE}. 
 
 % TODO: Chris thought this wording is confusing:
 %Like \cd{dinterval}, \cd{dconstraint} results in distributions that are not normalized (e.g. for (\cd{mu1}, \cd{mu2})), which makes most sense if the constraint is observed rather than established a priori. 
@@ -845,7 +847,7 @@ it helps define the model.
 
 \section{NIMBLE models are objects you can query and manipulate}
 
-At the heart of NIMBLE's flexibility is that NIMBLE models are objects (R objects with corresponding compiled versions) that can be modified and manipulated from R. We discuss this in detail in Part \ref{part:prog}, because this usage of NIMBLE model objects is most important when writing algorithms.
+At the heart of NIMBLE's flexibility is that NIMBLE models are objects (R objects with corresponding compiled versions) that can be modified and manipulated from R. We discuss this in detail in Chapter \ref{cha:using-bugs-models}, because this usage of NIMBLE model objects is most important when writing algorithms.
 
 However, in this section we provide some details on manipulating model objects that are useful when using NIMBLE's algorithms (particularly MCMC) with your models.
 
@@ -926,7 +928,6 @@ Note that some of the nodes may be ``lifted'' nodes introduced by
 NIMBLE (Section \ref{sec:introduced-nodes}).
 
 Next note that we can determine the set of nodes contained in one or more nodes or variables using \cd{expandNodeNames}. The \cd{returnScalarComponents} argument also allows us to return all of the scalar components of multivariate nodes. 
-to illustrate.
 
 <<expandNodeNames>>=
 @ 
@@ -953,6 +954,7 @@ has the name ``X[1, 2, 3]''.  Nodes following multivariate
 distributions have names that include their index blocks.  For
 example, a multivariate node for \cd{X[6:10, 3]} has the name ``X[6:10, 3]''.
 
+
 The definitive source for node names in a model is
 \cd{getNodeNames}, described below.  For example
 
@@ -961,6 +963,10 @@ The definitive source for node names in a model is
 
 You can see one lifted node for the Cholesky decomposition of
 \cd{cov}, and the two multivariate normal nodes.
+
+{\color{red} CJP asks if we need the next bit - I suspect in all cases
+  we now cleanly handle any cases where a node name is given with
+  non-canonical spacing.}
 
 In the event you need to ensure that a name is formatted correctly,
 you can use the \cd{expandNodeNames} method. For
@@ -996,12 +1002,13 @@ during the compilation process.
 
 \subsubsection{Determining dependencies in a model}
 \label{sec:cdgetdependencies}
+{\color{red} note from 30k feet over Nebraska: check spelling descendents or descendants}
 
 One can determine the node dependencies (or
-``descendants'') in a model using \cd{getDependencies}. There are a variety of arguments to \cd{getDependencies} that
+``descendents'') in a model using \cd{getDependencies}. There are a variety of arguments to \cd{getDependencies} that
 allow one to specify whether to include the node itself, whether to
 include deterministic or stochastic or data dependents, etc. By
-default \cd{getDependencies} returns descendants up to the next
+default \cd{getDependencies} returns descendents up through the next
 stochastic node on all edges emanating from the node(s) specified as input.  This is what would be
 needed to calculate a Metropolis-Hastings acceptance probability in
 MCMC, for example.
@@ -1013,17 +1020,14 @@ MCMC, for example.
 \subsubsection{Checking if a node holds data}
 \label{sec:cdisdata}
 
-Finally, you can query whether a node is flagged as data using the \cd{isData} method applied to one or more nodes:
+Finally, you can query whether a node is flagged as data using the
+\cd{isData} method applied to one or more nodes or nodes within variables:
 <<isData>>=
 pump$isData('x[1]')
 pump$isData(c('x[1]', 'x[2]', 'alpha'))
-@ 
-
-
-You can also query variables to determine if the nodes that are part of a variable are data nodes.
-
-<<isData2>>=
 pump$isData('x')
 pump$isData('x[1:3]')
 @ 
+
+
 

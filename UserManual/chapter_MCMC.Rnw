@@ -23,15 +23,15 @@ require(igraph, warn.conflicts = FALSE, quietly = TRUE)  # same question
 
 A NIMBLE MCMC algorithm is built to operate on a particular NIMBLE model object.  A high degree of customization is possible for the MCMC algorithm.  There are also two different ways an MCMC algorithm can be run, which provide different options, but both result in the collection of posterior samples from model parameters and latent states.  We first outline the steps and options available for creating and executing an MCMC algorithm.  More details on each step are available through the rest of the chapter.
 
-A NIMBLE model object is necessary to create an MCMC algorithm (see chapter \ref{cha:building-models}).  We'll refer to this object as \cd{model}.
+A NIMBLE model object is necessary to create an MCMC algorithm (see Chapter \ref{cha:building-models}).  We'll refer to this object as \cd{model}.
 
 \subsection*{Creating an MCMC algorithm}
 
-A default MCMC algorithm can be created using \cd{buildMCMC(model)}.  See section \ref{sec:build-compile-mcmc}.
+A default MCMC algorithm can be created using \cd{buildMCMC(model)}.  See Section \ref{sec:build-compile-mcmc}.
 
-To customize properties of the MCMC algorithm -- including the sampling algorithms, joint (block) sampling of dimensions, tuning and adaptive properties of sampling algorithms, variables being monitored (posterior samples are collected), and the thinning interval for sample collection -- an MCMC configuration object (\cd{conf}) must be created using \cd{configureMCMC(model)}.  Properties of the MCMC algorithm can be modified using the \cd{conf} object, after which an MCMC algorithm (\cd{mcmc}) can be created using \cd{buildMCMC(conf)}.  See section \ref{mcmc-configuration}.
+To customize properties of the MCMC algorithm -- including the sampling algorithms, joint (block) sampling of dimensions, tuning and adaptive properties of sampling algorithms, variables being monitored (posterior samples are collected), and the thinning interval for sample collection -- an MCMC configuration object (\cd{conf}) must be created using \cd{configureMCMC(model)}.  Properties of the MCMC algorithm can be modified using the \cd{conf} object, after which an MCMC algorithm (\cd{mcmc}) can be created using \cd{buildMCMC(conf)}.  See Section \ref{mcmc-configuration}.
 
-Both the \cd{model} and \cd{mcmc} should generally be compiled using \cd{compileNimble}, for significantly faster execution (section \ref{sec:build-compile-mcmc}).  We'll refer to the compiled MCMC algorithm as \cd{Cmcmc}.
+Both the \cd{model} and \cd{mcmc} should generally be compiled using \cd{compileNimble}, for significantly faster execution (Section \ref{sec:build-compile-mcmc}).  We'll refer to the compiled MCMC algorithm as \cd{Cmcmc}.
 
 \subsection*{Executing an MCMC algorithm and collecting samples}
 
@@ -42,9 +42,9 @@ There are two methods available to execute an MCMC algorithm:
 \item \cd{runMCMC(Cmcmc, ...)}
 \end{itemize}
 
-Using \cd{Cmcmc\$run(...)} provides lower-level options including extending an MCMC run (collecting additional samples from where it last stopped), and also collecting timing information for the internal sampling algorithms.  After executing an MCMC in this manner, posterior samples are extracted from within the \cd{Cmcmc} object using \cd{as.matrix(Cmcmc\$mvSamples)}.  See sections \ref{executing-the-mcmc-algorithm} and \ref{sec:extracting-samples}.
+Using \cd{Cmcmc\$run(...)} provides lower-level options including extending an MCMC run (collecting additional samples from where it last stopped), and also collecting timing information for the internal sampling algorithms.  After executing an MCMC in this manner, posterior samples are extracted from within the \cd{Cmcmc} object using \cd{as.matrix(Cmcmc\$mvSamples)}.  See Sections \ref{executing-the-mcmc-algorithm} and \ref{sec:extracting-samples}.
 
-Using \cd{runMCMC(Cmcmc, ...)} provides higher-level options such as running multiple chains, setting initial values, removing burn-in, and returning posterior samples in the form of a \cd{coda} \cd{mcmc} object.  Running an MCMC in this manner returns an array of samples, a list of sample arrays in the case of multiple chains, or optionally a \cd{coda} object.  See section \ref{sec:runMCMC}.
+Using \cd{runMCMC(Cmcmc, ...)} provides higher-level options such as running multiple chains, setting initial values, removing burn-in, and returning posterior samples in the form of a \cd{coda} \cd{mcmc} object.  Running an MCMC in this manner returns an array of samples, a list of sample arrays in the case of multiple chains, or optionally a \cd{coda} object.  See Section \ref{sec:runMCMC}.
 
 \subsection*{Other topics}
 
@@ -52,7 +52,7 @@ In addition to details of the steps outlined above, this chapter also includes:
 
 \begin{itemize}
 %%\item NIMBLE's algorithm to search blocks of nodes for efficient joint (block) sampling (section \ref{sec:default-mcmc-conf}) 
-\item Information about the sampling algorithms provided with NIMBLE (section \ref{sec:samplers-provided})
+\item Information about the sampling algorithms provided with NIMBLE (Section \ref{sec:samplers-provided})
 \item A detailed example of using the MCMC engine (section \ref{sec:mcmc-example-litters})
 \item Methods to automatically run WinBUGS, OpenBUGS, JAGS, Stan and/or multiple NIMBLE MCMCs on the same model (section \ref{mcmc-suite-compare-mcmcs}) 
 \end{itemize}
@@ -130,7 +130,7 @@ In this usage, the additional control argument \cd{autoIt} may also be provided 
 
 
 \subsection{Customizing the MCMC configuration}
-\label{customizing-mcmc-conf}
+\label{sec:customizing-mcmc-conf}
 
 The MCMC configuration may be customized in a variety of ways, either through additional named arguments to \cd{configureMCMC} or by calling member methods of an existing \cd{MCMCconf} object.
 
@@ -155,7 +155,7 @@ Note that when adding individual samplers (next), the default control list can b
 
 \subsubsection{Adding samplers to the configuration}
 
-Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCconf} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object. Valid character strings include `posterior\_predictive', `RW', `RW\_block', `slice', `RW\_multinomial`, `RW\_dirichlet`, `binary`, `ess`, `crossLevel', and `RW\_llFunction', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{printSamplers}.
+Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCconf} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the types of sampler, which may be provided as a character string or a \cd{nimbleFunction} object. Valid character strings include `posterior\_predictive', `RW', `RW\_block', `slice', `RW\_multinomial', `RW\_dirichlet', `binary', `ess', `crossLevel', and `RW\_llFunction', which are described below.  Requirements for writing a \cd{nimbleFunction} that can be used as a sampler are also described below, and new samplers can be labeled with a \cd{name} argument, which is used in output of \cd{printSamplers}.
 
 When a \cd{control} argument is provided in a call to \cd{addSampler}, the \cd{control} list elements specified will have the highest priority.  The hierarchy of precedence for control list elements for samplers is:
 
@@ -257,9 +257,9 @@ mcmcConf$setSamplers(samplerConfList)
 
 \subsubsection{Monitors and thinning intervals}
 
-An \cd{MCMCconf} object contains two independent lists of variables to monitor, which correspond to two independent thinning intervals: \cd{thin} corresponding to \cd{monitors}, and \cd{thin2} corresponding to \cd{monitors2}.  Monitors operate at the \textit{variable} level.  Only entire model variables may be monitored.  Specifying a monitor on a \textit{node}, e.g., \cd{x[1]}, will result in the entire variable \cd{x} being monitored.
+An MCMC configuration object contains two independent lists of variables to monitor, which correspond to two independent thinning intervals: \cd{thin} corresponding to \cd{monitors}, and \cd{thin2} corresponding to \cd{monitors2}.  Monitors operate at the \textit{variable} level.  Only entire model variables may be monitored.  Specifying a monitor on a \textit{node}, e.g., \cd{x[1]}, will result in the entire variable \cd{x} being monitored.
 
-The variables specified in \cd{monitors}  and \cd{monitors2} will be recorded (with thinning interval \cd{thin}) into the \cd{mvSamples} and \cd{mvSamples2} -- both \nm{modelValues} objects -- of the MCMC, respectively.  See Section \ref{sec:extracting-samples} for information about extracting these \nm{modelValues} objects from the MCMC algorithm object.
+The variables specified in \cd{monitors}  and \cd{monitors2} will be recorded (with thinning interval \cd{thin}) into objects called \cd{mvSamples} and \cd{mvSamples2}, contained within the MCMC object. These are both \nm{modelValues} objects; \nm{modelValues} are NIMBLE data structures used to store values of model variables.  See Section \ref{sec:extracting-samples} for information about extracting these \nm{modelValues} objects from the MCMC algorithm object.
 
 Monitors may be added to the MCMC configuration either in the original call to \cd{configureMCMC} or using the \cd{addMonitors} method:
 <<addMonitors, eval=FALSE>>=
@@ -334,7 +334,7 @@ When \cd{mcmc\$run(niter, reset = FALSE)} is called, the MCMC algorithm picks up
 
 The \cd{run} method an optional \cd{simulateAll} argument.  When \cd{simulateAll = TRUE}, the \cd{simulate} method of all stochastic nodes is called at the onset of the MCMC algorithm.  This may be used to generate a new set of initial values.  Note there is some danger in doing this when using non-informative priors (such as normal distributions with very large variances or gamma distributions with small parameter values), as one may easily simulate an extreme starting value.
 
-The \cd{run} method has an optional \cd{time} argument.  When \cd{time = TRUE}, runtimes of the individual internal MCMC samplers will be recorded.  See section \ref{sec:sampler-time}.
+The \cd{run} method has an optional \cd{time} argument.  When \cd{time = TRUE}, runtimes of the individual internal MCMC samplers will be recorded.  See Section \ref{sec:sampler-time}.
  
 Further arguments and details can be found by \cd{help(buildMCMC)}. 
 
@@ -382,9 +382,9 @@ Once an MCMC algorithm has been created using \cd{buildMCMC}, the function \cd{r
 
 See \cd{help(runMCMC)} for details of these arguments.
 
-Other features of the MCMC can still be customized when using \cd{runMCMC}, which is done using the MCMC configuration object.  This includes setting monitors, customizing samplers, or setting a thinning interval (see \ref{customizing-mcmc-conf}).  The MCMC configuration object is then used to create an MCMC algorithm, which is compiled and passed as an argument to \cd{runMCMC}.
+Other features of the MCMC can still be customized when using \cd{runMCMC}, which is done using the MCMC configuration object.  This includes setting monitors, customizing samplers, or setting a thinning interval (see Section \ref{sec:customizing-mcmc-conf}).  The MCMC configuration object is then used to create an MCMC algorithm, which is compiled and passed as an argument to \cd{runMCMC}.
 
-When running a single chain, \cd{runMCMC} returns a matrix of MCMC samples (as described in \ref{sec:extracting-samples}).  When running multiple chains, a list of sample matrices is returned.  Using the argument \cd{returnCodaMCMC=TRUE}, a \cd{coda} \cd{mcmc} object, or in the case of multiple chains, a \cd{coda} \cd{mcmc.list} object is returned instead.
+When running a single chain, \cd{runMCMC} returns a matrix of MCMC samples (as described in Section \ref{sec:extracting-samples}).  When running multiple chains, a list of sample matrices is returned.  Using the argument \cd{returnCodaMCMC=TRUE}, a \cd{coda} \cd{mcmc} object, or in the case of multiple chains, a \cd{coda} \cd{mcmc.list} object is returned instead.
 
 The following examples demonstrate some uses of \cd{runMCMC}, and assume the existence of \cd{Cmcmc}, a compiled MCMC algorithm.
 
@@ -628,7 +628,7 @@ mcmcConf$addSampler(target = 'y[1]', type = 'posterior_predictive')
 @
 
 \subsection{Particle MCMC \cd{PMCMC} sampler}
-For state space models, a particle MCMC (PMCMC) sampler can be specified for top-level parameters.  This sampler is described in section \ref{sec:particle-mcmc}.
+For state space models, a particle MCMC (PMCMC) sampler can be specified for top-level parameters.  This sampler is described in Section \ref{sec:particle-mcmc}.
 
 \section{Detailed MCMC example: \cd{litters}}
 \label{sec:mcmc-example-litters}
@@ -765,7 +765,7 @@ lapply(samplesList, dim)
 
 NIMBLE's \cd{MCMCsuite} function automatically runs WinBUGS, OpenBUGS, JAGS, Stan, and/or multiple NIMBLE configurations on the same model.  Note that the BUGS code must be compatible with whichever BUGS packages are included, and separate Stan code must be provided.  NIMBLE's \cd{compareMCMCs} manages calls to \cd{MCMCsuite} for multiple sets of comparisons and organizes the output(s) for generating html pages summarizing results.  It also allows multiple results to be combined and allows some different options for how results are processed, such as how effective sample size is estimated.
 
-We show how to use \cd{MCMCsuite} for the same \cd{litters} example used in \ref{sec:mcmc-example-litters}.  Subsequently, additional details of the \cd{MCMCsuite} are given.  Since use of \cd{compareMCMCs} is similar, we refer readers to \cd{help(compareMCMCs)} and the functions listed under ``See also'' on that R help page.
+We show how to use \cd{MCMCsuite} for the same \cd{litters} example used in Section \ref{sec:mcmc-example-litters}.  Subsequently, additional details of the \cd{MCMCsuite} are given.  Since use of \cd{compareMCMCs} is similar, we refer readers to \cd{help(compareMCMCs)} and the functions listed under ``See also'' on that R help page.
 
 \subsection{MCMC Suite example: \cd{litters}}
 

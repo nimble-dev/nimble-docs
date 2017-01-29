@@ -13,8 +13,23 @@ require(nimble)
 read_chunk(file.path('chunks', 'programmingWithModels_chunks.R')) 
 @ 
 
-
-
+{\color{red} figure out where this goes}
+For numeric variables from the \cd{setup} function that
+  appear in the \cd{run} function or other member functions (or
+  are declared in \cd{setupOutputs}): the
+  type is determined from the values created by the \cd{setup}
+  code. The types created by \cd{setup} code must be
+  consistent across all specializations of the nimbleFunction.  For
+  example if X is created as a matrix (2-dimensional double) in one
+  specialization but as a vector (1-dimensional double) in another, there
+  will be a problem during compilation.  The sizes may differ in each specialization.
+  
+   Treatment of vectors of length 1 presents special challenges because
+  they could be treated as scalars or vectors.  Currently they are
+  treated as scalars.  If you want a vector, ensure that the length is
+  greater than 1 in the setup code and then use \cd{setSize} in the
+  run-time code.
+  
 \section{Overview}
 \label{sec:writ-nimble-funct}
 
@@ -555,7 +570,44 @@ mcmcConf$addSampler(target = 'x', type = 'my_RW',
 Rmcmc <- buildMCMC(mcmcConf)   ## etc...
 @
 
+\section{Copying nimbleFunctions (and NIMBLE models)}
+
+{
+NIMBLE relies heavily on R's reference class system.  When models,
+modelValues, and nimbleFunctions with setup code are created, NIMBLE
+generates a new, customized reference class definition for each.  As a
+result, objects of these types are passed by reference and hence
+modified in place by most NIMBLE operations. This is necessary to
+avoid a great deal of copying and returning and having to reassign
+large objects, both in processing model and nimbleFunctions  and in
+running algorithms.
+
+One cannot generally copy NIMBLE models or nimbleFunctions
+(specializations or generators) in a safe fashion, because of the
+references to other objects embedded within NIMBLE objects. However,
+the model member function \cd{newModel} will create a new copy of
+the model from the same model definition
+(Section \ref{sub:multiple-instances}). This new model can then be used with
+newly instantiated nimbleFunctions.
+
+%% <<copy-model>>=
+%% newPump <- pumpModel$newModel()
+%% @ 
+
+The reliable way to create new copies of nimbleFunctions is to re-run
+the R function called \cd{nimbleFunction} and record the result in a
+new object.  For example, say you have a \cd{nimbleFunction} called
+\cd{foo} and 1000 instances of \cd{foo} are compiled as part of an
+algorithm related to a model called \cd{model1}.  If you then need to use \cd{foo} in
+an algorithm for another model, \cd{model2}, doing so may work without
+any problems.  However, there are cases where the NIMBLE compiler will
+tell you during compilation that the second set of \cd{foo} instances
+cannot be built from the previous compiled version.  A solution is to
+re-define \cd{foo} from the beginning -- i.e. call \cd{nimbleFunction}
+again -- and then proceed with building and compiling the algorithm
+for \cd{model2}.  
 \section{Debugging nimbleFunctions}
+\label{sec:debugging}
 
 {\color{red} TODO: basic info on inserting browser in nf run code and running in R as well as using debug(nf\$run)}
 

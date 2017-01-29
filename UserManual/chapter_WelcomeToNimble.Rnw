@@ -92,7 +92,14 @@ algorithms provided by NIMBLE without ever using the NIMBLE language
 to write algorithms. So as you get started, feel free to focus on
 Part \ref{part:models} to learn how to build your model and Part \ref{part:algorithms} to learn how to apply NIMBLE's built-in algorithms to your model.  
 
-Part \ref{part:programming} discusses how you can program in NIMBLE, allowing you to use user-defined function or distributions in your BUGS code, compiling your R code for faster operations, and writing algorithms with NIMBLE, either specific algorithms for your particular model (such as a user-defined MCMC sampler for a parameter in your model) or general algorithms you can distribute to others.
+Part \ref{part:programming} discusses how you can program in NIMBLE,
+allowing you to use user-defined function or distributions in your
+BUGS code, compile your R code for faster operations, and write
+algorithms with NIMBLE. These algorithms could be specific algorithms
+for your particular model (such as a user-defined MCMC sampler for a
+parameter in your model) or general algorithms you can distribute to
+others. In fact the algorithms provided as part of NIMBLE and
+described in Part \ref{part:algorithms} are written in precisely this way.
 The algorithm
 library in Version \ver\ is just a start, so we hope you'll let us know what
 you want to see and consider writing it in NIMBLE.  
