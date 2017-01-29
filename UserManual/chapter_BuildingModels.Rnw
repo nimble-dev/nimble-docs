@@ -876,6 +876,7 @@ Similarly, one can set initial values for parameters via \cd{setInits}.
 
 
 \subsection{Understanding the variables and nodes of a model}
+\label{sec:nodes-and-variables}
 
 This section discusses how one can determine the names of the variables and nodes in a model, which can be useful when a user wants to choose MCMC samplers that may be different from the default samplers that NIMBLE applies to a model.
 
@@ -1002,13 +1003,12 @@ during the compilation process.
 
 \subsubsection{Determining dependencies in a model}
 \label{sec:cdgetdependencies}
-{\color{red} note from 30k feet over Nebraska: check spelling descendents or descendants}
 
 One can determine the node dependencies (or
-``descendents'') in a model using \cd{getDependencies}. There are a variety of arguments to \cd{getDependencies} that
+``descendants'') in a model using \cd{getDependencies}. There are a variety of arguments to \cd{getDependencies} that
 allow one to specify whether to include the node itself, whether to
 include deterministic or stochastic or data dependents, etc. By
-default \cd{getDependencies} returns descendents up through the next
+default \cd{getDependencies} returns descendants up through the next
 stochastic node on all edges emanating from the node(s) specified as input.  This is what would be
 needed to calculate a Metropolis-Hastings acceptance probability in
 MCMC, for example.

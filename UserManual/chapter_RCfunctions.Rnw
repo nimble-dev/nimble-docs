@@ -106,8 +106,10 @@ the NIMBLE language in more detail.
 \end{itemize}
 
 
-\subsection{How numeric types work}
+\subsection{How numeric types work in NIMBLE}
 \label{sec:how-types-work}
+
+Variables in the NIMBLE language are typed -- a given variable can only represent a specific kinds of value, such as a real number, integer, or character string, and the dimension (scalar, vector, matrix, etc.) cannot change once it is set. 
 
 Numeric types in NIMBLE are much less flexible than in R, a reflection
 of the fact that NIMBLE code can be compiled into C++\footnote{C++ is a
@@ -120,7 +122,9 @@ supported for scalars only.  While the number of dimensions
 cannot change during run-time, numeric objects can be resized using
 \cd{setSize} or by full (non-indexed) assignment.
 
-When possible, NIMBLE will determine the type of a variable for you.
+Arguments and return values for functions must have their types and dimensions declared by the programmer.  
+
+Types and dimensions for variables declared within run code are handled differently. When possible, NIMBLE will determine the type of a local variable that is defined in run code for you.
 In particular, when a numeric variable is created by
   assignment, its type is determined by that assignment.  Subsequent
   uses of that variable must be consistent with that type. 
@@ -141,9 +145,7 @@ In particular, when a numeric variable is created by
 NIMBLE requires that types of arguments and the type of the return value be
 explicitly declared.
 
-As illustrated in the example in Section \ref{sec:RC-intro},  the syntax for a type declaration is:
-
-\cd{type(nDim, sizes)}
+As illustrated in the example in Section \ref{sec:RC-intro},  the syntax for a type declaration is: \cd{type(nDim, sizes)}.
 
 \cd{type} can currently take values \cd{double},
 \cd{integer}, \cd{character} (for scalars or vectors only) or
@@ -160,12 +162,16 @@ assigned to, or an explicit call to \cd{setSize} is needed.
 In the case of scalar arguments only, a default value can be
 provided.  For example, to provide 1.2 as a default:
 
-\cd{double(0, default = 1.2)}
+<<example-argtype, eval=FALSE>>=
+myfun <- nimbleFunction(
+    run = function(x = double(0, default = 1.2)) {
+})
+@ 
 
 \subsection{Creating non-scalar variables: \cd{numeric}, \cd{integer}, \cd{matrix}, and \cd{array}}
 \label{sec:decl-local-vars}
 
-When local variables are created by assignment, their types will be 
+When local variables in run code are created by assignment, their types will be 
 automatically inferred.  For example, \cd{x <- A \%*\% B} will create 
 \cd{x} as a matrix.  However, if a variable is to be filled by indexed 
 assignment, then it must be explicitly created or re-sized first.  For 
@@ -367,6 +373,7 @@ Sizes can be queried as follows:
   \end{itemize}
 \end{itemize}
 
+
 \subsection{Basic flow control: if-then-else, for, and while}
 \label{sec:basic-flow-control}
 
@@ -380,6 +387,12 @@ now we've included just one additional useful feature:  \cd{for(i in
   seq\_along(NFL))} will work as in R, where \cd{NFL} is a
 \cd{nimbleFunctionList}.  This is described below.
 
+\subsection{Using functions}
+
+You can call another nimbleFunction from within your nimbleFunction. Simply define the two functions and call one within the other. Similarly, you can define and use a nimbleFunction within another nimbleFunction.
+
+{\color{red} please confirm these statements are true for RC functions}
+
 \subsection{Basic math and linear algebra}
 \label{sec:basic-math-linear}
 
@@ -388,9 +401,7 @@ now we've included just one additional useful feature:  \cd{for(i in
 Numeric scalar and matrix mathematical operations are listed in tables
 \ref{table:functions-dsl} and \ref{table:functions-matrix-dsl}.  
 
-{\color{red} look for where we have text on indexing and see if we
-  want to say something about indexing in Ch. 9; look for indexing in
-  0.6-3 manuals}
+
 
 {
 \footnotesize 
@@ -435,8 +446,13 @@ than two dimensions in
 v\ver.  That means \cd{A = B + C} will work only if B and C have dimensions
 $\le$ 2.
 
-\subsubsection{Managing dimensions and sizes, including adding and dropping dimensions}
+\subsubsection{Indexing}
+
+
+\subsubsection{Managing dimensions, sizes and indices}
 \label{sec:manag-dimens-sizes}
+
+{\color{red} do we want to say anything else here about indexing?}
 
 It can be tricky to determine the dimensions returned by a linear
 algebra expression.  As much as possible, NIMBLE behaves like R, but
@@ -628,48 +644,3 @@ which ``print'' is being used, or to use the more intuitive keywords
 like \cd{print} but remember that they are not the same as R's functions.
 
 
-
-
-\section{OLD}
-
-
-\subsection{What's allowed in the NIMBLE language}
-\label{subsec:nimble-dsl}
-
-Here we briefly outline what is allowed in the NIMBLE DSL (domain
-specific language), which is the augmented subset of R that can be used in
-\cd{nimbleFunction} \cd{run} functions and other member methods.
-
-
-\subsubsection{Non-scalar variable declarations} 
-Use of \cd{numeric()}, \cd{integer()}, \cd{matrix()} or \cd{array()}
-(see \ref{sec:decl-local-vars}) or \cd{identityMatrix} (see
-\ref{sec:other-non-scalar}) to create non-scalar local variables.  Scalar-valued local 
-variables need not be declared.
-
-
-
-\subsubsection{Mathematical operations}
-
-
-\subsubsection{Distribution functions}
-Density evaluation, random generation, CDF and inverse-CDF functions for all 
-standard distributions (Section \ref{sec:nimble-dist-funs}),
-or any user-defined distributions (Chapter \ref{cha:user-defined}). 
-
-\subsubsection{Control flow}
-Standard control-flow commands including \cd{if()}, \cd{for()},
-\cd{while()}, and \cd{return()} (Section \ref{sec:basic-flow-control}).
-
-\subsubsection{Argument and return type declarations}
-Mandatory argument type declarations (which are included as part of the argument 
-list) and a mandatory return type declaration if anything is 
-returned (included as part of the function body) (Section \ref{sec:decl-argum-types}). 
-
-\subsubsection{Calling other nimbleFunctions}
-
-You can call another nimbleFunction from within your nimbleFunction. Simply define the two functions and call one within the other. 
-
-\subsubsection{Additional operations involving models and nested nimbleFunctions}
-
-In addition, you can do a variety of operations involving models, as well as defining nimbleFunctions within other nimbleFunctions, but we defer the use of nimbleFunctions with models to Chapters \ref{cha:intro-nf}-\ref{cha:progr-with-models}.

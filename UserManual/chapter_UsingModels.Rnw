@@ -12,7 +12,7 @@ require(nimble)
 \section{Variables and nodes in NIMBLE models}
 \label{sec:accessing-variables}
 
-Section XXX describes what variables and nodes in a NIMBLE model are. 
+Section \ref{sec:nodes-and-variables} describes what variables and nodes are in a NIMBLE model and how to nodes and their dependency relationships. 
 Here we review some of NIMBLE's functionality for determining and accessing variables and nodes in a model. 
 
 \subsection{Determining the variables and nodes in a model}
@@ -58,13 +58,15 @@ deparse(parse(text = "X[1,1:5]", keep.source = FALSE)[[1]])
 
 The \cd{keep.source = FALSE} makes \cd{parse} more efficient.
 
-{\color{red} review use of getDependencies}
+
+As discussed in Section \ref{sec:cdisdata}, you can determine whether a node is flagged as data using \cd{isData}. 
+
 
 \subsection{Determining dependencies in a model}
 \label{sec:cdgetdependencies}
 
 Next we'll see how to determine the node dependencies (or
-``descendents'') in a model. There are a variety of arguments to \cd{getDependencies} that
+``descendants'') in a model. There are a variety of arguments to \cd{getDependencies} that
 allow one to specify whether to include the node itself, whether to
 include deterministic or stochastic or data dependents, etc. By
 default \cd{getDependencies} returns descendants up to the next
@@ -73,23 +75,6 @@ needed to calculate a Metropolis-Hastings acceptance probability in
 MCMC, for example.
 
 <<getDependencies>>=
-@ 
-
-
-\subsection{\cd{isData}}
-
-Finally, you can query whether a node is flagged as data using the \cd{isData} method applied to one or more nodes:
-<<isDataRepeated>>=
-pump$isData('x[1]')
-pump$isData(c('x[1]', 'x[2]', 'alpha'))
-@ 
-
-
-You can also query variables to determine if the nodes that are part of a variable are data nodes.
-
-<<isData2Repeated>>=
-pump$isData('x')
-pump$isData('x[1:3]')
 @ 
 
 \subsection{Understanding lifted nodes}
@@ -129,12 +114,14 @@ generated.  These include:
 \section{Accessing information about nodes and variables}
 \label{sec:nodeInfo}
 
+NIMBLE provides an extensive set of functions to get information about
+one or more nodes or variables in a model, as well as the current values of parameters and bounds for nodes.
+
+While all of this functionality can be used from R, the primary use of getting information about nodes and variables is in nimbleFunctions. Information about node types, distributions, and dimensions can be used to determine algorithm behavior in setup code, while information about parameter and bound values would generally be used for algorithm calculations in run code.
+
 \subsection{Getting distributional information about a node}
 
-NIMBLE provides an extensive set of functions to get information about
-one or more nodes or variables. While this functionality can be used
-from R, its primary use is for determining algorithm behavior within the setup code of
-\cd{nimbleFunctions}. We briefly demonstrate some of the functionality here,
+We briefly demonstrate some of the functionality for information about a node here,
 but refer readers to the R help on \cd{modelBaseClass} for full details.
 
 Here is an example model, with use of various functions to determine
@@ -166,7 +153,8 @@ the inputs, once the expansion is accounted for.
 \subsection{Getting information about a distribution}
 
 One can also get generic information about a distribution based on the
-name of the distribution. In particular, one can determine whether a distribution
+name of the distribution. 
+In particular, one can determine whether a distribution
 was provided by the user (\cd{isUserDefined}), whether a distribution provides CDF and
 quantile functions (\cd{pqDefined}), whether a distribution is a
 discrete distribution (\cd{isDiscrete}), the parameter names (include
