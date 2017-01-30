@@ -7,7 +7,17 @@ require(nimble)
 \chapter{Working with NIMBLE models}
 \label{cha:using-bugs-models}
 
-{\color{red} TODO: add forward references to writingNimbleFunctions}
+
+
+Here we describe how one can get information about NIMBLE models and
+carry out operations on a model. While all of this functionality can
+be used from R, the primary use of getting information and operating a
+model occurs when writing nimbleFunctions (see Chapter \ref{cha:progr-with-models}). 
+Information about node types, distributions, and dimensions can be
+used to determine algorithm behavior in setup code of nimbleFunctions. Information
+about parameter and bound values would generally be used for algorithm
+calculations in run code of nimbleFunctions. Similarly, carrying out numerical operations
+on a model would generally be done in run code.
 
 \section{Variables and nodes in NIMBLE models}
 \label{sec:accessing-variables}
@@ -62,20 +72,7 @@ The \cd{keep.source = FALSE} makes \cd{parse} more efficient.
 As discussed in Section \ref{sec:cdisdata}, you can determine whether a node is flagged as data using \cd{isData}. 
 
 
-\subsection{Determining dependencies in a model}
-\label{sec:cdgetdependencies}
 
-Next we'll see how to determine the node dependencies (or
-``descendants'') in a model. There are a variety of arguments to \cd{getDependencies} that
-allow one to specify whether to include the node itself, whether to
-include deterministic or stochastic or data dependents, etc. By
-default \cd{getDependencies} returns descendants up to the next
-stochastic node on all edges emanating from the node(s) specified as input.  This is what would be
-needed to calculate a Metropolis-Hastings acceptance probability in
-MCMC, for example.
-
-<<getDependencies>>=
-@ 
 
 \subsection{Understanding lifted nodes}
 \label{sec:introduced-nodes}
@@ -114,10 +111,22 @@ generated.  These include:
 \section{Accessing information about nodes and variables}
 \label{sec:nodeInfo}
 
-NIMBLE provides an extensive set of functions to get information about
-one or more nodes or variables in a model, as well as the current values of parameters and bounds for nodes.
 
-While all of this functionality can be used from R, the primary use of getting information about nodes and variables is in nimbleFunctions. Information about node types, distributions, and dimensions can be used to determine algorithm behavior in setup code, while information about parameter and bound values would generally be used for algorithm calculations in run code.
+
+\subsection{Determining dependencies in a model}
+\label{sec:cdgetdependencies}
+
+Next we'll see how to determine the node dependencies (or
+``descendants'') in a model. There are a variety of arguments to \cd{getDependencies} that
+allow one to specify whether to include the node itself, whether to
+include deterministic or stochastic or data dependents, etc. By
+default \cd{getDependencies} returns descendants up to the next
+stochastic node on all edges emanating from the node(s) specified as input.  This is what would be
+needed to calculate a Metropolis-Hastings acceptance probability in
+MCMC, for example.
+
+<<getDependencies>>=
+@ 
 
 \subsection{Getting distributional information about a node}
 
@@ -274,7 +283,10 @@ an example using \cd{simulate}
 \subsection{\cd{simNodes}, \cd{calcNodes}, and \cd{getLogProbs}}
 \label{sec:cdsimn-cdcalcn-cdget}
 
-
+{\color{red} CJP commented elsewhere that not clear if these nf's
+  could be replaced with an extra argument to
+  calculate/simulate/getLogProb that allows on to specify that
+  dependencies should be included}
 
   \cd{simNodes}, \cd{calcNodes} and \cd{getLogProb} are basic nimbleFunctions that simulate, calculate, or get the log probabilities
   (densities), respectively, of the same set of nodes each time they
@@ -410,7 +422,18 @@ modelValues object is from a model object. This will create a
 modelValues object with the same variables as the model.  Although
 they were motivated by models, one is free to set up a
 \cd{modelValues} with any variables one wants.
-  
+
+As with the material in the rest of this chapter, modelValues objects
+will generally be used in nimbleFunctions that interact with models
+(see Chapter \ref{cha:progr-with-models}, so one may want to read this
+section after an inital reading of that chapter. modelValues objects can
+be defined either in setup code or separately in R (and then passed as
+an argument to setup code). The modelValues object can then used in run code of nimbleFunctions.
+ 
+\subsection{Creating modelValues objects}
+
+Here is a simple example of creating a modelValues object:
+
 <<intro-mv>>=
 pumpModelValues = modelValues(pumpModel, m = 2)
 pumpModel$x
@@ -568,77 +591,15 @@ customMV['a',1]
 
 However, when you retrieve a variable from a modelValues object, the result is a standard R list, which is subsequently passed by value, as usual in R.
 
-\subsection{Accessing model and modelValues variables and using \cd{copy}}
-\label{sec:access-model-modelv}
-
-{\color{red} TODO: revise this to just talk about access and use of copy and not about nf's}
-
-The \cd{modelValues} structure was introduced in Section
-\ref{sec:modelValues-struct}.  Inside nimbleFunctions, modelValues are
-designed to easily save values from a model object during the running
-of a nimbleFunction. A \cd{modelValues} object used in \cd{run} code
-must always exist in the setup code, either by passing it in as a
-setup argument or creating it in the setup code.
-  
-To illustrate this, we will create a nimbleFunction for computing
-importance weights for importance sampling. This function will use two
-modelValues objects.  \cd{propModelValues} will contain a set of
-values simulated from the importance sampling distribution and a field \cd{propLL}
-for their log
-probabilities (densities).  \cd{savedWeights} will contain the
-difference in log probability (density) between the model and the
-\cd{propLL} value provided for each set of values.   
-
-<<mv-setup-code>>=
-@
-  
-  The simplest way to pass values back and forth between models and
-  modelValues inside of a nimbleFunction is with \cd{copy}, which
-  has the synonym \cd{nimCopy}. See \cd{help(nimCopy)} for argument details.
-  
-  %% This takes arguments 
-  %% \begin{description}
-  %% \item[\cd{from}, \cd{to}] which can either be models or modelValues
-  %% \item[\cd{row}, \cd{rowTo}] which refers to the rows of a
-  %%   modelValues object, if either \cd{from} or \cd{to} is a
-  %%   modelValues. If \cd{rowTo} is omitted, it is assumed to be equal to \cd{row} if necessary.
-  %%   \item[\cd{nodes}, \cd{nodesTo}] which is a vector of the names of the nodes
-  %%     to be copied.  The node names will be expanded when variable names are provided.  If
-  %%     \cd{nodesTo} is omitted it will be set equal to \cd{nodes}.
-  %% \end{description}
-  
-%  TODO: CHECK THESE USAGES
-  
-  Alternatively, the values may be accessed via indexing of individual
-  rows, using the notation \cd{mv[var, i]}, where \cd{mv} is a
-  modelValues object, \cd{var} is a variable name (not a node name),
-  and \cd{i} is a row number. Likewise, the \cd{getsize} and
-  \cd{resize} functions can be used as discussed previously. However the function
-  \cd{as.matrix} does not work in \cd{run} code.
-  
-  Here is a \cd{run} function to use these modelValues:
-  
-<<mv-run-time>>=
-@
-
-Once the nimbleFunction is built, the modelValues object can be accessed
-using \cd{\$}, which is shown in more detail below.  In
-fact, since modelValues, like most NIMBLE objects, are reference class
-objects, one can get a reference to them before the function is
-executed and then use that reference afterwards.
-  
-<<mv-compilation-example>>=
-@
-
-Importance sampling could also be written using simple vectors for the
-weights, but we illustrated putting them in a modelValues object along
-with model variables.
 
 
-\subsubsection{\cd{simNodesMV}, \cd{calcNodesMV}, and \cd{getLogProbsMV}}
+\subsubsection{Automating calculation and simulation using modelValues}
 
-There is a similar trio of nimbleFunctions that does each job
-repeatedly for different rows of a modelValues object.  For example,
+
+
+The nimbleFunctions \cd{simNodesMV}, \cd{calcNodesMV}, and \cd{getLogProbsMV}}
+can be used to operate on a model based on rows in a modelValues object.
+For example,
 \cd{simNodesMV} will simulate in the model multiple times and record
 each simulation in a row of its modelValues.  \cd{calcNodesMV} and
 \cd{getLogProbsMV} iterate over the rows of a modelValues, copy the

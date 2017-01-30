@@ -13,22 +13,7 @@ require(nimble)
 read_chunk(file.path('chunks', 'programmingWithModels_chunks.R')) 
 @ 
 
-{\color{red} figure out where this goes}
-For numeric variables from the \cd{setup} function that
-  appear in the \cd{run} function or other member functions (or
-  are declared in \cd{setupOutputs}): the
-  type is determined from the values created by the \cd{setup}
-  code. The types created by \cd{setup} code must be
-  consistent across all specializations of the nimbleFunction.  For
-  example if X is created as a matrix (2-dimensional double) in one
-  specialization but as a vector (1-dimensional double) in another, there
-  will be a problem during compilation.  The sizes may differ in each specialization.
-  
-   Treatment of vectors of length 1 presents special challenges because
-  they could be treated as scalars or vectors.  Currently they are
-  treated as scalars.  If you want a vector, ensure that the length is
-  greater than 1 in the setup code and then use \cd{setSize} in the
-  run-time code.
+
   
 \section{Overview}
 \label{sec:writ-nimble-funct}
@@ -98,14 +83,16 @@ dependencies\footnote{Note the use of the global assignment operator
 ``specialized'' or ``bound'' to \cd{a} and \cd{testModel}.  Usually, the
 \cd{setup} code will be where information about the model
 structure is determined, and then the \cd{run} code can use that
-information without repeatedly, redundantly recomputing it.  A nimbleFunction can
-be called repeatedly, each time returning a specialized nimbleFunction.
+information without repeatedly, redundantly recomputing it.  A
+nimbleFunction can
+be called repeatedly (one can think of it as a generator), each time returning a specialized
+nimbleFunction. 
   
 Readers familiar with object-oriented programming may find it useful
 to think in terms of class definitions and objects.  \cd{nimbleFunction}
 creates a class definition.  Each specialized nimbleFunction is one object
 in the class.  The setup arguments are used to define member data in
-the object.
+the object. 
 
 
 \section{Using and compiling nimbleFunctions}
@@ -127,7 +114,7 @@ versions and can be used in the same way:
 \subsection{Useful tools for \cd{setup} functions}
 
 The setup function is typically used to determine information on nodes
-in a model, set up any modelValues objects, set up any nimbleFunctions
+in a model, set up modelValues objects, set up (nested) nimbleFunctions 
 or nimbleFunctionLists, and set up any persistent numeric objects.
 For example, the \cd{setup} code of an MCMC nimbleFunction creates the
 nimbleFunctionList of sampler nimbleFunctions.  The values of numeric
@@ -162,6 +149,23 @@ numeric values and modelValues (see below) can be.  For example:
 <<nf-modifyValueToAdd>>=
 @ 
 
+\subsection{Determining numeric types in nimbleFunctions}
+  
+For numeric variables from the \cd{setup} function that
+  appear in the \cd{run} function or other member functions (or
+  are declared in \cd{setupOutputs}): the
+  type is determined from the values created by the \cd{setup}
+  code. The types created by \cd{setup} code must be
+  consistent across all specializations of the nimbleFunction.  For
+  example if X is created as a matrix (2-dimensional double) in one
+  specialization but as a vector (1-dimensional double) in another, there
+  will be a problem during compilation.  The sizes may differ in each specialization.
+  
+   Treatment of vectors of length 1 presents special challenges because
+  they could be treated as scalars or vectors.  Currently they are
+  treated as scalars.  If you want a vector, ensure that the length is
+  greater than 1 in the setup code and then use \cd{setSize} in the
+  run-time code.
 
 \subsection{Control of \cd{setup} outputs }
 \label{sec:determ-pers-texttts}
@@ -222,11 +226,39 @@ myModel$calculate(nodes[1:i])
 @ 
 is not allowed.
 
-\subsection{Accessing model and modelValues variables and using \cd{copy}}
+\subsection{Getting and setting more than one model node or variable
+  at a time using \cd{values}}
+\label{sec:getting-setting-more}
+
+Sometimes it is useful to set a collection of nodes or variables at
+one time.  For example, one might want a nimbleFunction that will
+serve as the objective function for an optimizer.  The input to the
+nimbleFunction would be a vector, which should be used to fill a
+collection of nodes in the model before calculating their log
+probabilities.  This can be done using \cd{values()}:
+
+<<eval=FALSE>>=
+## get values from a set of model nodes into a vector
+P <- values(model, nodes)
+## or put values from a vector into a set of model nodes
+values(model, nodes) <- P
+@ 
+
+where the first line would assign the collection of values from nodes
+into P, and the second would to the inverse.  In both cases, values
+from nodes with 2 or more dimensions are flattened into a vector in
+column-wise order.
+
+\cd{values(model, nodes)} may be used as a
+vector in other expressions, e.g. \cd{Y <- A \%*\% values(model,
+  nodes) + b}. 
+
+\subsection{Using modelValues objects}
 \label{sec:access-model-modelv}
 
-{\color{red} TODO: see what of this info is specific to nf usage and put in good location in this chapter}
-
+{\color{red} This didn't seem to fit in Using Models chapter because
+  of all the discussion and examples with nimbleFunctions, though some
+  of this functionality can be used from R. Thoughts welcome.}
 
 The \cd{modelValues} structure was introduced in Section
 \ref{sec:modelValues-struct}.  Inside nimbleFunctions, modelValues are
@@ -316,32 +348,6 @@ will try to do the right thing by treating this as a scalar.  In the
 event of problems\footnote{please tell us!}, a more explicit way to
 access z is \cd{model\$z[1]} or \cd{model[[`z']][1]}.
 
-\subsection{Getting and setting more than one model node or variable
-  at a time using \cd{values}}
-\label{sec:getting-setting-more}
-
-Sometimes it is useful to set a collection of nodes or variables at
-one time.  For example, one might want a nimbleFunction that will
-serve as the objective function for an optimizer.  The input to the
-nimbleFunction would be a vector, which should be used to fill a
-collection of nodes in the model before calculating their log
-probabilities.  This can be done using \cd{values()}:
-
-<<eval=FALSE>>=
-## get values from a set of model nodes into a vector
-P <- values(model, nodes)
-## or put values from a vector into a set of model nodes
-values(model, nodes) <- P
-@ 
-
-where the first line would assign the collection of values from nodes
-into P, and the second would to the inverse.  In both cases, values
-from nodes with 2 or more dimensions are flattened into a vector in
-column-wise order.
-
-\cd{values(model, nodes)} may be used as a
-vector in other expressions, e.g. \cd{Y <- A \%*\% values(model,
-  nodes) + b}. 
 
 
 \subsection{Including other methods in a nimbleFunction}
@@ -367,6 +373,7 @@ access a setup variable or method of another nimbleFunction, use
 <<owningMemberFunctions>>=
 @ 
 
+
 Note that the output from the \cd{print} calls in the compiled
 function match those from the uncompiled function when run in an R
 session.  It may not be shown here because this document is created with
@@ -386,7 +393,7 @@ and return types of methods: virtual nimbleFunctions created by
 \cd{nimbleFunctionVirtual}.  Other nimbleFunctions can inherit from
 virtual nimbleFunctions, which in R is called ``containing'' them.
 Readers familiar with object oriented programming will recognize this
-as a simple class inheritance system.  In v\ver\ it is limited to
+as a simple class inheritance system.  In Version \ver\ it is limited to
 simple, single-level inheritance.
 
 Here is how it works:
@@ -606,8 +613,21 @@ cannot be built from the previous compiled version.  A solution is to
 re-define \cd{foo} from the beginning -- i.e. call \cd{nimbleFunction}
 again -- and then proceed with building and compiling the algorithm
 for \cd{model2}.  
+
 \section{Debugging nimbleFunctions}
 \label{sec:debugging}
+
+One of the main reasons that NIMBLE provides an R (uncompiled) version
+of each nimbleFunction is for debugging. One can call \cd{debug} on
+nimbleFunction methods (in particular the main \nm{run} method) and
+then step through the code in R using R's debugger. One can also
+insert \cd{browser} calls into run code and then run the
+nimbleFunction from R. 
+
+In contrast, directly debugging a compiled nimbleFunction is
+difficult, although those familiar with running R through a debugger
+and accessing the underlying C code may be able to operate similarly
+with NIMBLE code. 
 
 {\color{red} TODO: basic info on inserting browser in nf run code and running in R as well as using debug(nf\$run)}
 
