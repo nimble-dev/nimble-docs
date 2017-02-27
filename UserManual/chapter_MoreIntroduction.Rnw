@@ -5,17 +5,15 @@
 \chapter{More introduction}
 
 Now that we have shown a brief example, we will introduce more about
-the concepts and design of NIMBLE.  Subsequent chapters will go into
-more detail about working with models and programming in NIMBLE.  
+the concepts and design of NIMBLE.  
 
 One of the most important concepts behind NIMBLE is to allow a
 combination of high-level processing in R and low-level processing in
-compiled C++.  For example, when we write a Metropolis-Hastings MCMC
-sampler in the NIMBLE language, the inspection of the model structure
-related to one node is done in R, and the actual sampler calculations
-are done in compiled C++.  The theme of separating one-time high-level
-processing and repeated low-level processing will become clearer as we
-introduce more about NIMBLE's components.
+C++.  For example, when we write a Metropolis-Hastings MCMC sampler in
+the NIMBLE language, the inspection of the model structure related to
+one node is done in R, and the actual sampler calculations are done in
+C++.  This separation between \textit{setup} and \textit{run} steps
+will become clearer as we go.
 
 
 \section{NIMBLE adopts and extends the BUGS language for specifying models}
@@ -24,103 +22,125 @@ We adopted the BUGS language, and we have extended it to make it more
 flexible. The BUGS language became widely used in WinBUGS, then in
 OpenBUGS and JAGS.  These systems all provide automatically-generated
 MCMC algorithms, but we have adopted only the language for describing
-models, not their systems for generating MCMCs.  We adopted BUGS
-because it has been so successful, with over 30,000 users by the time
-they stopped counting \citep{Lunn_Spiegelhalter_Thomas_Best_2009}.
-Many papers and books provide BUGS code as a way to document their
-statistical models. We provide a brief introduction to BUGS later, but
-we refer you to the WinBUGS, OpenBUGS or JAGS websites for more material.  For
-the most part, if you have BUGS code, you can try NIMBLE.
+models, not their systems for generating MCMCs.  
 
-  NIMBLE takes BUGS code and does several things with it:
-  \begin{enumerate}
-  \item NIMBLE extracts all the declarations in the BUGS code to
-    create a \nm{model definition}.  This includes a directed acyclic graph (DAG)
-    representing the model and functions that can 
-   query model relationships from the graph.  Usually you'll ignore the \nm{model definition}
-    and let NIMBLE's default options take you directly to the next step.
-  \item From the \nm{model definition}, NIMBLE builds a working model
-    in R.  This can be used to manipulate variables and operate the
-    model from R.  Operating the model includes calculating,
-    simulating, or querying the log probability value of model
-    nodes. These basic capabilities, along with the tools to query model
-    structure, allow one to write programs that use the model and
-    adapt to its structure.
-  \item From the working model, NIMBLE generates customized C++ code
-    representing the model, compiles the C++, loads it back into R,
-    and provides an R object that interfaces to it.  We often call the
-    uncompiled model the ``R-model'' and the compiled model the
-    ``C-model.''  The C-model can be used identically to the R-model,
-    so code written to use one will work with the other.  We use the
-    word ``compile'' to refer to
-    the entire process of generating C++ code, compiling it and
-    loading it into R.
-  \end{enumerate}
-  
-  {\color{red} Not sure we've generally used the term 'C-model' --
-    these only appear in this Chapter: I
-    think 'R model' and 'compiled model' is our standard phrasing;
-    thoughts on whether to reword the above?}
- 
-  More information about specifying and manipulating models is in
-  Chapters \ref{cha:building-models} and \ref{cha:using-bugs-models}.
-  
-  
-  \section{The NIMBLE language for writing algorithms}
-  \label{sec:nimble-lang-writ}
-  
-  NIMBLE provides a language, embedded within and similar in style to
-  R, for writing algorithms that can operate on BUGS models.  The
-  algorithms can use NIMBLE's utilities for inspecting the structure
-  of a model, such as determining the dependencies between variables.
-  And the algorithms can control the model, changing values of its
-  variables and controlling execution of its probability calculations
-  or corresponding simulations.  Finally, the algorithms can use
-  automatically generated data structures to manage sets of model
-  values and probabilities.  In fact, the calculations of the model
-  are themselves constructed as functions in the NIMBLE language, as
-  are the algorithms provided in NIMBLE's algorithm library.  This
-  means that you can extend BUGS with new
-  distributions and new functions written in NIMBLE.
-  
-  Like the models themselves, functions in
-  the NIMBLE language are turned into C++, which is compiled, loaded,
-  and interfaced to R.  
-
-Programming in NIMBLE involves a fundamental distinction between:
+NIMBLE extends BUGS by:
 \begin{enumerate}
-\item the steps for an algorithm that need to happen only
-once, at the beginning, such as inspecting the model; and
-\item the steps that need to happen each time a function is called, such as MCMC iterations.
+\item allowing you to write new functions and
+distributions and use them in BUGS models;
+\item allowing you to define multiple models in the same code using
+  conditionals evaluated when the BUGS code is processed;
+\item supporting a variety of more flexible syntax such as R-like
+  named parameters and more general algebraic expressions.
 \end{enumerate}
-When one writes a \cd{nimbleFunction}, each of
-these parts can be provided separately.  The former, if needed, are given in a \nm{setup
-  function}, and they are executed directly in R, allowing any feature
-of R to be used.  The latter are in one or more \nm{run-time functions}, and they
-are turned into C++.  Run-time code is written in the NIMBLE language,
-which you can think of as a carefully controlled, small subset of R
-along with some special functions for handling models and NIMBLE's
-data structures.
+By supporting new functions and distributions, NIMBLE makes BUGS an
+extensible language, which is a major departure from previous
+packages that implement BUGS.  
+
+We adopted BUGS because it has been so successful, with over 30,000
+users by the time they stopped counting
+\citep{Lunn_Spiegelhalter_Thomas_Best_2009}.  Many papers and books
+provide BUGS code as a way to document their statistical models. We
+describe NIMBLE's version of BUGS later.  The web sites for WinBUGS,
+OpenBUGS and JAGS provide other useful documntation on writing models
+in BUGS.  For the most part, if you have BUGS code, you can try
+NIMBLE.
+
+NIMBLE does several things with BUGS code:
+\begin{enumerate}
+\item NIMBLE creates a \nm{model definition} object that knows
+  everything about the variables and their relationships written in
+  the BUGS code.  Usually you'll ignore the \nm{model definition}
+  and let NIMBLE's default options take you directly to the next step.
+\item NIMBLE creates a model object\footnote{or multiple model
+    objects}.  This can be used to
+  manipulate variables and operate the model from R.  Operating the
+  model includes calculating, simulating, or querying the log
+  probability value of model nodes. These basic capabilities, along
+  with the tools to query model structure, allow one to write
+  programs that use the model and adapt to its structure.
+\item When you're ready, NIMBLE can generate customized C++ code
+  representing the model, compile the C++, load it back into R, and
+  provide a new model object that uses the compiled model
+  internally.  We use the word ``compile'' to refer to all of these
+  steps together.
+\end{enumerate}
+
+As an example of how radical a departure NIMBLE is from previous BUGS
+implementations, consider a situation where you want to simulate new
+data from a model written in BUGS code.  Since NIMBLE creates model
+objects that you can control from R, simulating new data is trivial.
+With previous BUGS-based packages, this isn't possible.
+
+More information about specifying and manipulating models is in
+Chapters \ref{cha:building-models} and \ref{cha:using-bugs-models}.
+
+\section{nimbleFunctions for writing algorithms}
+\label{sec:nimble-lang-writ}
+
+NIMBLE provides \nm{nimbleFunction}s for writing functions that can
+(but don't have to) use BUGS models.  The main ways they can use
+BUGS models are:
+
+\begin{enumerate}
+\item inspecting the structure of a model, such as determining the
+  dependencies between variables, in order to do the right
+  calculations with each model;
+\item accessing values of the model's variables;
+\item controlling execution of the model's probability calculations
+  or corresponding simulations;
+\item managing \nm{modelValues} data structures for multiple sets of
+  model values and probabilities.
+\end{enumerate}
+
+In fact, the calculations of the model are themselves constructed as
+nimbleFunctions, as are the algorithms provided in
+NIMBLE's algorithm library\footnote{That's why it's easy to use new
+  functions and distributions written as nimbleFunctions in BUGS code.}.
+
+Programming with nimbleFunctions involves a fundamental distinction
+between two stages of processing:
+\begin{enumerate}
+
+\item A \nm{setup} function within a nimbleFunction gives the steps
+  that need to happen only once for each new situation (e.g., for each
+  new model).  Typically such steps include inspecting the model's
+  variables and their relationships, such as determining which parts
+  of a model will need to be calculated for a MCMC sampler. \nm{setup}
+  functions are executed in R and never compiled.
+
+\item One or more \nm{run} functions within a nimbleFunction give
+  steps that need to happen multiple times using the results of the
+  \nm{setup} function, such as the iterations of a MCMC sampler.
+  Formally, \nm{run} code is written in the NIMBLE language, which you
+  can think of as a small subset of R along with features for
+  operating models and related data structures.  The NIMBLE language
+  is what the NIMBLE compiler can automatically turn into C++ as part
+  of a compiled nimbleFunction.
+\end{enumerate}
 
 What NIMBLE does with a \cd{nimbleFunction} is similar to what it does
 with a BUGS model:
 \begin{enumerate}
-\item NIMBLE creates a working R version of the \cd{nimbleFunction},
-  which you can use with an R-model or a C-model.
-\item NIMBLE generates C++ code for the run-time function(s), compiles
-  it, and loads it back into R with an interface nearly identical to
-  the R version of the \cd{nimbleFunction}.   As with models, we refer
-  to the uncompiled and compiled versions as R-nimbleFunctions and
-  C-nimbleFunctions, respectively.   In Version \ver, the behavior
-  of \cd{nimbleFunction}s is usually very similar, but not identical,
-  between the two versions.  The primary purpose of uncompiled
-  execution is to facilitate debugging.
+\item NIMBLE creates a working R version of the \cd{nimbleFunction}.
+  This is most useful for debugging.
+\item When you are ready, NIMBLE can generate C++ code, compile it,
+  load it back into R and give you new objects that use the compiled
+  C++ internally.  Again, we refer to these steps all together as ``compilation.''  The behavior of compiled \cd{nimbleFunction}s is
+  usually very similar, but not identical, to their uncompiled
+  counterparts.
 \end{enumerate}
 
-{\color{red} Actually we never use {R,C}-nimbleFunction elsewhere - I
-  vote for taking this out - CJP}
-
   More about writing algorithms is in Chapter \ref{cha:progr-with-models}.
+  
+  If you are familiar with object-oriented programming, you can think of
+a nimbleFunction as a class definition. The \nm{setup} function
+initializes a new object and \nm{run} functions are class methods.
+Member data are determined automatically as the objects from a
+\nm{setup} function needed in \nm{run} functions.  If no \cd{setup}
+function is provided, the nimbleFunction corresponds to a simple
+(compilable) function rather than a class.
+
   
 \section{The NIMBLE algorithm library}
 \label{sec:nimble-algor-libr}
@@ -128,44 +148,40 @@ with a BUGS model:
 In Version \ver, the NIMBLE algorithm library includes:
 
 \begin{enumerate}
-\item MCMC with samplers including conjugate, slice, adaptive random
-  walk (with options for reflection or sampling on a log scale),
-  adaptive block random walk, and elliptical slice.  NIMBLE's MCMC
-  system illustrates the flexibility of combining R and C++.  An R
-  function inspects the model object and creates an MCMC configuration
-  object representing choices of which kind of sampler to use for each
-  node.  This MCMC specification can be modified in R, such as adding
-  new samplers for particular nodes, before compiling the algorithm.
-  Since each sampler is written in NIMBLE, you can use its source code
-  or write new samplers to insert into the MCMC.  And if you want to
-  build an entire MCMC system differently, you can do that too.
-\item A \cd{nimbleFunction} that provides a likelihood function for
-  arbitrary sets of nodes in any model. This can be useful for simple
-  maximum likelihood estimation of non-hierarchical models using R's
-  optimization functions.  And it can be useful for other R packages
-  that run algorithms on any likelihood function.
-\item A \cd{nimbleFunction} that provides ability to simulate,
-  calculate, or retrieve the summed log probability (density) of many
- sets of values for
-  arbitrary sets of nodes. {\color{red} CJP would like to remove this bullet
-    as the nimbleFunctions referred to are really a programming tool and not algorithms}
-\item A set of particle filter (Sequential Monte Carlo) methods
+\item MCMC with samplers including conjugate (Gibbs), slice, adaptive
+  random walk (with options for reflection or sampling on a log
+  scale), adaptive block random walk, and elliptical slice. You can
+  modify sampler choices and configurations from R before compiling
+  the MCMC.  You can also write new samplers as nimbleFunctions.
+\item A set of particle filter (sequential Monte Carlo) methods
   including a basic bootstrap filter, auxiliary particle filter, and
   Liu-West filter.
-\item An ascent-based Monte Carlo Expectation Maximization (MCEM) algorithm.
-  MCEM has its issues as an algorithm, such as potentially slow convergence to the maximum
-  likelihood (i.e., empirical Bayes in this context) estimates, but we chose it as a
-  good illustration of how NIMBLE can be used.  Each MCMC step uses
-  NIMBLE's MCMC; the objective function for maximization is another
-  \cd{nimbleFunction}; and the actual maximization is done through R's
-  \cd{optim} function\footnote{In the future we plan to provide direct
-    access to R's optimizers from within \cd{nimbleFunction}s.}.
+\item An ascent-based Monte Carlo Expectation Maximization (MCEM)
+  algorithm.
+\item A variety of basic algorithms that can be used as programming
+  tools for larger algorithms.  These include:
+  \begin{enumerate}
+  \item A likelihood function for arbitrary parts of any model.
+  \item Functions to simulate one or many sets of values for arbitrary
+    parts of any model.
+  \item Functions to calculate the summed log probability (density)
+    for one or many sets of values for arbitrary parts of any model
+    along with stochastic dependencies in the model structure.
+  \item Other functions described in Chapter \ref{cha:algos-provided}.
+  \end{enumerate}
+
 \end{enumerate}
 
+{\color{red} Add references where appropriate.}.
+ 
 {\color{red} CJP - so is the only difference between calculate and
   calcNodes (and similarly for simNodes, getLogProbNodes) that
-  calcNodes etc. include operations on dependencies? If so, I
-  propose we extend calculate, simulate, getLogProb to have an
-  argument includeDependencies with default FALSE}
+  calcNodes etc. include operations on dependencies? If so, I propose
+  we extend calculate, simulate, getLogProb to have an argument
+  includeDependencies with default FALSE.} {\color{blue} PdV - There
+  were a couple of things conflated here, but the question is still
+  valid.  The suggestion seems like a slippery slope towards trying to
+  make calculate (etc.) smarter, which could get away from the core
+  design ideas.}
   
 More about the NIMBLE algorithm library is in Chapter \ref{cha:algos-provided}.
