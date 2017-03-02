@@ -6,55 +6,43 @@
 require(nimble)
 @ 
 
-\chapter{Building models}
+<<echo=FALSE>>=
+read_chunk(file.path('chunks', 'usingBugsModels_chunks.R'))  # one can put code chunks here if one wants
+@ 
+
+\chapter{Building and using models}
 \label{cha:building-models}
 
 This chapter explains how to build and manipulate model objects
 starting from BUGS code.
 
 
-Building models
+\section{Creating model objects}
 
-Providing  dimensions
+NIMBLE provides two functions for creating model objects:
+\cd{nimbleModel} and \cd{readBUGSmodel}. The first, \cd{nimbleModel},
+is more general and was illustrated in Chapter \ref{cha:intro}. The
+second, \cd{readBUGSmodel} provides compatibility with BUGS file
+formats for models, variables, data, and initial values for MCMC.  In
+addition one can create new model objects from existing model objects.
 
-KEEP THIS:
+\subsection{Using \cd{nimbleModel} to create a model}
 
-Here's an example of indexing in the context of multivariate nodes,
-showing two ways to do the indexing.  The first provides indices, so
-no \cd{dimensions} argument is needed, while the second omits the
-indices and provides a \cd{dimensions} argument instead.
+\cd{nimbleModel} processes BUGS code to determine all the nodes,
+variables, and their relationships in a model.  Any constants must be
+provided at this step.  Data and initial values can optionally be
+provided.  BUGS code passed to \cd{nimbleModel} must go through
+\cd{nimbleCode}.
 
-<<multivar-index>>=
-code <- nimbleCode({
-  y[1:K] ~ dmulti(p[1:K], n)
-  p[1:K] ~ ddirch(alpha[1:K])
-  log(alpha[1:K]) ~ dmnorm(alpha0[1:K], R[1:K, 1:K])
-})
+We look again at the pump example from the introduction:
 
-K <- 5
-model <- nimbleModel(code, constants = list(n = 3, K = K,
-                          alpha0 = rep(0, K), R = diag(K)),
-                     check = FALSE)
-
-codeAlt <- nimbleCode({
-  y[] ~ dmulti(p[], n)
-  p[] ~ ddirch(alpha[])
-  log(alpha[]) ~ dmnorm(alpha0[], R[ , ])
-})
-
-model <- nimbleModel(codeAlt, constants = list(n = 3, K = K,
-                          alpha0 = rep(0, K), R = diag(K)),
-                  dimensions = list(y = K, p = K, alpha = K),
-                      check = FALSE)
-                  
-                                           
+<<reinitPumpModel, message=FALSE>>=
 @ 
 
-\subsection{Data and constants}
+\subsubsection{Data and constants}
 \label{sec:data-constants}
 
-NIMBLE makes a distinction between data and constants that would both
-be considered ``data'' in BUGS and JAGS.  
+NIMBLE makes a distinction between data and constants:
 
 \begin{itemize}
 \item \nm{Constants} can never be changed and must be provided when a
@@ -76,27 +64,44 @@ be considered ``data'' in BUGS and JAGS.
   % they can also be provided earlier when a model is defined.
 \end{itemize}
 
-We encourage users to distinguish between data and constants
-when building a model via \cd{nimbleModel}. However, for compatibility
-with BUGS and JAGS, NIMBLE allows both to be provided in the
-the \cd{constants} argument to \cd{nimbleModel}, in which case
-NIMBLE determines which are which, based on which variables appear on the 
-left-hand side of BUGS declarations. 
+WinBUGS, OpenBUGS and JAGS do not allow data values to be changed or
+different nodes to be labeled as data without starting from the
+beginning again.  Hence they do not distinguish between constants and
+data.  
 
-It is also possible to have variables appear only on the right-hand side of BUGS declarations (e.g., covariates/predictors). If the values of these variables will never change, one can specify these via \cd{constants}. However, one might want to define a model and then change such values (e.g., use a model with different covariate values). Therefore one can provide the values of such variables via the \cd{data} argument 
-to \cd{nimbleModel} and these will
-appear as variables in the model but will not
-have any corresponding nodes. A user can change these values via direct
-assignment if desired.
-% we used to say that RHS 'data' would be flagged as data but this
-% seems not to be true so I took it out - CJP 4/30/15
+For compatibility with BUGS and JAGS, NIMBLE allows both to be
+provided in the the \cd{constants} argument to \cd{nimbleModel}, in
+which case NIMBLE handles values for stochastic nodes as data and
+everything else as constants.
+
+Values for nodes that appear only on the right-hand side of BUGS
+declarations (e.g., covariates/predictors) can be provided as data or
+constants.
+
+\subsubsection{Providing data and initial values to an existing model}
+
+Wherease constants must be provided during the call the
+\cd{nimbleModel}, data and initial values can be provided later via
+the model member functions \cd{setData} and \cd{setInits}. For
+example, if \cd{pumpData} is a named list of data values (as above),
+then \cd{pump\$setData(pumpData)} sets the named variables to the
+values in the list.
+
+\cd{setData} does two things: it sets the values of the data nodes,
+and it flags those nodes as containing data.  \cd{nimbleFunction}
+programmers can then use that information to control whether an
+algorithm should over-write data or not.  For example, NIMBLE's
+\cd{simulate} functions by default do not overwrite data values but
+can be told to do so.  Values of data variables can be replaced, and
+the indication of which nodes should be treated as data can be reset
+by using the \cd{resetData} method, e.g. \cd{pump\$resetData()}.
 
 \subsubsection{Missing data values}
 
 Sometimes one needs a model variable to have a mix of data and
 non-data, often due to missing data values.  In NIMBLE, when data
 values are provided, any nodes with \cd{NA} values will \nm{not} be
-labeled as data. The result will be that nodes with non-\cd{NA} values will be flagged as data nodes, while nodes with \cd{NA} values will not.  A node following a multivariate distribution must be either entirely observed or entirely missing.
+labeled as data.  A node following a multivariate distribution must be either entirely observed or entirely missing.
 
 Here's an example of running an MCMC on the \nm{pump} model, with two
 of the observations taken to be missing.  Some of the steps in this
@@ -104,7 +109,7 @@ example are documented more below.  NIMBLE's default MCMC
 configuration will treat the missing values as unknowns to be sampled,
 as can be seen in the MCMC output here.
 
-<<pump-missing, eval=FALSE>>=
+<<pump-missing, eval=FALSE, message=FALSE>>=
 pumpMiss <- pump$newModel()
 pumpMiss$resetData()
 pumpDataNew <- pumpData
@@ -128,26 +133,23 @@ samples[1:5, 13:17]
 
 % TODO: IS THIS REDUNDANT 
 % I THINK IT IS NICE TO HAVE - CJP: 
-Missing values may also occur in variables appearing on the
-right-hand side of BUGS declarations. Values for such variables should
-be passed in via the \cd{data} argument to \cd{nimbleModel}, with \cd{NA}
-for the missing values.  In many contexts, one would want to 
-specify (prior) distributions for the elements with missing values.
+% I edited this. -PdV
+Missing values may also occur in explanatory variables.  Values for
+such variables should be passed in via the \cd{data} argument to
+\cd{nimbleModel}, with \cd{NA} for the missing values.  In some
+contexts, one would want to specify distributions for such explanatory
+variables so that values are imputed by an MCMC for missing values.
 
-\subsection{Defining alternative models with the same code}
+\subsubsection{Defining alternative models with the same code}
 \label{sec:defin-altern-models}
 % THIS STAYS HERE BECAUSE IT USES nimbleModel
-Avoiding code duplication is a basic principle of good programming.
-In BUGS and JAGS, if one wants to consider model variants, one needs
-to create complete model
-code for each one.  This can lead to lots of code and potential errors.
-
-In NIMBLE, one can use definition-time if-then-else statements to
-create different models from the same code.  As a simple example, say we have
+Avoiding code duplication is a basic principle of good programming. In
+NIMBLE, one can use definition-time if-then-else statements to create
+different models from the same code.  As a simple example, say we have
 a linear regression model and want to consider including or omitting
 \cd{x[2]} as an explanatory variable:
 
-<<>>=
+<<message=FALSE>>=
 regressionCode <- nimbleCode({
     intercept ~ dnorm(0, sd = 1000)
     slope1 ~ dnorm(0, sd = 1000)
@@ -172,24 +174,51 @@ modelWithX2 <- nimbleModel(regressionCode, constants = list(N = 30),
 modelWithX2$getVarNames()
 @ 
 
-\section{Creating model objects}
+Whereas the \nm{constants} are a property of the \nm{model definition}
+-- since they may help determine the model structure itself --
+\nm{data} nodes can be different in different copies of the model
+generated from the same \nm{model definition}.   The \cd{setData} and
+\cd{setInits} described above can be used for each copy of the model.
 
-NIMBLE provides two functions for creating model objects:
-\cd{nimbleModel} and \cd{readBUGSmodel}. The first, \cd{nimbleModel}, is the primary way to create models and
-was illustrated in Chapter \ref{cha:intro}. The second, \cd{readBUGSmodel} provides compatibility with BUGS file
-formats for models, variables, data, and initial values for MCMC.  
+\subsubsection{Providing dimensions via \cd{nimbleModel}}
+\label{sec:prov-dimens-via}
 
-NIMBLE also provides some additional flexibility in setting data in a model and in defining multiple models from the same model definition, as described at the end of this section. 
+\cd{nimbleModel} can usually determine the dimensions of every
+variable from the declarations in the BUGS code.  However, it is
+possible to use a multivariate object only with empty indices
+(e.g. \cd{x[,]}), in which case the dimensions must be provided as an
+argument to \cd{nimbleModel}.
 
+Here's an example with multivariate nodes.  The first provides indices, so
+no \cd{dimensions} argument is needed, while the second omits the
+indices and provides a \cd{dimensions} argument instead.
 
-\subsection{Using \cd{nimbleModel} to specify a model}
+<<multivar-index, message=FALSE>>=
+code <- nimbleCode({
+  y[1:K] ~ dmulti(p[1:K], n)
+  p[1:K] ~ ddirch(alpha[1:K])
+  log(alpha[1:K]) ~ dmnorm(alpha0[1:K], R[1:K, 1:K])
+})
 
-  The R help page
-(\cd{?nimbleModel}) provides more details on \cd{nimbleModel} arguments.
+K <- 5
+model <- nimbleModel(code, constants = list(n = 3, K = K,
+                          alpha0 = rep(0, K), R = diag(K)),
+                     check = FALSE)
 
- 
+codeAlt <- nimbleCode({
+  y[] ~ dmulti(p[], n)
+  p[] ~ ddirch(alpha[])
+  log(alpha[]) ~ dmnorm(alpha0[], R[ , ])
+})
 
-\subsection{Specifying a model from standard BUGS and JAGS input files}
+model <- nimbleModel(codeAlt, constants = list(n = 3, K = K,
+                          alpha0 = rep(0, K), R = diag(K)),
+                  dimensions = list(y = K, p = K, alpha = K),
+                      check = FALSE)
+
+@
+
+\subsection{Creating a model from standard BUGS and JAGS input files}
 \label{sec:readBUGSmodel}
 
 Users with BUGS and JAGS experience may have files set up in standard
@@ -202,21 +231,8 @@ In either case, after processing the inputs, it calls \cd{nimbleModel}.
 Note that unlike BUGS and JAGS, only a single set of initial values can be
 specified in creating a model. Please see \cd{help(readBUGSmodel)} for argument details.  
 
-%% \cd{readBUGSmodel()} can take the following arguments:
-%% \begin{description}
-%% \item[model] is either a file name, an R code object such as can be
-%%   passed in the \cd{code} argument of \cd{nimbleModel()}, or a R
-%%   function whose body contains the model code. 
-%% \item[data] is either a file name or a named list specifying constants
-%%   and data together, the way they would be provided for BUGS or JAGS.
-%%   \cd{readBUGSmodel()} treats values that appear on the left-hand side
-%%   of BUGS declarations as data and other values as constants, so you
-%%   do not need to call the \cd{setData} method.
-%% \item[inits] is either a file name or a named list of initial values.  
-%% \end{description}
-
 As an example of using \cd{readBUGSmodel}, let's create a model for the \nm{pump} example from BUGS.
-<<readBUGSmodel>>=
+<<readBUGSmodel, message=FALSE>>=
 pumpDir <- system.file('classic-bugs', 'vol1', 'pump', package = 'nimble')
 pumpModel <- readBUGSmodel('pump.bug', data = 'pump-data.R', 
                            inits = 'pump-init.R', dir = pumpDir)
@@ -243,14 +259,14 @@ original BUGS examples in which data was indicated with syntax such as
 \label{sub:multiple-instances}
   
 Sometimes it is useful to have more than one copy of the same model.
-For example, \cd{nimbleFunction}s are often bound to a particular
-model as a result of \cd{setup} code.  A user could build multiple
-algorithms to use the same model instance, or they may want each
-algorithm to have its own instance of the model.
+For example, an algorithm (i.e., \cd{nimbleFunction}) such as an MCMC will be
+bound to a particular model before it is run.  A user could build multiple algorithms
+to use the same model instance, or they may want each algorithm to
+have its own instance of the model.
 
 There are two ways to create new instances of a model, shown in this example:
 
-<<>>=
+<<message=FALSE>>=
 simpleCode <- nimbleCode({
     for(i in 1:N) x[i] ~ dnorm(0, 1)
     })
@@ -269,6 +285,8 @@ simpleModelCopy3 <- simpleModelCopy2$newModel(check = FALSE, data =
    list())
 @ 
 
+{\color{red} LET'S CHECK THE STATUS OF THE BUG DESCRIBED IN THE COMMENTS.}
+
 Each copy of the model can have different nodes flagged as data and
 different values in any nodes.  They cannot have different values of
 \cd{N} because that is a constant; it must be a constant because
@@ -276,34 +294,10 @@ it helps define the model.
 
 \section{NIMBLE models are objects you can query and manipulate}
 
-At the heart of NIMBLE's flexibility is that NIMBLE models are objects (R objects with corresponding compiled versions) that can be modified and manipulated from R. We discuss this in detail in Chapter \ref{cha:using-bugs-models}, because this usage of NIMBLE model objects is most important when writing algorithms.
-
-However, in this section we provide some details on manipulating model objects that are useful when using NIMBLE's algorithms (particularly MCMC) with your models.
-
-\subsection{Providing data and initial values to an existing model}
-
-
-Whereas the \nm{constants} are a property of the \nm{model definition}
--- since they may help determine the model structure itself --
-\nm{data} nodes can be different in different copies of the model
-generated from the same \nm{model definition}.  For this reason,
-\nm{data} is not required to be provided when the model code is
-processed.  It can be provided later via the model member function
-\cd{setData}. e.g., \cd{pump\$setData(pumpData)}, where \cd{pumpData}
-is a named list of data values.
-
-\cd{setData} does two things: it sets the values of the data nodes,
-and it flags those nodes as containing data.  \cd{nimbleFunction}
-programmers can then use that information to control whether an
-algorithm should over-write data or not.  For example, NIMBLE's
-\cd{simulate} functions by default do not overwrite data values but
-can be told to do so.  Values of data variables can be replaced, and
-the indication of which nodes should be treated as data can be reset
-by using the \cd{resetData} method, e.g. \cd{pump\$resetData()}.
-
-Similarly, one can set initial values for parameters via \cd{setInits}. 
-
-
+NIMBLE models are objects that can be modified and manipulated from R.
+In this section we introduce some basic ways to use a model object.
+Chapter \ref{cha:using-bugs-models} covers more topics for writing
+algorithms that use models.
 
 \subsection{Determining the nodes and variables in a model}
 
@@ -315,9 +309,9 @@ One can determine the nodes and variables in a model using \cd{getNodeNames}:
 Note that some of the nodes may be ``lifted'' nodes introduced by
 NIMBLE (Section \ref{sec:introduced-nodes}).
 
-Next note that we can determine the set of nodes contained in one or more nodes or variables using \cd{expandNodeNames}. The \cd{returnScalarComponents} argument also allows us to return all of the scalar components of multivariate nodes. 
+We can determine the set of nodes contained in one or more nodes or variables using \cd{expandNodeNames}. The \cd{returnScalarComponents} argument also allows us to return all of the scalar components of multivariate nodes. 
 
-<<expandNodeNames>>=
+<<expandNodeNames, message=FALSE>>=
 @ 
 
 \subsubsection{Accessing nodes}
@@ -328,10 +322,17 @@ node also has its own name that can be used to access it directly.  For
 example, \cd{y[2]} has the name ``y[2]'' and can be accessed by that
 name as follows:
 
+
+<<usingModelsExample, message=FALSE>>=
+@ 
+
 <<usingNodeNames>>=
 @ 
 
-Notice that node names can include index blocks, such as \cd{model[[`z[2:4, 1:2]']]}, and these are not strictly required to correspond to actual nodes.  Such blocks can be subsequently sub-indexed in the regular R manner.
+Notice that node names can include index blocks, such as
+\cd{model[[`z[2:4, 1:2]']]}, and these are not strictly required to
+correspond to actual nodes.  Such blocks can be subsequently
+sub-indexed in the regular R manner, such as \cd{model[['z[2:4, 1:2]']][1, 2]}.
 
 \paragraph{How nodes are named}
 \label{sec:how-nodes-are}
@@ -346,15 +347,13 @@ example, a multivariate node for \cd{X[6:10, 3]} has the name ``X[6:10, 3]''.
 The definitive source for node names in a model is
 \cd{getNodeNames}, described below.  For example
 
-<<multivariateDecExample>>=
+<<multivariateDecExample, message=FALSE>>=
 @ 
 
 You can see one lifted node for the Cholesky decomposition of
 \cd{cov}, and the two multivariate normal nodes.
 
-{\color{red} CJP asks if we need the next bit - I suspect in all cases
-  we now cleanly handle any cases where a node name is given with
-  non-canonical spacing.}
+% PdV thinks this is still potentially relevant.
 
 In the event you need to ensure that a name is formatted correctly,
 you can use the \cd{expandNodeNames} method. For
