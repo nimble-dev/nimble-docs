@@ -1,5 +1,4 @@
 % To avoid execution of code, do opts_chunk$set(eval = FALSE)
-% Or in shell to make NimbleUserManualNoEval.pdf %not sure that works anymore
 % See options() calls below.  To force evaluation of all chunks, use
 % the one with cache.rebuild = TRUE
 \documentclass[12pt,oneside]{book}
