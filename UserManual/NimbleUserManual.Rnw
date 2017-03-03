@@ -1,5 +1,4 @@
 % To avoid execution of code, do opts_chunk$set(eval = FALSE)
-% Or in shell to make NimbleUserManualNoEval.pdf %not sure that works anymore
 % See options() calls below.  To force evaluation of all chunks, use
 % the one with cache.rebuild = TRUE
 \documentclass[12pt,oneside]{book}
@@ -39,7 +38,7 @@
 options(replace.assign=TRUE, width=65)
 runMCEMs <- FALSE
 opts_chunk$set(eval = FALSE)
-## options(replace.assign=TRUE, cache.rebuild = TRUE, width=65)
+##options(replace.assign=TRUE, cache.rebuild = TRUE, width=65)
 @
 
 
@@ -84,8 +83,12 @@ nimbleOptions(MCMCprogressBar = FALSE)
 
 \Sexpr{knit_child('chapter_InstallingNimble.Rnw')}
 
-\Sexpr{knit_child('chapter_BuildingModels.Rnw')}
+\part{Models in NIMBLE}
+\label{part:models}
 
+\Sexpr{knit_child('chapter_WritingModels.Rnw')}
+
+\Sexpr{knit_child('chapter_BuildingModels.Rnw')}
 
 \part{Algorithms in NIMBLE}
 \label{part:algorithms}
