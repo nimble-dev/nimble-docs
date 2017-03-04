@@ -253,6 +253,32 @@ column-wise order.
 vector in other expressions, e.g. \cd{Y <- A \%*\% values(model,
   nodes) + b}. 
 
+One can also use indexing, but one can only have a single index, and not a range of indices:
+
+<<eval=FALSE>>=
+## get values from a set of model nodes into a vector
+i <- 2
+P <- values(model, nodes[i])
+## or put values from a vector into a set of model nodes
+values(model, nodes[i]) <- P
+# P <- values(model, nodes[1:2] # won't compile
+@ 
+
+Note that \cd{values()} returns a 1-d vector and expects a 1-d vector when used on the left-hand side of an assignment. This means that one needs to do some extra work to use scalars with \cd{values()}. For example:
+
+<<eval=FALSE>>=
+tmp <- numeric(1)
+tmp[1] <- rnorm(1)
+values(model, nodes[1]) <- tmp
+# values(model, nodes[1]) <- rnorm(1)  # won't compile
+
+out <- values(model, nodes[1])
+returnType(double(0))
+return(out[1])
+# return(out)  # won't compile unless one has returnType(double(1))
+@ 
+
+
 \subsection{Using modelValues objects}
 \label{sec:access-model-modelv}
 
