@@ -248,8 +248,10 @@ similar to the specification of runtime arguments to \cd{nimbleFunction}s.  The 
 
 The second method of creating a \cd{nimbleList} definition is by providing an \cd{R} \cd{list} of \cd{nimbleType} objects to the \cd{nimbleList()} function.  A \cd{nimbleType} object can be created using the \cd{nimbleType()} function, which must be provided with three arguments: the \cd{name} of the object being created, the \cd{type} of the object being created, and the \cd{dim} of the object being created.  For example, the following code creates a list with two \cd{nimbleType} objects, and uses these objects to create a \cd{nimbleList} definition.
 <<exampleDefineNimList2>>=
- nimbleListTypes <- list(nimbleType(name = 'nimListInteger', type = 'integer', dim = 0),
-                         nimbleType(name = 'nimListMatrix', type = 'double', dim = 2))
+ nimbleListTypes <- list(nimbleType(name = 'nimListInteger',
+                                    type = 'integer', dim = 0),
+                         nimbleType(name = 'nimListMatrix',
+                                    type = 'double', dim = 2))
 
  ## this nimbleList definition is identical to the one created above
  exampleNimListDef <- nimbleList(nimbleListTypes)
@@ -258,7 +260,8 @@ Creating definitions using a \cd{list} of \cd{nimbleType}s can be useful, as it 
 
 Once a \cd{nimbleList} definition has been created, new instances of \cd{nimbleList}s can be made from that definition using the \cd{new()} member function.  The \cd{new()} function can optionally take initial values for the list elements as arguments.  Below, we create a new \cd{nimbleList} from our \cd{exampleNimListDef} and specify values for the two elements of our list:
 <<exampleCreateNimList>>=
- exampleNimList <- exampleNimListDef$new(nimListInteger = 1, nimListMatrix = diag(2))
+ exampleNimList <- exampleNimListDef$new(nimListInteger = 1,
+                                         nimListMatrix = diag(2))
 @
 Once created, \cd{nimbleList} elements can be accessed using the \cd{\$} operator, just as with \cd{list}s in \cd{R}.  For example, the value of the \cd{nimListInteger} element of our \cd{exampleNimbleList} can be set to \cd{11} using
 <<exampleSetNimList>>=
@@ -310,7 +313,8 @@ outerNimList$innerNimList$nimListCharacter <- "hello, world"
 Note that definitions for inner, or nested, \cd{nimbleList}s must be created before the definition for an outer \cd{nimbleList}.
 
 
-\subsection{Using \cd{eigen()} and \cd{svd()} in \cd{nimbleFunction}s} \label{sec:eigen-nimFunctions}
+\subsection{Using \cd{eigen()} and \cd{svd()} in \cd{nimbleFunction}s}
+\label{sec:eigen-nimFunctions}
 
 \cd{nimble} has two linear algebra functions that return \cd{nimbleList}s.  The \cd{eigen()} function takes a symmetic matrix \cd{X} as an argument, and returns a list with two elements: \cd{values}, a vector with the eigenvalues of \cd{X}, and \cd{vectors}, a square matrix with the same dimension as \cd{X} whose columns are the eigenvectors of \cd{X}.  The \cd{eigen()} function has an optional argument named \cd{only.values}, which defaults to \cd{FALSE}.  If \cd{only.values = TRUE}, the \cd{eigen()} function will not calculate the eigenvectors of \cd{X}, leaving the \cd{vectors} \cd{nimbleList} element empty.  This can reduce calculation time if only the eigenvalues of \cd{X} are needed.
 
