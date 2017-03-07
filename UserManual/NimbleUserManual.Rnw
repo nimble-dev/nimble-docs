@@ -109,6 +109,8 @@ nimbleOptions(MCMCprogressBar = FALSE)
 
 \Sexpr{knit_child('chapter_UsingModels.Rnw')}
 
+\Sexpr{knit_child('chapter_DataStructures.Rnw')}
+
 \Sexpr{knit_child('chapter_WritingNimbleFunctions.Rnw')}
 
 % When building individual chapters that have no refs, knitr

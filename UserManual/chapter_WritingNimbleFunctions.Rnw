@@ -134,6 +134,7 @@ Some of the useful tools and objects to create in \cd{setup} functions include
 \item[lists of other nimbleFunctions] In addition to containing single
   other nimbleFunctions, a nimbleFunction can contain a list of other
   nimbleFunctions.  These are discussed more below.
+\item[nimbleList objects] {\color{red} Nick, is it natural to mention here? if so, I guess we want to be clear about nimList configuration vs. instantiation}
 \end{description}
 
 If one wants a nimbleFunction that does get specialized but has
@@ -282,9 +283,6 @@ return(out[1])
 \subsection{Using modelValues objects}
 \label{sec:access-model-modelv}
 
-{\color{red} This didn't seem to fit in Using Models chapter because
-  of all the discussion and examples with nimbleFunctions, though some
-  of this functionality can be used from R. Thoughts welcome.}
 
 The \cd{modelValues} structure was introduced in Section
 \ref{sec:modelValues-struct}.  Inside nimbleFunctions, modelValues are
