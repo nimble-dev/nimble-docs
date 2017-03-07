@@ -137,6 +137,7 @@ In particular, when a numeric variable is created by
   they could be treated as scalars or vectors.  Currently they are
   treated as scalars.  
 
+\cd{nimbleList}s provide containers for numeric and character type variables in NIMBLE.  More information on using \cd{nimbleList}s in \cd{nimbleFunction}s can be found in Section \ref{...}
 
 
 \subsection{Declaring argument types and the return type}
