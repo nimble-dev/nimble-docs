@@ -141,7 +141,7 @@ In particular, when a numeric variable is created by
   treated as scalars.  
   {\color{red} I think we should say more here - we do allow length-one vectors and passing in a scalar from R into a double(1) (e.g.) will work. Perry, can you frame this more comprehensively here or somewhere else appropriate - I'm wondering if this should be its own subsection and also have a bullet on it in the previous subsection}
 
-\cd{nimbleList}s provide containers for numeric and character type variables in NIMBLE.  More information on using \cd{nimbleList}s in \cd{nimbleFunction}s can be found in Section \ref{...}
+\cd{nimbleList}s provide containers for numeric and character type variables in NIMBLE.  More information on using \cd{nimbleList}s in \cd{nimbleFunction}s can be found in Section \ref{sec:nimbleLists}.
 
 
 \subsection{Declaring argument types and the return type}

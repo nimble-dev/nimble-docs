@@ -14,8 +14,11 @@
 %\endhead
  \cd{inverse(x)}& matrix inverse & $x$ symmetric, positive definite & \Checkmark  \\
  \cd{chol(x)}& matrix Cholesky factorization & $x$ symmetric, positive definite & \Checkmark   \\
- \cd{eigen(x)}& matrix eigendecomposition  &  &  \\
- \cd{svd(x)}& matrix singular value decomposition  &  &  \\
+ \cd{eigen(x)\$values}& matrix eigenvalues  & $x$ symmetric, positive definite & \Checkmark   \\
+ \cd{eigen(x)\$vectors}& matrix eigenvectors  & $x$ symmetric, positive definite & \Checkmark   \\
+ \cd{svd(x)\$d}& matrix singular values  &  & \Checkmark \\
+ \cd{svd(x)\$u}& matrix left singular vectors  &  & \Checkmark \\
+ \cd{svd(x)\$v}& matrix right singular vectors  &  & \Checkmark \\
  \cd{t(x)}& matrix transpose & $x^\top$ & \Checkmark  \\
  \cd{x\%*\%y}& matrix multiply & $ xy$; $x$, $y$ conformant & \Checkmark  \\
  \cd{inprod(x, y)}& dot product & $x^\top y$; $x$ and $y$ vectors & \Checkmark \\

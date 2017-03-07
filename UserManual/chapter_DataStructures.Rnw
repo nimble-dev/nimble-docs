@@ -10,12 +10,9 @@ require(nimble)
 NIMBLE provides several data structures useful for programming.
 
 We'll first describe \cd{modelValues}, which are containers designed for
-storing values for models. Then we'll describe \cd{nimbleLists}, which have a similar purpose to lists in R, allowing you to store heterogeneous information in a single object. 
+storing values for models. Then in Section \ref{sec:nimbleLists} we'll describe \cd{nimbleLists}, which have a similar purpose to lists in \cd{R}, allowing you to store heterogeneous information in a single object. 
 
-modelValues and nimbleLists can be created in either R or in nimbleFunction setup code.  They can then be used either in R or in nimbleFunction run code. If used in run code, they will be compiled along with the nimbleFunction.
-
-{\color{red} Nick et al., please clean up this language and make sure it is accurate/precise in terms of configuration vs instantiation.}
-
+\cd{modelValues} can be created in either \cd{R} or in \cd{nimbleFunction} setup code.  \cd{nimbleList}s can be created in \cd{R} code, in \cd{nimbleFunction} setup code, and in \cd{nimbleFunction} run code. Once created, \cd{modelValues} and \cd{nimbleLists} can then be used either in \cd{R} or in \cd{nimbleFunction} setup or run code.  If used in run code, they will be compiled along with the \cd{nimbleFunction}.
 
 \section{The \nm{modelValues} data structure}
 \label{sec:modelValues-struct}
@@ -237,4 +234,108 @@ cGetLogProbMany$run() #
 @
   
 \section{The \nm{nimbleList} data structure}
-\label{sec:modelValues-struct}
+\label{sec:nimbleLists}
+
+\cd{nimbleList}s provide a container for storing different types of objects in \cd{nimble}, similar to the \cd{list} data structure in \cd{R}.  Before a \cd{nimbleList} can be created and used, a definition  for that \cd{nimbleList} must be created that provides the names, types, and dimensions of the elements in the \cd{nimbleList}.  Unlike \cd{list}s in \cd{R}, \cd{nimbleList}s must have the names and types of all list elements provided by a definition before the list can be used.  A \cd{nimbleList} definition can be made by using the \cd{nimbleList} function in one of two manners.  The first manner is to provide the \cd{nimbleList} function with a series of expressions of the type
+\begin{itemize}
+\item \cd{name = type(nDim)}
+\end{itemize}
+similar to the specification of runtime arguments to \cd{nimbleFunction}s.  The types allowed for a \cd{nimbleList} are the same as those allowed as runtime arguments to a \cd{nimbleFunction}, described in Section \ref{sec:decl-argum-types}.  For example, the following line of code creates a \cd{nimbleList} definition with two elements: \cd{nimListInteger}, which is a scalar integer, and \cd{nimListMatrix}, which is a matrix of doubles.
+<<exampleDefineNimList>>=
+ exampleNimListDef <- nimbleList(nimListInteger = integer(0),
+                                 nimListMatrix = double(2))
+@
+
+The second method of creating a \cd{nimbleList} definition is by providing an \cd{R} \cd{list} of \cd{nimbleType} objects to the \cd{nimbleList()} function.  A \cd{nimbleType} object can be created using the \cd{nimbleType()} function, which must be provided with three arguments: the \cd{name} of the object being created, the \cd{type} of the object being created, and the \cd{dim} of the object being created.  For example, the following code creates a list with two \cd{nimbleType} objects, and uses these objects to create a \cd{nimbleList} definition.
+<<exampleDefineNimList2>>=
+ nimbleListTypes <- list(nimbleType(name = 'nimListInteger', type = 'integer', dim = 0),
+                         nimbleType(name = 'nimListMatrix', type = 'double', dim = 2))
+
+ ## this nimbleList definition is identical to the one created above
+ exampleNimListDef <- nimbleList(nimbleListTypes)
+@
+Creating definitions using a \cd{list} of \cd{nimbleType}s can be useful, as it allows for programmatic generation of \cd{nimbleList} elements.
+
+Once a \cd{nimbleList} definition has been created, new instances of \cd{nimbleList}s can be made from that definition using the \cd{new()} member function.  The \cd{new()} function can optionally take initial values for the list elements as arguments.  Below, we create a new \cd{nimbleList} from our \cd{exampleNimListDef} and specify values for the two elements of our list:
+<<exampleCreateNimList>>=
+ exampleNimList <- exampleNimListDef$new(nimListInteger = 1, nimListMatrix = diag(2))
+@
+Once created, \cd{nimbleList} elements can be accessed using the \cd{\$} operator, just as with \cd{list}s in \cd{R}.  For example, the value of the \cd{nimListInteger} element of our \cd{exampleNimbleList} can be set to \cd{11} using
+<<exampleSetNimList>>=
+ exampleNimList$nimListInteger <- 11
+@
+\cd{nimbleList} definitions can be created either in \cd{R}'s global environment, or in \cd{setup} code of a \cd{nimbleFunction}.  Once a \cd{nimbleList} definition has been made, new instances of \cd{nimbleList}s can be created using the \cd{new()} function in \cd{R}'s global environment, in \cd{setup} code, or in \cd{run} code of a \cd{nimbleFunction}.
+
+\cd{nimbleList}s can also be passed as arguments to run code of \cd{nimbleFunction}s, and returned from \cd{nimbleFunction}s.  To use a \cd{nimbleList} as a run code argument, the name of the \cd{nimbleList} definition should be provided as the argument type, with a set of parentheses following.  To return a \cd{nimbleList} from the run code of a \cd{nimbleFunction}, the \cd{returnType} of that function should be the name of the \cd{nimbleList} definition, again using a following set of parentheses.
+
+Below, we demonstrate a function that takes the \cd{exampleNimList} as an argument, modifies its \cd{nimListMatrix} element, and returns the \cd{nimbleList}.  We note that \cd{nimbleFunction}s that take \cd{nimbleList}s as run arguments must have setup code.  For functions that need no setup code, setting \cd{setup = TRUE} will allow these functions to work correctly.
+
+<<exampleNimListFunction>>=
+nimListFunctionGenerator <- nimbleFunction(
+  setup = TRUE,
+  run = function(argumentList = exampleNimListDef()){
+    onesMatrix <- matrix(value = 1, nrow = 2, ncol = 2)
+    argumentList$nimListMatrix  <- onesMatrix
+    returnType(exampleNimListDef())
+    return(argumentList)
+  })
+nimListFunction <- nimListFunctionGenerator()
+
+## pass exampleNimList as argument to run function
+nimListFunction$run(exampleNimList)
+@
+
+\cd{nimbleList} arguments to run functions are passed by reference -- this means that if an element of a \cd{nimbleList} argument is modified within a function, that element will remain modified when the function has finished running.  To see this, we can inspect the value of the \cd{nimListMatrix} element of the \cd{exampleNimList} object:
+
+<<exampleNimListReference>>=
+exampleNimList$nimListMatrix
+@
+Note that the \cd{nimListMatrix} was assigned a new value (a matrix of all 1's) within the function, and this new value persists outside of the function.
+
+In addition to storing basic data types, \cd{nimbleList}s can also store other \cd{nimbleList}s.  To acheive this, we must create a \cd{nimbleList} definition that declares the types of nested \cd{nimbleList}s a \cd{nimbleList} will store.  Below, we create two types of \cd{nimbleList}s: the first, named \cd{innerNimList}, will be stored inside the second, named \cd{outerNimList}:
+
+<<exampleNestedNimList>>=
+## first, create definitions for both inner and outer nimbleLists
+innerNimListDef <- nimbleList(nimListCharacter = character(0))
+outerNimListDef <- nimbleList(innerNimList = innerNimListDef(),
+                                nimListDouble = double(0))
+
+## then, create outer nimbleList
+outerNimList <- outerNimListDef$new(nimListDouble = 3.14)
+
+## access element of inner nimbleList
+outerNimList$innerNimList$nimListCharacter <- "hello, world"
+@
+
+Note that definitions for inner, or nested, \cd{nimbleList}s must be created before the definition for an outer \cd{nimbleList}.
+
+
+\subsection{Using \cd{eigen()} and \cd{svd()} in \cd{nimbleFunction}s} \label{sec:eigen-nimFunctions}
+
+\cd{nimble} has two linear algebra functions that return \cd{nimbleList}s.  The \cd{eigen()} function takes a symmetic matrix \cd{X} as an argument, and returns a list with two elements: \cd{values}, a vector with the eigenvalues of \cd{X}, and \cd{vectors}, a square matrix with the same dimension as \cd{X} whose columns are the eigenvectors of \cd{X}.  The \cd{eigen()} function has an optional argument named \cd{only.values}, which defaults to \cd{FALSE}.  If \cd{only.values = TRUE}, the \cd{eigen()} function will not calculate the eigenvectors of \cd{X}, leaving the \cd{vectors} \cd{nimbleList} element empty.  This can reduce calculation time if only the eigenvalues of \cd{X} are needed.
+
+The \cd{svd()} function takes an \cd{n-by-p} matrix \cd{Y} as an argument, and returns a list with three elements: \cd{d}, a vector with the singular values of \cd{Y}, \cd{u} a matrix with the left singular vectors of \cd{Y}, and \cd{v}, a matrix with the right singular vectors of \cd{Y}.  The \cd{svd()} function has an optional argument \cd{vectors} which defaults to a value of \cd{"full"}.  The \cd{vectors} argument can be used to specify the number of singular vectors that are returned.  If \cd{vectors = "full"}, \cd{v} will be an \cd{n-by-n} matrix and \cd{u} will be an \cd{p-by-p} matrix.  If \cd{vectors = "thin"}, \cd{v} will be an \cd{n-by-m} matrix, where \cd{m = min(n,p)}, and \cd{u} will be an \cd{m-by-p} matrix.  If \cd{vectors = "none"}, the \cd{u} and \cd{v} elements of the returned \cd{nimbleList} will not be populated. 
+\cd{nimbleList}s created by either \cd{eigen()} or \cd{svd()} can be returned from a \cd{nimbleFunction}, using \cd{returnType(eigen())} or \cd{returnType(svd())} respectively.  \cd{nimbleList}s created by \cd{eigen()} and \cd{svd()} can also be used as nested lists within other \cd{nimbleList}s by specifyng the \cd{nimbleList} element types as \cd{eigen()} and \cd{svd()}.  The below example demonstrates the use of \cd{eigen()} and \cd{svd()} within a \cd{nimbleFunction}.
+
+<<exampleEigenListFunction>>=
+eigenListFunctionGenerator <- nimbleFunction(
+  setup = function(){
+    demoMatrix <- diag(4) + 2
+    eigenAndSvdListDef <- nimbleList(eigenList = eigen(), svdList = svd())
+    eigenAndSvdList <- eigenAndSvdListDef$new()
+  },
+  run = function(){
+    ## we will take the eigendecomposition and svd of a symmetric matrix
+    eigenAndSvdList$eigenList <<- eigen(demoMatrix, only.values = TRUE)
+    eigenAndSvdList$svdList <<- svd(demoMatrix, vectors = 'none')
+    returnType(eigenAndSvdListDef())
+    return(eigenAndSvdList)
+  })
+eigenListFunction <- eigenListFunctionGenerator()
+
+outputList <-  eigenListFunction$run()
+outputList$eigenList$values
+outputList$svdList$d
+@
+The eigenvalues and singular values returned from the above function are the same since the matrix being decomposed was symmetric.  However, note that both eigendecompositions and singular value decompositions are numerical procedures, and computed solutions may have slight differences even for a symmetric input matrix.
+
