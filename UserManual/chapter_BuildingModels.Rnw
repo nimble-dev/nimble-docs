@@ -358,6 +358,13 @@ We can determine the set of nodes contained in one or more nodes or variables us
 \subsubsection{Accessing nodes}
 \label{sec:accessing-nodes}
 
+Model variables can be accessed and set just as in R using \cd{\$} and
+\cd{[[ ]]}.  For example
+
+<<usingModelVars>>=
+@ 
+
+
 While nodes that are part of a variable can be accessed as above, each
 node also has its own name that can be used to access it directly.  For
 example, \cd{y[2]} has the name ``y[2]'' and can be accessed by that
