@@ -413,7 +413,7 @@ samplesMatrix2 <- as.matrix(mvSamples2)
 The column names of the matrices will be the node names of nodes in the monitored variables.  Then, for example, the mean of the samples for node \cd{x[2]} could be calculated as:
 
 <<access-samples, eval=FALSE>>=
-mean(samplesMatrix[, `x[2]'])
+mean(samplesMatrix[, 'x[2]'])
 @
 
 Obtaining samples as matrices is most common, but see section \ref{sec:modelValues-struct} for more about programming with \cd{modelValues} objects, especially if you want to write nimbleFunctions to use the samples.

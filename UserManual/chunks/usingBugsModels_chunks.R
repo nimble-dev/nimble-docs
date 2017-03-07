@@ -69,6 +69,27 @@ multiVarModel$expandNodeNames("X[1,1:5]")
 
 ## @knitr calcSimGLPdemos
 
+mc <- nimbleCode({
+    a ~ dnorm(0, 0.001)
+    for(i in 1:5) {
+        y[i] ~ dnorm(a, 0.1)
+        for(j in 1:3)
+            z[i,j] ~ dnorm(y[i], sd = 0.1)
+    }
+    y.squared[1:5] <- y[1:5]^2
+})
+
+model <- nimbleModel(mc, data = list(z = matrix(rnorm(15), nrow = 5)))
+
+model$a <- 5
+model$a
+model[['a']]
+model$y[2:4] <- rnorm(3)
+model$y
+model[['y']][c(1, 5)] <- rnorm(2)
+model$y
+model$z[1,]
+
 model$y
 model$simulate('y[1:3]')
 ## model$simulate('y[1:3]') does the same thing

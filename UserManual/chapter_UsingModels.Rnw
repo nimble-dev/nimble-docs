@@ -14,34 +14,19 @@ carry out operations on a model. While all of this functionality can
 be used from R, the primary use of getting information and operating a
 model occurs when writing nimbleFunctions (see Chapter \ref{cha:progr-with-models}). 
 Information about node types, distributions, and dimensions can be
-used to determine algorithm behavior in setup code of nimbleFunctions. Information
-about parameter and bound values would generally be used for algorithm
+used to determine algorithm behavior in \nm{setup} code of nimbleFunctions. Information
+about node or variable values or the parameter and bound values of a node would generally be used for algorithm
 calculations in run code of nimbleFunctions. Similarly, carrying out numerical operations
-on a model would generally be done in run code.
+on a model, including setting node or variable values, would generally be done in \nm{run} code.
 
-\section{Variables and nodes in NIMBLE models}
+\section{The variables and nodes in a NIMBLE}
 \label{sec:accessing-variables}
 
-Section \ref{sec:nodes-and-variables} describes what variables and nodes are in a NIMBLE model and how to nodes and their dependency relationships. 
-Here we review some of NIMBLE's functionality for determining and accessing variables and nodes in a model. 
+Section \ref{sec:nodes-and-variables} describes the definitions of variables and nodes in a NIMBLE model and discusses how to determine and access the nodes in a model and their dependency relationships. 
 
-\subsection{Determining the variables and nodes in a model}
+{\color{red} need to work on overlap between stuff below here and what is in chapter 6}
 
-Model variables can be accessed and set just as in R using \cd{\$} and
-\cd{[[ ]]}.  For example
-
-<<usingModelVars>>=
-@ 
-
-While nodes that are part of a variable can be accessed as above, each
-node also has its own name that can be used to access it directly.  For
-example, \cd{y[2]} has the name ``y[2]'' and can be accessed by that
-name as follows:
-
-<<usingNodeNames>>=
-@ 
-
-Notice that node names can include index blocks, such as \cd{model[[`z[2:4, 1:2]']]}, and these are not strictly required to correspond to actual nodes.  Such blocks can be subsequently sub-indexed in the regular R manner.
+\subsection{Determining the nodes in a model}
 
 The definitive source for node names in a model is
 \cd{getNodeNames}, described below.  For example
@@ -65,14 +50,9 @@ to use its \cd{parse} and \cd{deparse} functions.
 deparse(parse(text = "X[1,1:5]", keep.source = FALSE)[[1]])
 @ 
 
-
 The \cd{keep.source = FALSE} makes \cd{parse} more efficient.
 
-
 As discussed in Section \ref{sec:cdisdata}, you can determine whether a node is flagged as data using \cd{isData}. 
-
-
-
 
 \subsection{Understanding lifted nodes}
 \label{sec:introduced-nodes}
@@ -110,7 +90,6 @@ generated.  These include:
 
 \section{Accessing information about nodes and variables}
 \label{sec:nodeInfo}
-
 
 
 \subsection{Determining dependencies in a model}
@@ -244,6 +223,22 @@ version of the random walk MCMC sampler.
   %\cd{calculate}, \cd{calculateDiff}, \cd{simulate}, and \cd{getLogProb}
 \label{sec:cdcalc-cdsim-cdgetl}
 
+\subsection{Getting and setting variable and node values}
+
+Model variables and nodes can be accessed and set just as in R using \cd{\$} and
+\cd{[[ ]]} as discussed in Section \ref{sec:accessing-nodes}.
+
+Variables and nodes that contain more than one value can also be subindexed, e.g.,
+<<subindexing, eval=FALSE>>=
+model[['z[1:5']][2:3]
+model[['z[1:5']][2:3] <- vals 
+@ 
+
+{\color{red} check that we allow subindexing on LHS of run code}
+
+In addition, one can use \cd{values} to get or set the value(s) of one more nodes in a vectorized fashion, as discussed in Section \ref{sec:getting-setting-more}.
+
+
 \subsection{Core model operations: calculation and simulation}
 
 The four basic ways to operate a model are to calculate nodes,
@@ -355,7 +350,7 @@ cCalcXDep$run()
 \subsection{Example: simulating arbitrary collections of nodes}
 \label{sec:arbitr-coll-nodes}
 
-<<calcSimGLPdemos,results='markup;$=\\$'>>=
+<<calcSimGLPdemos,results='markup;$=\\$'>>= 
 @ 
 
 Note the following.

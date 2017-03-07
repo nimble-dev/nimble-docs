@@ -299,7 +299,48 @@ In this section we introduce some basic ways to use a model object.
 Chapter \ref{cha:using-bugs-models} covers more topics for writing
 algorithms that use models.
 
-\subsection{Determining the nodes and variables in a model}
+\subsection{The nodes and variables in a model}
+\label{sec:nodes-and-variables}
+
+\subsection{What are variables and nodes?}
+\label{sec:what-are-nodes-and-variables}
+
+This section discusses some basic concepts and terminology to
+be able to speak about NIMBLE models clearly.
+
+Say we have the following BUGS code
+% This chunk can be modified to jut remove the nimbleModel call.
+
+<<echo=FALSE,message=FALSE>>=
+read_chunk(file.path('chunks', 'usingBugsModels_chunks.R'))
+@ 
+
+<<understandingNimbleConcepts, eval=FALSE>>=
+@ 
+
+In NIMBLE terminology:
+\begin{itemize}
+\item The \textit{variables} of this model are \cd{a}, \cd{y}, \cd{z},
+  and \cd{y.squared}.
+\item The \textit{nodes} of this model are \cd{a}, \cd{y[1]} $\ldots$
+  \cd{y[5]}, \cd{z[1,1]} $\ldots$ \cd{z[5, 3]}, and
+  \cd{y.squared[1:5]}.  In graph terminology, nodes are vertices in
+  the model graph.
+\item the \textit{node functions} of this model are
+  \verb|a ~ dnorm(0, 0.001)|, \verb|y[i] ~ dnorm(a, 0.1)|,
+  \verb|z[i,j] ~ dnorm(y[i], sd = 0.1)|, and
+  \verb|y.squared[1:5] <- y[1:5]^2|.  Each node's calculations are
+  handled by a node function.  Sometimes the distinction between
+  nodes and node functions is important, but when it is not important
+  we may refer to both simply as \textit{nodes}.  
+\item  The \textit{scalar elements} of this model include all the scalar
+  nodes as well as the scalar elements \cd{y.squared[1]} $\ldots$
+  \cd{y.squared[5]} of the multivariate node \cd{y.squared[1:5]}.
+\end{itemize}
+
+
+
+\subsubsection{Determining the nodes and variables in a model}
 
 One can determine the nodes and variables in a model using \cd{getNodeNames}:
 
@@ -334,7 +375,7 @@ Notice that node names can include index blocks, such as
 correspond to actual nodes.  Such blocks can be subsequently
 sub-indexed in the regular R manner, such as \cd{model[['z[2:4, 1:2]']][1, 2]}.
 
-\paragraph{How nodes are named}
+\subsubsection{How nodes are named}
 \label{sec:how-nodes-are}
 
 Every node has a name that is a character string including its
@@ -371,7 +412,7 @@ deparse(parse(text = "X[1,1:5]", keep.source = FALSE)[[1]])
 
 The \cd{keep.source = FALSE} makes \cd{parse} more efficient.
 
-\paragraph{Why use node names?}
+\subsubsection{Why use node names?}
 \label{sec:why-use-node}
 
 Syntax like \cd{pump[["x[2, 3]"]]} may seem strange at first, because

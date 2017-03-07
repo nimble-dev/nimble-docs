@@ -570,39 +570,3 @@ will enforce \cd{alpha1 $\le$ alpha2 $\le$ alpha3}, but it does not treat the th
 
 NIMBLE does not support the JAGS \cd{sort} syntax.
 
-\subsection{Understanding the variables and nodes of a model}
-\label{sec:nodes-and-variables}
-
-This section discusses some basic concepts and terminology to
-be able to speak about NIMBLE models clearly.
-
-Say we have the following BUGS code
-% This chunk can be modified to jut remove the nimbleModel call.
-
-<<echo=FALSE,message=FALSE>>=
-read_chunk(file.path('chunks', 'usingBugsModels_chunks.R'))
-@ 
-
-<<understandingNimbleConcepts, eval=FALSE>>=
-@ 
-
-In NIMBLE terminology:
-\begin{itemize}
-\item The \textit{variables} of this model are \cd{a}, \cd{y}, \cd{z},
-  and \cd{y.squared}.
-\item The \textit{nodes} of this model are \cd{a}, \cd{y[1]} $\ldots$
-  \cd{y[5]}, \cd{z[1,1]} $\ldots$ \cd{z[5, 3]}, and
-  \cd{y.squared[1:5]}.  In graph terminology, nodes are vertices in
-  the model graph.
-\item the \textit{node functions} of this model are
-  \verb|a ~ dnorm(0, 0.001)|, \verb|y[i] ~ dnorm(a, 0.1)|,
-  \verb|z[i,j] ~ dnorm(y[i], sd = 0.1)|, and
-  \verb|y.squared[1:5] <- y[1:5]^2|.  Each node's calculations are
-  handled by a node function.  Sometimes the distinction between
-  nodes and node functions is important, but when it is not important
-  we may refer to both simply as \textit{nodes}.  
-\item  The \textit{scalar elements} of this model include all the scalar
-  nodes as well as the scalar elements \cd{y.squared[1]} $\ldots$
-  \cd{y.squared[5]} of the multivariate node \cd{y.squared[1:5]}.
-\end{itemize}
-
