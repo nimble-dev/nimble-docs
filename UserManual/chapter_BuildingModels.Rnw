@@ -293,16 +293,15 @@ different values in any nodes.  They cannot have different values of
 it helps define the model.
 
 \section{NIMBLE models are objects you can query and manipulate}
+\label{sec:nodes-and-variables}
 
 NIMBLE models are objects that can be modified and manipulated from R.
 In this section we introduce some basic ways to use a model object.
 Chapter \ref{cha:using-bugs-models} covers more topics for writing
 algorithms that use models.
 
-\subsection{The nodes and variables in a model}
-\label{sec:nodes-and-variables}
 
-\subsubsection{What are variables and nodes?}
+\subsection{What are variables and nodes?}
 \label{sec:what-are-nodes-and-variables}
 
 This section discusses some basic concepts and terminology to
@@ -315,7 +314,7 @@ Suppose we have created a model from the following BUGS code.
 read_chunk(file.path('chunks', 'usingBugsModels_chunks.R'))
 @ 
 
-<<usingModelsExample, eval=FALSE>>=
+<<usingModelsExample, message=FALSE>>=
 @ 
 
 In NIMBLE terminology:
@@ -340,19 +339,24 @@ In NIMBLE terminology:
 
 
 
-\subsubsection{Determining the nodes and variables in a model}
+\subsection{Determining the nodes and variables in a model}
 
+  
 One can determine the variables in a model using \cd{getVarNames} and the  nodes in a model using \cd{getNodeNames}, with optional arguments allowing you to select only certain types of nodes. 
 
 <<getVarAndNodeNames>>=
 @ 
 
 Note that some of the nodes may be ``lifted'' nodes introduced by
-NIMBLE (Section \ref{sec:introduced-nodes}). In this case \cd{lifted\_d1\_over\_beta} is the only lifted node in the model.
+NIMBLE (Section \ref{sec:introduced-nodes}). In this case \cd{lifted\_d1\_over\_sqrt\_oPtau\_cP} (this is a node for the standard deviation of the \cd{z} nodes using NIMBLE's canonical parameterization of the normal distribution) is the only lifted node in the model.
 
 To determine the dependencies of one or more nodes in the model, you can use \cd{getDependencies} as discussed in Section \ref{sec:cdgetdependencies}.
 
-\subsubsection{Accessing nodes}
+{\color{red} moved expandNodeNames stuff to chapter 11}
+
+{\color{red} moved getDependencies stuff to chapter 11}
+
+\subsection{Accessing nodes}
 \label{sec:accessing-nodes}
 
 Model variables can be accessed and set just as in R using \cd{\$} and
@@ -376,7 +380,7 @@ Notice that node names can include index blocks, such as
 correspond to actual nodes.  Such blocks can be subsequently
 sub-indexed in the regular R manner, such as \cd{model[['z[2:4, 1:2]']][1, 2]}.
 
-\subsubsection{How nodes are named}
+\subsection{How nodes are named}
 \label{sec:how-nodes-are}
 
 Every node has a name that is a character string including its
@@ -413,11 +417,11 @@ deparse(parse(text = "X[1,1:5]", keep.source = FALSE)[[1]])
 
 The \cd{keep.source = FALSE} makes \cd{parse} more efficient.
 
-\subsubsection{Why use node names?}
+\subsection{Why use node names?}
 \label{sec:why-use-node}
 
-Syntax like \cd{pump[["x[2, 3]"]]} may seem strange at first, because
-the natural habit of an R user would be \cd{pump[["x"]][2,3]}.  To see
+Syntax like \cd{model[["z[2, 3]"]]} may seem strange at first, because
+the natural habit of an R user would be \cd{model[["z"]][2,3]}.  To see
 its utility, consider the example of writing the nimbleFunction given in
 Section \ref{sec:creating-your-own}.  By giving every scalar node a name, even
 if it is part of a multivariate variable, one can write functions in R
@@ -427,16 +431,16 @@ useful for NIMBLE, which resolves how to access a particular node
 during the compilation process.
 
 
-\subsubsection{Checking if a node holds data}
+\subsection{Checking if a node holds data}
 \label{sec:cdisdata}
 
 Finally, you can query whether a node is flagged as data using the
 \cd{isData} method applied to one or more nodes or nodes within variables:
 <<isData>>=
-pump$isData('x[1]')
-pump$isData(c('x[1]', 'x[2]', 'alpha'))
-pump$isData('x')
-pump$isData('x[1:3]')
+model$isData('z[1]')
+model$isData(c('z[1]', 'z[2]', 'a'))
+model$isData('z')
+model$isData('z[1:3, 1]')
 @ 
 
 

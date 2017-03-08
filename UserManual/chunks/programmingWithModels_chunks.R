@@ -12,6 +12,7 @@ nimExp <- nimbleFunction(
            for( i in 1:n) 
                 out[i] <- exp(x[i])
            return(out)
+       }
 )
 
 x <- rnorm(5)

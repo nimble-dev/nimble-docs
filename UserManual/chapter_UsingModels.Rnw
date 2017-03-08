@@ -9,13 +9,12 @@ require(nimble)
 
 Here we describe how one can get information about NIMBLE models and
 carry out operations on a model. While all of this functionality can
-be used from R, the primary use of getting information and operating a
-model occurs when writing nimbleFunctions (see Chapter \ref{cha:progr-with-models}). 
+be used from R, its primary use occurs when writing nimbleFunctions (see Chapter \ref{cha:progr-with-models}). 
 Information about node types, distributions, and dimensions can be
 used to determine algorithm behavior in \nm{setup} code of nimbleFunctions. Information
 about node or variable values or the parameter and bound values of a node would generally be used for algorithm
-calculations in run code of nimbleFunctions. Similarly, carrying out numerical operations
-on a model, including setting node or variable values, would generally be done in \nm{run} code.
+calculations in \nm{run} code of nimbleFunctions. Similarly, carrying out numerical operations
+on a model, including setting node or variable values, would generally be done in run code.
 
 \section{The variables and nodes in a NIMBLE model}
 \label{sec:accessing-variables}
@@ -27,15 +26,14 @@ Section \ref{sec:nodes-and-variables} defines what we mean by variables and node
 {\color{red} the content on getNodeNames (but not expandNodeNames) repeats stuff from Chap. 6; thoughts?}
 {\color{red} one idea is to just have getNodeNames in its most basic usage shown in Chap 6 and more extended usage here}
 
-One can determine the variables in a model using \cd{getVarNames} and the  nodes in a model using \cd{getNodeNames}, with optional arguments allowing you to select only certain types of nodes. 
+One can determine the variables in a model using \cd{getVarNames} and the  nodes in a model using \cd{getNodeNames}, with optional arguments allowing you to select only certain types of nodes. We illustrate here with the pump model from Chapter \ref{cha:intro}.
 
 <<getVarAndNodeNamesPump>>=
 @ 
 
-You can see one lifted node (see next section) for the Cholesky decomposition of
-\cd{cov}, and the two multivariate normal nodes.
+You can see one lifted node (see next section), \cd{lifted\_d1\_over\_beta}, involved in a reparameterization to NIMBLE's canonical parameterization of the gamma distribution for the \cd{theta} nodes. 
 
-We can determine the set of nodes contained in one or more nodes or variables using \cd{expandNodeNames}. The \cd{returnScalarComponents} argument also allows us to return all of the scalar components of multivariate nodes. 
+We can determine the set of nodes contained in one or more nodes or variables using \cd{expandNodeNames}, illustrated here for an example with multivariate nodes. The \cd{returnScalarComponents} argument also allows us to return all of the scalar components of multivariate nodes. 
 
 <<expandNodeNames, message=FALSE>>=
 @ 
@@ -107,7 +105,7 @@ but refer readers to the R help on \cd{modelBaseClass} for full details.
 Here is an example model, with use of various functions to determine
 information about nodes or variables.
 
-<<distAPI-example>>=
+<<distAPI-example, message=FALSE>>=
 code <- nimbleCode({
     for(i in 1:4) 
         y[i] ~ dnorm(mu, sd = sigma)
@@ -169,7 +167,7 @@ getParam(gammaModel, 'x', 'rate')
 gammaModel$getParam('x','rate')
 @ 
 
-\cd{getParam} also works in compiled nimbleFunctions.
+\cd{getParam} is part of the NIMBLE language, so it can be used in run code of nimbleFunctions.
 
 \subsection{Getting distribution bounds for a node}
 \label{sec:getBound}
@@ -204,7 +202,7 @@ getBound(exampleModel, 'a', 'upper')
 exampleModel$getBound('b','lower')
 @ 
 
-\cd{getBound} also works in compiled nimbleFunctions. In fact, we anticipate that
+\cd{getBound} is part of the NIMBLE language, so it can be used in run code of nimbleFunctions. In fact, we anticipate that
 most use of \cd{getBound} will be for algorithms, such as for the reflection
 version of the random walk MCMC sampler.
 
@@ -214,63 +212,6 @@ version of the random walk MCMC sampler.
 \section{Carrying out model calculations}
   %\cd{calculate}, \cd{calculateDiff}, \cd{simulate}, and \cd{getLogProb}
 \label{sec:cdcalc-cdsim-cdgetl}
-
-\subsection{Getting and setting variable and node values}
-
-Model variables and nodes can be accessed and set using \cd{[[ ]]}, but there are some limitations on what can be compiled relative to the syntax  discussed in Section \ref{sec:accessing-nodes}. 
-
-Here is an example that illustrates getting and setting of nodes and subsets of nodes.  Note the following:
-
-\begin{itemize}
-  \item use of \cd{[[ ]]} is restricted to use with a single node (potentially a non-scalar node), and
- \item one should use the \cd{<<-} global assignment operator to assign into model nodes. 
-\end{itemize}
-
-{\color{red} this is what I'm envisioning but some of this is not compiling - perhaps Perry or Daniel can set me straight and flesh this out}
-
-<<getSetInRunCode>>=
-
-code <- nimbleCode({
-    z ~ dnorm(0, sd = sigma)
-    sigma ~ dunif(0, 10)
-    y[1:n] ~ dmnorm(zeroes[1:n], cov = C[1:5, 1:5])
-})
-n <- 5
-m <- nimbleModel(code, constants = list(n = n, zeroes = rep(0, n),
-                                        C = diag(n)))
-cm <- compileNimble(m)
-
-nfGen <- nimbleFunction(
-    setup = function(model, node1, node2) {
-    },
-    run = function(vals = double(1)) {
-        tmp0 <- model[[node1]]    # tmp0 will be a scalar
-        tmp1 <- model[['sigma']]  # allowed but not model-generic
-        tmp2 <- model[[node2]]    # tmp2 will be a vector
-        tmp3 <- model[[node2]][1]  # tmp3 will be a scalar
-        model[[node1]] <<- runif(1) # node1 is scalar so can be assigned a scalar
-        model[['sigma']] <<- runif(1) # allowed but not model-generic
-        model[[node2]][1] <<- runif(1) # only an element of node2 can be assigned a scalar
-        model[[node2]][1:3] <<- vals[1:3] 
-        returnType(double(1))
-        out <- model[[node2]]
-        return(out)
-    }
-    )
-    
-Rnf <- nfGen(m, 'sigma', 'y[1:5]')
-Cnf <- compileNimble(Rnf)
-Cnf$run(rnorm(10))
-@
-
-
-
-Use of \cd{[[ ]]} allows one to programmatically access a node based on a character variable that stores the name of the node; this character variable would generally be set in setup code. In contrast, use of \cd{\$} hard codes the variable name and would not generally be suitable for nimbleFunctions intended for use with arbitrary models. Furthermore one can only use \cd{\$} in very limited ways.
-
-
-{\color{red} do we want to show any use of \$?}
-
-In addition, one can use \cd{values} to get or set the value(s) of one more nodes in a vectorized fashion, as discussed in Section \ref{sec:getting-setting-more}.
 
 
 \subsection{Core model operations: calculation and simulation}
@@ -303,19 +244,47 @@ deterministic node.
 \end{description}
 
 Each of these functions is accessed as a member function of a model
-object, taking a vector of node names as an argument.   If there is
+object, taking a vector of node names as an argument\footnote{Standard usage is \cd{model\$calculate(nodes)} but calculat(model, nodes) is synonymous.}.   If there is
 more than one node name, \cd{calculate} and \cd{getLogProb} return the
 sum of the log probabilities from each node, while \cd{calculateDiff}
 returns the sum of the new values minus the old values.  Next we show
-an example using \cd{simulate}
+an example using \cd{simulate}.
+
+
+\subsubsection{Example: simulating arbitrary collections of nodes}
+\label{sec:arbitr-coll-nodes}
+
+<<calcSimGLPdemos,results='markup;$=\\$'>>= 
+@ 
+
+Note the following.
+\begin{enumerate}
+\item \cd{simulate(model, nodes)} is equivalent to
+  \cd{model\$simulate(nodes)}. You can use either, but the latter is
+  encouraged and the former may be deprecated inthe future.
+\item Inputs like \cd{`y[1:3]'} are automatically expanded into
+  \cd{c(`y[1]', `y[2]', `y[3]')}.  In fact, simply \cd{`y'} will be
+  expanded into all nodes within \cd{y}.
+\item An arbitrary number of nodes can be provided as a character
+vector.
+\item Simulations will be done in the order provided, so in practice
+  the nodes should often be obtained by functions like
+  \cd{getDependencies} described below.  These return nodes in
+  topologically sorted order, which means no node comes before something
+  it depends on.
+\item The data nodes \cd{z} were not simulated into until
+  \cd{includeData = TRUE} was used.
+\end{enumerate}
+
+Use of \cd{calculate}, \cd{calculateDiff} and \cd{getLogProb} are similar to \cd{simulate},
+except that they return a value (described above) and they have no \cd{includeData} argument.
+
+
 
 \subsection{\cd{simNodes}, \cd{calcNodes}, and \cd{getLogProbs}}
 \label{sec:cdsimn-cdcalcn-cdget}
 
-{\color{red} CJP commented elsewhere that not clear if these nf's
-  could be replaced with an extra argument to
-  calculate/simulate/getLogProb that allows on to specify that
-  dependencies should be included}
+{\color{red} under discussion: how to clarify the point of these and where to put this text}
 
   \cd{simNodes}, \cd{calcNodes} and \cd{getLogProb} are basic nimbleFunctions that simulate, calculate, or get the log probabilities
   (densities), respectively, of the same set of nodes each time they
@@ -381,37 +350,11 @@ cCalcXDep$run()
 @
 
  
-\subsection{Example: simulating arbitrary collections of nodes}
-\label{sec:arbitr-coll-nodes}
-
-<<calcSimGLPdemos,results='markup;$=\\$'>>= 
-@ 
-
-Note the following.
-\begin{enumerate}
-\item \cd{simulate(model, nodes)} is equivalent to
-  \cd{model\$simulate(nodes)}. You can use either, but the latter is
-  encouraged and the former may be deprecated inthe future.
-\item Inputs like \cd{`y[1:3]'} are automatically expanded into
-  \cd{c(`y[1]', `y[2]', `y[3]')}.  In fact, simply \cd{`y'} will be
-  expanded into all nodes within \cd{y}.
-\item An arbitrary number of nodes can be provided as a character
-vector.
-\item Simulations will be done in the order provided, so in practice
-  the nodes should often be obtained by functions like
-  \cd{getDependencies} described below.  These return nodes in
-  topologically sorted order, which means no node comes before something
-  it depends on.
-\item The data nodes \cd{z} were not simulated into until
-  \cd{includeData = TRUE} was used.
-\end{enumerate}
-
-Use of \cd{calculate}, \cd{calculateDiff} and \cd{getLogProb} are similar to \cd{simulate},
-except that they return a value (described above) and they have no \cd{includeData} argument.
-
 
 \subsection{Accessing log probabilities via logProb variables}
 \label{sec:access-log-prob}
+
+{\color{red} I'm somewhat inclined to remove this - this feels like access to private member data in OOP - we provide getLogProb as the public accessor, so is there a need to even tell users about this? Or if not remove, we might mention when we talk about getLogProb that what it does is return the relevant current value(s) in logProb\_variableName.}
 
 For each variable that contains at least one stochastic node, NIMBLE generates a model variable with the
 prefix  ``logProb\_''.  When the stochastic node is scalar, the

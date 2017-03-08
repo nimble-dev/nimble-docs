@@ -568,3 +568,5 @@ will enforce \cd{alpha1 $\le$ alpha2 $\le$ alpha3}, but it does not treat the th
 
 NIMBLE does not support the JAGS \cd{sort} syntax.
 
+
+{\color{red} moved subsection on defining nodes/vars to chap 6}

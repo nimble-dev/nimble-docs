@@ -4,6 +4,11 @@
 require(nimble)
 @ 
 
+<<echo=FALSE>>=
+read_chunk(file.path('chunks', 'programmingWithModels_chunks.R'))  # one can put code chunks here if one wants
+@ 
+
+
 \chapter{Writing simple nimbleFunctions using the NIMBLE language}
 \label{cha:RCfunctions}
 
@@ -25,6 +30,7 @@ when no model or modelValues is needed. The real benefits come from compiling th
   variables. 
   
   Here's a basic example. 
+  
 <<rc-intro>>=
 @ 
 
@@ -171,6 +177,8 @@ myfun <- nimbleFunction(
     run = function(x = double(0, default = 1.2)) {
 })
 @ 
+
+If one would like to use a nimbleList as an argument or the return value, one needs to specify the type as a nimbleList definition (see Section \ref{nimbleLists}).
 
 \subsection{Creating non-scalar variables: \cd{numeric}, \cd{integer}, \cd{logical}, \cd{matrix}, and \cd{array}}
 \label{sec:decl-local-vars}
@@ -321,6 +329,10 @@ setSize(d, c(x+1, y+1, z+1))
 %beforehand, they can be included when declaring \cd{x}. Either of the
 %following are valid and equivalent.
 
+\subsubsection{nimbleLists}
+
+nimbleLists can be created from a nimbleList definition as discussed in Section \ref{sec:nimbleLists}. 
+
 \subsubsection{Deprecated method of creating non-scalar objects using \cd{declare}}
 
 Previous versions of NIMBLE provided a function \cd{declare} for
@@ -462,7 +474,7 @@ $\le$ 2.
 \subsubsection{Managing dimensions, sizes and indices}
 \label{sec:manag-dimens-sizes}
 
-{\color{red} do we want to say anything else here about indexing?}
+{\color{red} do we want to say anything else here about indexing? Vague memory that Perry had a vision for something more here (or perhaps somewhere else where we talk about indexing!)}
 
 It can be tricky to determine the dimensions returned by a linear
 algebra expression.  As much as possible, NIMBLE behaves like R, but

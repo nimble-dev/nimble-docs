@@ -12,7 +12,7 @@ NIMBLE provides several data structures useful for programming.
 We'll first describe \cd{modelValues}, which are containers designed for
 storing values for models. Then in Section \ref{sec:nimbleLists} we'll describe \cd{nimbleLists}, which have a similar purpose to lists in \cd{R}, allowing you to store heterogeneous information in a single object. 
 
-\cd{modelValues} can be created in either \cd{R} or in \cd{nimbleFunction} setup code.  \cd{nimbleList}s can be created in \cd{R} code, in \cd{nimbleFunction} setup code, and in \cd{nimbleFunction} run code. Once created, \cd{modelValues} and \cd{nimbleLists} can then be used either in \cd{R} or in \cd{nimbleFunction} setup or run code.  If used in run code, they will be compiled along with the \cd{nimbleFunction}.
+\cd{modelValues} can be created in either \cd{R} or in \cd{nimbleFunction} setup code.  \cd{nimbleList}s can be created in \cd{R} code, in \cd{nimbleFunction} setup code, and in \cd{nimbleFunction} run code, from a nimbleList definition created in R or setup code. Once created, \cd{modelValues} and \cd{nimbleLists} can then be used either in \cd{R} or in \cd{nimbleFunction} setup or run code.  If used in run code, they will be compiled along with the \cd{nimbleFunction}.
 
 \section{The \nm{modelValues} data structure}
 \label{sec:modelValues-struct}
@@ -49,8 +49,8 @@ In this example, \cd{pumpModelValues} has the same variables as
 \cd{pumpModel}, and we set \cd{pumpModelValues} to have \cd{m = 2}
 rows. As you can see, the rows are stored as elements of a list.
   
-  Alternatively, one can define a modelValues object manually via the
-  \cd{modelValuesConf} function, like this:
+  Alternatively, one can define a modelValues object manually by first defining a modelValues configuration via the
+  \cd{modelValuesConf} function, and then creating an instance from that configuration, like this:
 %%   \begin{itemize}
 %%  \item \cd{vars}, which is a character vector of variable names, 
 %%    \item \cd{type}, which is a character vector of the data types for each variable (`double' for real numbers, `integer' for integers) and 
@@ -199,6 +199,7 @@ However, when you retrieve a variable from a modelValues object, the result is a
 
 \subsubsection{Automating calculation and simulation using modelValues}
 
+{\color{red} as with calcNodes, I'd like to discuss when a user would be expected to use this and figure out if this is where to talk about it in light of that}
 
 
 The nimbleFunctions \cd{simNodesMV}, \cd{calcNodesMV}, and \cd{getLogProbsMV}}
@@ -236,7 +237,12 @@ cGetLogProbMany$run() #
 \section{The \nm{nimbleList} data structure}
 \label{sec:nimbleLists}
 
-\cd{nimbleList}s provide a container for storing different types of objects in \cd{nimble}, similar to the \cd{list} data structure in \cd{R}.  Before a \cd{nimbleList} can be created and used, a definition  for that \cd{nimbleList} must be created that provides the names, types, and dimensions of the elements in the \cd{nimbleList}.  Unlike \cd{list}s in \cd{R}, \cd{nimbleList}s must have the names and types of all list elements provided by a definition before the list can be used.  A \cd{nimbleList} definition can be made by using the \cd{nimbleList} function in one of two manners.  The first manner is to provide the \cd{nimbleList} function with a series of expressions of the type
+\cd{nimbleList}s provide a container for storing different types of objects in \cd{nimble}, similar to the \cd{list} data structure in \cd{R}.  Before a \cd{nimbleList} can be created and used, a definition  for that \cd{nimbleList} must be created that provides the names, types, and dimensions of the elements in the \cd{nimbleList}.  nimbleList definitions must be created in R, but the nimbleList instances can be created in run code, provided the definition is created or passed into setup code. 
+
+{\color{red} Nick, please check last sentence}
+
+
+Unlike \cd{list}s in \cd{R}, \cd{nimbleList}s must have the names and types of all list elements provided by a definition before the list can be used.  A \cd{nimbleList} definition can be made by using the \cd{nimbleList} function in one of two manners.  The first manner is to provide the \cd{nimbleList} function with a series of expressions of the type
 \begin{itemize}
 \item \cd{name = type(nDim)}
 \end{itemize}
@@ -295,7 +301,7 @@ exampleNimList$nimListMatrix
 @
 Note that the \cd{nimListMatrix} was assigned a new value (a matrix of all 1's) within the function, and this new value persists outside of the function.
 
-In addition to storing basic data types, \cd{nimbleList}s can also store other \cd{nimbleList}s.  To acheive this, we must create a \cd{nimbleList} definition that declares the types of nested \cd{nimbleList}s a \cd{nimbleList} will store.  Below, we create two types of \cd{nimbleList}s: the first, named \cd{innerNimList}, will be stored inside the second, named \cd{outerNimList}:
+In addition to storing basic data types, \cd{nimbleList}s can also store other \cd{nimbleList}s.  To achieve this, we must create a \cd{nimbleList} definition that declares the types of nested \cd{nimbleList}s a \cd{nimbleList} will store.  Below, we create two types of \cd{nimbleList}s: the first, named \cd{innerNimList}, will be stored inside the second, named \cd{outerNimList}:
 
 <<exampleNestedNimList>>=
 ## first, create definitions for both inner and outer nimbleLists
