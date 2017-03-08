@@ -240,17 +240,17 @@ cGetLogProbMany$run() #
 \begin{itemize}
 \item \cd{name = type(nDim)}
 \end{itemize}
-similar to the specification of runtime arguments to \cd{nimbleFunction}s.  The types allowed for a \cd{nimbleList} are the same as those allowed as runtime arguments to a \cd{nimbleFunction}, described in Section \ref{sec:decl-argum-types}.  For example, the following line of code creates a \cd{nimbleList} definition with two elements: \cd{nimListInteger}, which is a scalar integer, and \cd{nimListMatrix}, which is a matrix of doubles.
+similar to the specification of runtime arguments to \cd{nimbleFunction}s.  The types allowed for a \cd{nimbleList} are the same as those allowed as runtime arguments to a \cd{nimbleFunction}, described in Section \ref{sec:decl-argum-types}.  For example, the following line of code creates a \cd{nimbleList} definition with two elements: \cd{x}, which is a scalar integer, and \cd{Y}, which is a matrix of doubles.
 <<exampleDefineNimList>>=
- exampleNimListDef <- nimbleList(nimListInteger = integer(0),
-                                 nimListMatrix = double(2))
+ exampleNimListDef <- nimbleList(x = integer(0),
+                                 Y = double(2))
 @
 
 The second method of creating a \cd{nimbleList} definition is by providing an \cd{R} \cd{list} of \cd{nimbleType} objects to the \cd{nimbleList()} function.  A \cd{nimbleType} object can be created using the \cd{nimbleType()} function, which must be provided with three arguments: the \cd{name} of the object being created, the \cd{type} of the object being created, and the \cd{dim} of the object being created.  For example, the following code creates a list with two \cd{nimbleType} objects, and uses these objects to create a \cd{nimbleList} definition.
 <<exampleDefineNimList2>>=
- nimbleListTypes <- list(nimbleType(name = 'nimListInteger',
+ nimbleListTypes <- list(nimbleType(name = 'x',
                                     type = 'integer', dim = 0),
-                         nimbleType(name = 'nimListMatrix',
+                         nimbleType(name = 'Y',
                                     type = 'double', dim = 2))
 
  ## this nimbleList definition is identical to the one created above
@@ -260,25 +260,25 @@ Creating definitions using a \cd{list} of \cd{nimbleType}s can be useful, as it 
 
 Once a \cd{nimbleList} definition has been created, new instances of \cd{nimbleList}s can be made from that definition using the \cd{new()} member function.  The \cd{new()} function can optionally take initial values for the list elements as arguments.  Below, we create a new \cd{nimbleList} from our \cd{exampleNimListDef} and specify values for the two elements of our list:
 <<exampleCreateNimList>>=
- exampleNimList <- exampleNimListDef$new(nimListInteger = 1,
-                                         nimListMatrix = diag(2))
+ exampleNimList <- exampleNimListDef$new(x = 1,
+                                         Y = diag(2))
 @
-Once created, \cd{nimbleList} elements can be accessed using the \cd{\$} operator, just as with \cd{list}s in \cd{R}.  For example, the value of the \cd{nimListInteger} element of our \cd{exampleNimbleList} can be set to \cd{11} using
+Once created, \cd{nimbleList} elements can be accessed using the \cd{\$} operator, just as with \cd{list}s in \cd{R}.  For example, the value of the \cd{x} element of our \cd{exampleNimbleList} can be set to \cd{11} using
 <<exampleSetNimList>>=
- exampleNimList$nimListInteger <- 11
+ exampleNimList$x <- 11
 @
 \cd{nimbleList} definitions can be created either in \cd{R}'s global environment, or in \cd{setup} code of a \cd{nimbleFunction}.  Once a \cd{nimbleList} definition has been made, new instances of \cd{nimbleList}s can be created using the \cd{new()} function in \cd{R}'s global environment, in \cd{setup} code, or in \cd{run} code of a \cd{nimbleFunction}.
 
 \cd{nimbleList}s can also be passed as arguments to run code of \cd{nimbleFunction}s, and returned from \cd{nimbleFunction}s.  To use a \cd{nimbleList} as a run code argument, the name of the \cd{nimbleList} definition should be provided as the argument type, with a set of parentheses following.  To return a \cd{nimbleList} from the run code of a \cd{nimbleFunction}, the \cd{returnType} of that function should be the name of the \cd{nimbleList} definition, again using a following set of parentheses.
 
-Below, we demonstrate a function that takes the \cd{exampleNimList} as an argument, modifies its \cd{nimListMatrix} element, and returns the \cd{nimbleList}.  We note that \cd{nimbleFunction}s that take \cd{nimbleList}s as run arguments must have setup code.  For functions that need no setup code, setting \cd{setup = TRUE} will allow these functions to work correctly.
+Below, we demonstrate a function that takes the \cd{exampleNimList} as an argument, modifies its \cd{Y} element, and returns the \cd{nimbleList}.  We note that \cd{nimbleFunction}s that take \cd{nimbleList}s as run arguments must have setup code.  For functions that need no setup code, setting \cd{setup = TRUE} will allow these functions to work correctly.
 
 <<exampleNimListFunction>>=
 nimListFunctionGenerator <- nimbleFunction(
   setup = TRUE,
   run = function(argumentList = exampleNimListDef()){
     onesMatrix <- matrix(value = 1, nrow = 2, ncol = 2)
-    argumentList$nimListMatrix  <- onesMatrix
+    argumentList$Y  <- onesMatrix
     returnType(exampleNimListDef())
     return(argumentList)
   })
@@ -288,26 +288,26 @@ nimListFunction <- nimListFunctionGenerator()
 nimListFunction$run(exampleNimList)
 @
 
-\cd{nimbleList} arguments to run functions are passed by reference -- this means that if an element of a \cd{nimbleList} argument is modified within a function, that element will remain modified when the function has finished running.  To see this, we can inspect the value of the \cd{nimListMatrix} element of the \cd{exampleNimList} object:
+\cd{nimbleList} arguments to run functions are passed by reference -- this means that if an element of a \cd{nimbleList} argument is modified within a function, that element will remain modified when the function has finished running.  To see this, we can inspect the value of the \cd{Y} element of the \cd{exampleNimList} object:
 
 <<exampleNimListReference>>=
-exampleNimList$nimListMatrix
+exampleNimList$Y
 @
-Note that the \cd{nimListMatrix} was assigned a new value (a matrix of all 1's) within the function, and this new value persists outside of the function.
+Note that \cd{Y} was assigned a new value (a matrix of all 1's) within the function, and this new value persists outside of the function.
 
 In addition to storing basic data types, \cd{nimbleList}s can also store other \cd{nimbleList}s.  To acheive this, we must create a \cd{nimbleList} definition that declares the types of nested \cd{nimbleList}s a \cd{nimbleList} will store.  Below, we create two types of \cd{nimbleList}s: the first, named \cd{innerNimList}, will be stored inside the second, named \cd{outerNimList}:
 
 <<exampleNestedNimList>>=
 ## first, create definitions for both inner and outer nimbleLists
-innerNimListDef <- nimbleList(nimListCharacter = character(0))
+innerNimListDef <- nimbleList(someText = character(0))
 outerNimListDef <- nimbleList(innerNimList = innerNimListDef(),
-                                nimListDouble = double(0))
+                              z = double(0))
 
 ## then, create outer nimbleList
-outerNimList <- outerNimListDef$new(nimListDouble = 3.14)
+outerNimList <- outerNimListDef$new(z = 3.14)
 
 ## access element of inner nimbleList
-outerNimList$innerNimList$nimListCharacter <- "hello, world"
+outerNimList$innerNimList$someText <- "hello, world"
 @
 
 Note that definitions for inner, or nested, \cd{nimbleList}s must be created before the definition for an outer \cd{nimbleList}.

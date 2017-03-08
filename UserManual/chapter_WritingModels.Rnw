@@ -417,6 +417,7 @@ for use in calculations, namely the ``p'', ``q'', and ``d'' functions.
   \hline \hline \\
 \endhead
 \input{functionTableMatrixLong.tex}
+\input{eigenSvdTableMatrixElements.tex}
  \end{longtable}
 }
 

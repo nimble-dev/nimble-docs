@@ -410,7 +410,7 @@ You can call another nimbleFunction from within your nimbleFunction. Simply defi
 \subsubsection{Available mathematical operations}
 
 Numeric scalar and matrix mathematical operations are listed in tables
-\ref{table:functions-dsl} and \ref{table:functions-matrix-dsl}.  More information on the \cd{nimbleList}s returned by the \cd{eigen()} and \cd{svd()} functions in NIMBLE can be found in Section \ref{sec:eigen-nimFunctions}.
+\ref{table:functions-dsl} and \ref{table:functions-matrix-dsl}. 
 
 {\color{red} Perry please scan through these tables for accuracy. In particular, do we now allow vector inputs to distribution functions?}
 
@@ -445,9 +445,11 @@ Numeric scalar and matrix mathematical operations are listed in tables
   \hline \hline \\
 \endhead
 \input{functionTableMatrixLong.tex}
+\input{eigenSvdTableMatrixAsNimList.tex}
  \end{longtable}
 }
 
+More information on the \cd{nimbleList}s returned by the \cd{eigen()} and \cd{svd()} functions in NIMBLE can be found in Section \ref{sec:eigen-nimFunctions}.
 
 NIMBLE uses the \nm{Eigen} library in C++ to accomplish linear algebra.  In
 Version \ver, we use a lot of Eigen's capabilities, but not all of them.  
