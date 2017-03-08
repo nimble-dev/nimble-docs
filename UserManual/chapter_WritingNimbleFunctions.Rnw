@@ -134,7 +134,7 @@ Some of the useful tools and objects to create in \cd{setup} functions include
 \item[lists of other nimbleFunctions] In addition to containing single
   other nimbleFunctions, a nimbleFunction can contain a list of other
   nimbleFunctions.  These are discussed more below.
-\item[nimbleList objects] {\color{red} Nick, is it natural to mention here? if so, I guess we want to be clear about nimList configuration vs. instantiation}
+\item[nimbleList definitions]  It can be useful to create \cd{nimbleList} definitions in setup code.  New instances of \cd{nimbleList}s can then be created from this definition in either setup or run code. See Section \ref{sec:nimbleLists} for more information.
 \end{description}
 
 If one wants a nimbleFunction that does get specialized but has

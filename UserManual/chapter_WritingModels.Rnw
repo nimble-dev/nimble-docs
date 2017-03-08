@@ -404,8 +404,6 @@ for use in calculations, namely the ``p'', ``q'', and ``d'' functions.
 \end{longtable}
 }
 
-{\color{red} This table needs updating, at least for eigen and svd.}
-
 {
 \footnotesize
 \LTcapwidth=\textwidth
