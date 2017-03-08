@@ -4,6 +4,11 @@
 require(nimble)
 @ 
 
+<<echo=FALSE>>=
+read_chunk(file.path('chunks', 'programmingWithModels_chunks.R'))  # one can put code chunks here if one wants
+@ 
+
+
 \chapter{Writing simple nimbleFunctions using the NIMBLE language}
 \label{cha:RCfunctions}
 
@@ -25,6 +30,7 @@ when no model or modelValues is needed. The real benefits come from compiling th
   variables. 
   
   Here's a basic example. 
+  
 <<rc-intro>>=
 @ 
 
@@ -141,7 +147,7 @@ In particular, when a numeric variable is created by
   treated as scalars.  
   {\color{red} I think we should say more here - we do allow length-one vectors and passing in a scalar from R into a double(1) (e.g.) will work. Perry, can you frame this more comprehensively here or somewhere else appropriate - I'm wondering if this should be its own subsection and also have a bullet on it in the previous subsection}
 
-\cd{nimbleList}s provide containers for numeric and character type variables in NIMBLE.  More information on using \cd{nimbleList}s in \cd{nimbleFunction}s can be found in Section \ref{sec:nimbleLists}.
+\cd{nimbleList}s provide containers for numeric, logical, and character type variables in NIMBLE.  More information on using \cd{nimbleList}s in \cd{nimbleFunction}s can be found in Section \ref{sec:nimbleLists}.
 
 
 \subsection{Declaring argument types and the return type}
@@ -172,7 +178,9 @@ myfun <- nimbleFunction(
 })
 @ 
 
-\subsection{Creating non-scalar variables: \cd{numeric}, \cd{integer}, \cd{logical}, \cd{matrix}, and \cd{array}}
+If one would like to use a \cd{nimbleList} as an argument or the return value, one needs to specify the type as a \cd{nimbleList} definition (see Section \ref{nimbleLists}).
+
+\subsection{Creating non-scalar variables: \cd{numeric}, \cd{integer}, \cd{logical}, \cd{matrix}, \cd{array}, and \cd{nimbleList}}
 \label{sec:decl-local-vars}
 
 When local variables in run code are created by assignment, their types will be 
@@ -321,6 +329,10 @@ setSize(d, c(x+1, y+1, z+1))
 %beforehand, they can be included when declaring \cd{x}. Either of the
 %following are valid and equivalent.
 
+\subsubsection{nimbleLists}
+
+\cd{nimbleList}s can be created from a \cd{nimbleList} definition as discussed in Section \ref{sec:nimbleLists}. 
+
 \subsubsection{Deprecated method of creating non-scalar objects using \cd{declare}}
 
 Previous versions of NIMBLE provided a function \cd{declare} for
@@ -464,7 +476,7 @@ $\le$ 2.
 \subsubsection{Managing dimensions, sizes and indices}
 \label{sec:manag-dimens-sizes}
 
-{\color{red} do we want to say anything else here about indexing?}
+{\color{red} do we want to say anything else here about indexing? Vague memory that Perry had a vision for something more here (or perhaps somewhere else where we talk about indexing!)}
 
 It can be tricky to determine the dimensions returned by a linear
 algebra expression.  As much as possible, NIMBLE behaves like R, but

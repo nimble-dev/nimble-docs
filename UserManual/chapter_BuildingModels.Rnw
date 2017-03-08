@@ -70,7 +70,7 @@ beginning again.  Hence they do not distinguish between constants and
 data.  
 
 For compatibility with BUGS and JAGS, NIMBLE allows both to be
-provided in the the \cd{constants} argument to \cd{nimbleModel}, in
+provided in the \cd{constants} argument to \cd{nimbleModel}, in
 which case NIMBLE handles values for stochastic nodes as data and
 everything else as constants.
 
@@ -80,7 +80,7 @@ constants.
 
 \subsubsection{Providing data and initial values to an existing model}
 
-Wherease constants must be provided during the call the
+Whereas constants must be provided during the call the
 \cd{nimbleModel}, data and initial values can be provided later via
 the model member functions \cd{setData} and \cd{setInits}. For
 example, if \cd{pumpData} is a named list of data values (as above),
@@ -109,7 +109,7 @@ example are documented more below.  NIMBLE's default MCMC
 configuration will treat the missing values as unknowns to be sampled,
 as can be seen in the MCMC output here.
 
-<<pump-missing, eval=FALSE, message=FALSE>>=
+<<pump-missing, message=FALSE>>=
 pumpMiss <- pump$newModel()
 pumpMiss$resetData()
 pumpDataNew <- pumpData
@@ -122,7 +122,7 @@ pumpMissConf$addMonitors('x', 'alpha', 'beta', 'theta')
 pumpMissMCMC <- buildMCMC(pumpMissConf)
 Cobj <- compileNimble(pumpMiss, pumpMissMCMC)
 
-niter <- 1000
+niter <- 10
 set.seed(0)
 Cobj$pumpMissMCMC$run(niter)
 samples <- as.matrix(Cobj$pumpMissMCMC$mvSamples)
@@ -138,7 +138,7 @@ Missing values may also occur in explanatory variables.  Values for
 such variables should be passed in via the \cd{data} argument to
 \cd{nimbleModel}, with \cd{NA} for the missing values.  In some
 contexts, one would want to specify distributions for such explanatory
-variables so that values are imputed by an MCMC for missing values.
+variables, for example so that an MCMC would impute the missing values.
 
 \subsubsection{Defining alternative models with the same code}
 \label{sec:defin-altern-models}
@@ -293,38 +293,84 @@ different values in any nodes.  They cannot have different values of
 it helps define the model.
 
 \section{NIMBLE models are objects you can query and manipulate}
+\label{sec:nodes-and-variables}
 
 NIMBLE models are objects that can be modified and manipulated from R.
 In this section we introduce some basic ways to use a model object.
 Chapter \ref{cha:using-bugs-models} covers more topics for writing
 algorithms that use models.
 
+
+\subsection{What are variables and nodes?}
+\label{sec:what-are-nodes-and-variables}
+
+This section discusses some basic concepts and terminology to
+be able to speak about NIMBLE models clearly.
+
+Suppose we have created a model from the following BUGS code.
+% This chunk can be modified to jut remove the nimbleModel call.
+
+<<echo=FALSE,message=FALSE>>=
+read_chunk(file.path('chunks', 'usingBugsModels_chunks.R'))
+@ 
+
+<<usingModelsExample, message=FALSE>>=
+@ 
+
+In NIMBLE terminology:
+\begin{itemize}
+\item The \textit{variables} of this model are \cd{a}, \cd{y}, \cd{z},
+  and \cd{y.squared}.
+\item The \textit{nodes} of this model are \cd{a}, \cd{y[1]} $\ldots$
+  \cd{y[5]}, \cd{z[1,1]} $\ldots$ \cd{z[5, 3]}, and
+  \cd{y.squared[1:5]}.  In graph terminology, nodes are vertices in
+  the model graph.
+\item the \textit{node functions} of this model are
+  \verb|a ~ dnorm(0, 0.001)|, \verb|y[i] ~ dnorm(a, 0.1)|,
+  \verb|z[i,j] ~ dnorm(y[i], sd = 0.1)|, and
+  \verb|y.squared[1:5] <- y[1:5]^2|.  Each node's calculations are
+  handled by a node function.  Sometimes the distinction between
+  nodes and node functions is important, but when it is not important
+  we may refer to both simply as \textit{nodes}.  
+\item  The \textit{scalar elements} of this model include all the scalar
+  nodes as well as the scalar elements \cd{y.squared[1]} $\ldots$
+  \cd{y.squared[5]} of the multivariate node \cd{y.squared[1:5]}.
+\end{itemize}
+
+
+
 \subsection{Determining the nodes and variables in a model}
 
-One can determine the nodes and variables in a model using \cd{getNodeNames}:
+  
+One can determine the variables in a model using \cd{getVarNames} and the  nodes in a model using \cd{getNodeNames}, with optional arguments allowing you to select only certain types of nodes. 
 
-<<getNodeNames>>=
+<<getVarAndNodeNames>>=
 @ 
 
 Note that some of the nodes may be ``lifted'' nodes introduced by
-NIMBLE (Section \ref{sec:introduced-nodes}).
+NIMBLE (Section \ref{sec:introduced-nodes}). In this case \cd{lifted\_d1\_over\_sqrt\_oPtau\_cP} (this is a node for the standard deviation of the \cd{z} nodes using NIMBLE's canonical parameterization of the normal distribution) is the only lifted node in the model.
 
-We can determine the set of nodes contained in one or more nodes or variables using \cd{expandNodeNames}. The \cd{returnScalarComponents} argument also allows us to return all of the scalar components of multivariate nodes. 
+To determine the dependencies of one or more nodes in the model, you can use \cd{getDependencies} as discussed in Section \ref{sec:cdgetdependencies}.
 
-<<expandNodeNames, message=FALSE>>=
+{\color{red} moved expandNodeNames stuff to chapter 11}
+
+{\color{red} moved getDependencies stuff to chapter 11}
+
+\subsection{Accessing nodes}
+\label{sec:accessing-nodes}
+
+Model variables can be accessed and set just as in R using \cd{\$} and
+\cd{[[ ]]}.  For example
+
+<<usingModelVars>>=
 @ 
 
-\subsubsection{Accessing nodes}
-\label{sec:accessing-nodes}
 
 While nodes that are part of a variable can be accessed as above, each
 node also has its own name that can be used to access it directly.  For
 example, \cd{y[2]} has the name ``y[2]'' and can be accessed by that
 name as follows:
 
-
-<<usingModelsExample, message=FALSE>>=
-@ 
 
 <<usingNodeNames>>=
 @ 
@@ -334,7 +380,7 @@ Notice that node names can include index blocks, such as
 correspond to actual nodes.  Such blocks can be subsequently
 sub-indexed in the regular R manner, such as \cd{model[['z[2:4, 1:2]']][1, 2]}.
 
-\paragraph{How nodes are named}
+\subsection{How nodes are named}
 \label{sec:how-nodes-are}
 
 Every node has a name that is a character string including its
@@ -371,11 +417,11 @@ deparse(parse(text = "X[1,1:5]", keep.source = FALSE)[[1]])
 
 The \cd{keep.source = FALSE} makes \cd{parse} more efficient.
 
-\paragraph{Why use node names?}
+\subsection{Why use node names?}
 \label{sec:why-use-node}
 
-Syntax like \cd{pump[["x[2, 3]"]]} may seem strange at first, because
-the natural habit of an R user would be \cd{pump[["x"]][2,3]}.  To see
+Syntax like \cd{model[["z[2, 3]"]]} may seem strange at first, because
+the natural habit of an R user would be \cd{model[["z"]][2,3]}.  To see
 its utility, consider the example of writing the nimbleFunction given in
 Section \ref{sec:creating-your-own}.  By giving every scalar node a name, even
 if it is part of a multivariate variable, one can write functions in R
@@ -384,35 +430,17 @@ dimensionality of the variable in which it is embedded.  This is particularly
 useful for NIMBLE, which resolves how to access a particular node
 during the compilation process.
 
-\subsection{Determining model structure}
 
-
-\subsubsection{Determining dependencies in a model}
-\label{sec:cdgetdependencies}
-
-One can determine the node dependencies (or
-``descendants'') in a model using \cd{getDependencies}. There are a variety of arguments to \cd{getDependencies} that
-allow one to specify whether to include the node itself, whether to
-include deterministic or stochastic or data dependents, etc. By
-default \cd{getDependencies} returns descendants up through the next
-stochastic node on all edges emanating from the node(s) specified as input.  This is what would be
-needed to calculate a Metropolis-Hastings acceptance probability in
-MCMC, for example.
-
-<<getDependencies>>=
-@ 
-
-
-\subsubsection{Checking if a node holds data}
+\subsection{Checking if a node holds data}
 \label{sec:cdisdata}
 
 Finally, you can query whether a node is flagged as data using the
 \cd{isData} method applied to one or more nodes or nodes within variables:
 <<isData>>=
-pump$isData('x[1]')
-pump$isData(c('x[1]', 'x[2]', 'alpha'))
-pump$isData('x')
-pump$isData('x[1:3]')
+model$isData('z[1]')
+model$isData(c('z[1]', 'z[2]', 'a'))
+model$isData('z')
+model$isData('z[1:3, 1]')
 @ 
 
 
