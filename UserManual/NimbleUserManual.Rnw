@@ -37,7 +37,7 @@
 ## width controls (not perfectly) width of R code lines, hopefully avoiding some of the margin overflow
 options(replace.assign=TRUE, width=65)
 runMCEMs <- FALSE
-opts_chunk$set(eval = FALSE)
+opts_chunk$set(eval = TRUE)
 ##options(replace.assign=TRUE, cache.rebuild = TRUE, width=65)
 @
 

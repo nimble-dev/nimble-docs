@@ -36,6 +36,14 @@ model[['y']][c(1, 5)] <- rnorm(2)
 model$y
 model$z[1,]
 
+## @knitr getVarAndNodeNames
+model$getVarNames()
+
+model$getNodeNames()
+model$getNodeNames(determOnly = TRUE)
+model$getNodeNames(stochOnly = TRUE)
+model$getNodeNames(dataOnly = TRUE)
+
 ## @knitr usingModelLogProbs
 
 model$logProb_y
@@ -133,13 +141,15 @@ pumpInits <- list(alpha = 1, beta = 1,
 pump <- nimbleModel(code = pumpCode, name = 'pump', constants = pumpConsts,
                     data = pumpData, inits = pumpInits)
 
-## @knitr getNodeNames
+## @knitr getVarAndNodeNamesPump
+
+pump$getVarNames()
 
 pump$getNodeNames()
 pump$getNodeNames(determOnly = TRUE)
 pump$getNodeNames(stochOnly = TRUE)
 pump$getNodeNames(dataOnly = TRUE)
-pump$getVarNames()
+
 
 ## @knitr expandNodeNames
 

@@ -7,8 +7,6 @@ require(nimble)
 \chapter{Working with NIMBLE models}
 \label{cha:using-bugs-models}
 
-
-
 Here we describe how one can get information about NIMBLE models and
 carry out operations on a model. While all of this functionality can
 be used from R, the primary use of getting information and operating a
@@ -19,38 +17,29 @@ about node or variable values or the parameter and bound values of a node would 
 calculations in run code of nimbleFunctions. Similarly, carrying out numerical operations
 on a model, including setting node or variable values, would generally be done in \nm{run} code.
 
-\section{The variables and nodes in a NIMBLE}
+\section{The variables and nodes in a NIMBLE model}
 \label{sec:accessing-variables}
 
-Section \ref{sec:nodes-and-variables} describes the definitions of variables and nodes in a NIMBLE model and discusses how to determine and access the nodes in a model and their dependency relationships. 
-
-{\color{red} need to work on overlap between stuff below here and what is in chapter 6}
+Section \ref{sec:nodes-and-variables} defines what we mean by variables and nodes in a NIMBLE model and discusses how to determine and access the nodes in a model and their dependency relationships. Here we'll review and go into more detail on the topics of determining the nodes and node dependencies in a model.
 
 \subsection{Determining the nodes in a model}
 
-The definitive source for node names in a model is
-\cd{getNodeNames}, described below.  For example
+{\color{red} the content on getNodeNames (but not expandNodeNames) repeats stuff from Chap. 6; thoughts?}
+{\color{red} one idea is to just have getNodeNames in its most basic usage shown in Chap 6 and more extended usage here}
 
-<<multivariateDecExample>>=
+One can determine the variables in a model using \cd{getVarNames} and the  nodes in a model using \cd{getNodeNames}, with optional arguments allowing you to select only certain types of nodes. 
+
+<<getVarAndNodeNamesPump>>=
 @ 
 
-You can see one lifted node for the Cholesky decomposition of
+You can see one lifted node (see next section) for the Cholesky decomposition of
 \cd{cov}, and the two multivariate normal nodes.
 
-In the event you need to ensure that a name is formatted correctly,
-you can use the \cd{expandNodeNames} method. For
-example, to get the spaces correctly inserted into ``X[1,1:5]'':
+We can determine the set of nodes contained in one or more nodes or variables using \cd{expandNodeNames}. The \cd{returnScalarComponents} argument also allows us to return all of the scalar components of multivariate nodes. 
 
-<<multivariateExpandNodeNames>>=
+<<expandNodeNames, message=FALSE>>=
 @ 
 
-Alternatively, for those inclined to R's less commonly used features, a nice trick is
-to use its \cd{parse} and \cd{deparse} functions.  
-<<>>=
-deparse(parse(text = "X[1,1:5]", keep.source = FALSE)[[1]])
-@ 
-
-The \cd{keep.source = FALSE} makes \cd{parse} more efficient.
 
 As discussed in Section \ref{sec:cdisdata}, you can determine whether a node is flagged as data using \cd{isData}. 
 
@@ -88,12 +77,11 @@ generated.  These include:
   redundantly.    
 \end{itemize}
 
-\section{Accessing information about nodes and variables}
-\label{sec:nodeInfo}
-
 
 \subsection{Determining dependencies in a model}
 \label{sec:cdgetdependencies}
+
+{\color{red} this repeats stuff from Chap. 6; thoughts?}
 
 Next we'll see how to determine the node dependencies (or
 ``descendants'') in a model. There are a variety of arguments to \cd{getDependencies} that
@@ -106,6 +94,10 @@ MCMC, for example.
 
 <<getDependencies>>=
 @ 
+
+\section{Accessing information about nodes and variables}
+\label{sec:nodeInfo}
+
 
 \subsection{Getting distributional information about a node}
 
@@ -225,16 +217,58 @@ version of the random walk MCMC sampler.
 
 \subsection{Getting and setting variable and node values}
 
-Model variables and nodes can be accessed and set just as in R using \cd{\$} and
-\cd{[[ ]]} as discussed in Section \ref{sec:accessing-nodes}.
+Model variables and nodes can be accessed and set using \cd{[[ ]]}, but there are some limitations on what can be compiled relative to the syntax  discussed in Section \ref{sec:accessing-nodes}. 
 
-Variables and nodes that contain more than one value can also be subindexed, e.g.,
-<<subindexing, eval=FALSE>>=
-model[['z[1:5']][2:3]
-model[['z[1:5']][2:3] <- vals 
-@ 
+Here is an example that illustrates getting and setting of nodes and subsets of nodes.  Note the following:
 
-{\color{red} check that we allow subindexing on LHS of run code}
+\begin{itemize}
+  \item use of \cd{[[ ]]} is restricted to use with a single node (potentially a non-scalar node), and
+ \item one should use the \cd{<<-} global assignment operator to assign into model nodes. 
+\end{itemize}
+
+{\color{red} this is what I'm envisioning but some of this is not compiling - perhaps Perry or Daniel can set me straight and flesh this out}
+
+<<getSetInRunCode>>=
+
+code <- nimbleCode({
+    z ~ dnorm(0, sd = sigma)
+    sigma ~ dunif(0, 10)
+    y[1:n] ~ dmnorm(zeroes[1:n], cov = C[1:5, 1:5])
+})
+n <- 5
+m <- nimbleModel(code, constants = list(n = n, zeroes = rep(0, n),
+                                        C = diag(n)))
+cm <- compileNimble(m)
+
+nfGen <- nimbleFunction(
+    setup = function(model, node1, node2) {
+    },
+    run = function(vals = double(1)) {
+        tmp0 <- model[[node1]]    # tmp0 will be a scalar
+        tmp1 <- model[['sigma']]  # allowed but not model-generic
+        tmp2 <- model[[node2]]    # tmp2 will be a vector
+        tmp3 <- model[[node2]][1]  # tmp3 will be a scalar
+        model[[node1]] <<- runif(1) # node1 is scalar so can be assigned a scalar
+        model[['sigma']] <<- runif(1) # allowed but not model-generic
+        model[[node2]][1] <<- runif(1) # only an element of node2 can be assigned a scalar
+        model[[node2]][1:3] <<- vals[1:3] 
+        returnType(double(1))
+        out <- model[[node2]]
+        return(out)
+    }
+    )
+    
+Rnf <- nfGen(m, 'sigma', 'y[1:5]')
+Cnf <- compileNimble(Rnf)
+Cnf$run(rnorm(10))
+@
+
+
+
+Use of \cd{[[ ]]} allows one to programmatically access a node based on a character variable that stores the name of the node; this character variable would generally be set in setup code. In contrast, use of \cd{\$} hard codes the variable name and would not generally be suitable for nimbleFunctions intended for use with arbitrary models. Furthermore one can only use \cd{\$} in very limited ways.
+
+
+{\color{red} do we want to show any use of \$?}
 
 In addition, one can use \cd{values} to get or set the value(s) of one more nodes in a vectorized fashion, as discussed in Section \ref{sec:getting-setting-more}.
 

@@ -70,7 +70,7 @@ beginning again.  Hence they do not distinguish between constants and
 data.  
 
 For compatibility with BUGS and JAGS, NIMBLE allows both to be
-provided in the the \cd{constants} argument to \cd{nimbleModel}, in
+provided in the \cd{constants} argument to \cd{nimbleModel}, in
 which case NIMBLE handles values for stochastic nodes as data and
 everything else as constants.
 
@@ -80,7 +80,7 @@ constants.
 
 \subsubsection{Providing data and initial values to an existing model}
 
-Wherease constants must be provided during the call the
+Whereas constants must be provided during the call the
 \cd{nimbleModel}, data and initial values can be provided later via
 the model member functions \cd{setData} and \cd{setInits}. For
 example, if \cd{pumpData} is a named list of data values (as above),
@@ -109,7 +109,7 @@ example are documented more below.  NIMBLE's default MCMC
 configuration will treat the missing values as unknowns to be sampled,
 as can be seen in the MCMC output here.
 
-<<pump-missing, eval=FALSE, message=FALSE>>=
+<<pump-missing, message=FALSE>>=
 pumpMiss <- pump$newModel()
 pumpMiss$resetData()
 pumpDataNew <- pumpData
@@ -122,7 +122,7 @@ pumpMissConf$addMonitors('x', 'alpha', 'beta', 'theta')
 pumpMissMCMC <- buildMCMC(pumpMissConf)
 Cobj <- compileNimble(pumpMiss, pumpMissMCMC)
 
-niter <- 1000
+niter <- 10
 set.seed(0)
 Cobj$pumpMissMCMC$run(niter)
 samples <- as.matrix(Cobj$pumpMissMCMC$mvSamples)
@@ -138,7 +138,7 @@ Missing values may also occur in explanatory variables.  Values for
 such variables should be passed in via the \cd{data} argument to
 \cd{nimbleModel}, with \cd{NA} for the missing values.  In some
 contexts, one would want to specify distributions for such explanatory
-variables so that values are imputed by an MCMC for missing values.
+variables, for example so that an MCMC would impute the missing values.
 
 \subsubsection{Defining alternative models with the same code}
 \label{sec:defin-altern-models}
@@ -302,20 +302,20 @@ algorithms that use models.
 \subsection{The nodes and variables in a model}
 \label{sec:nodes-and-variables}
 
-\subsection{What are variables and nodes?}
+\subsubsection{What are variables and nodes?}
 \label{sec:what-are-nodes-and-variables}
 
 This section discusses some basic concepts and terminology to
 be able to speak about NIMBLE models clearly.
 
-Say we have the following BUGS code
+Suppose we have created a model from the following BUGS code.
 % This chunk can be modified to jut remove the nimbleModel call.
 
 <<echo=FALSE,message=FALSE>>=
 read_chunk(file.path('chunks', 'usingBugsModels_chunks.R'))
 @ 
 
-<<understandingNimbleConcepts, eval=FALSE>>=
+<<usingModelsExample, eval=FALSE>>=
 @ 
 
 In NIMBLE terminology:
@@ -342,18 +342,15 @@ In NIMBLE terminology:
 
 \subsubsection{Determining the nodes and variables in a model}
 
-One can determine the nodes and variables in a model using \cd{getNodeNames}:
+One can determine the variables in a model using \cd{getVarNames} and the  nodes in a model using \cd{getNodeNames}, with optional arguments allowing you to select only certain types of nodes. 
 
-<<getNodeNames>>=
+<<getVarAndNodeNames>>=
 @ 
 
 Note that some of the nodes may be ``lifted'' nodes introduced by
-NIMBLE (Section \ref{sec:introduced-nodes}).
+NIMBLE (Section \ref{sec:introduced-nodes}). In this case \cd{lifted\_d1\_over\_beta} is the only lifted node in the model.
 
-We can determine the set of nodes contained in one or more nodes or variables using \cd{expandNodeNames}. The \cd{returnScalarComponents} argument also allows us to return all of the scalar components of multivariate nodes. 
-
-<<expandNodeNames, message=FALSE>>=
-@ 
+To determine the dependencies of one or more nodes in the model, you can use \cd{getDependencies} as discussed in Section \ref{sec:cdgetdependencies}.
 
 \subsubsection{Accessing nodes}
 \label{sec:accessing-nodes}
@@ -370,9 +367,6 @@ node also has its own name that can be used to access it directly.  For
 example, \cd{y[2]} has the name ``y[2]'' and can be accessed by that
 name as follows:
 
-
-<<usingModelsExample, message=FALSE>>=
-@ 
 
 <<usingNodeNames>>=
 @ 
@@ -431,24 +425,6 @@ or NIMBLE that access any single node by a name, regardless of the
 dimensionality of the variable in which it is embedded.  This is particularly
 useful for NIMBLE, which resolves how to access a particular node
 during the compilation process.
-
-\subsection{Determining model structure}
-
-
-\subsubsection{Determining dependencies in a model}
-\label{sec:cdgetdependencies}
-
-One can determine the node dependencies (or
-``descendants'') in a model using \cd{getDependencies}. There are a variety of arguments to \cd{getDependencies} that
-allow one to specify whether to include the node itself, whether to
-include deterministic or stochastic or data dependents, etc. By
-default \cd{getDependencies} returns descendants up through the next
-stochastic node on all edges emanating from the node(s) specified as input.  This is what would be
-needed to calculate a Metropolis-Hastings acceptance probability in
-MCMC, for example.
-
-<<getDependencies>>=
-@ 
 
 
 \subsubsection{Checking if a node holds data}
