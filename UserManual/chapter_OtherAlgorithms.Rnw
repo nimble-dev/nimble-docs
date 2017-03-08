@@ -7,118 +7,13 @@
 require(nimble)
 @ 
 
-\chapter{Sequential Monte Carlo and other algorithms in NIMBLE}
+\chapter{Sequential Monte Carlo and MCEM}
 \label{cha:algos-provided}
 
-The NIMBLE algorithm library is growing and as of version 0.5-1 includes a suite of Sequential Monte Carlo algorithms as well as a more robust MCEM. It also includes some basic utilities for calculating and simulating sets
-of nodes.  
 
-\section{Basic Utilities}
-\label{sec:basic-utils}
+The NIMBLE algorithm library is growing and as of version 0.5-1 includes a suite of Sequential Monte Carlo algorithms as well as a more robust MCEM. 
 
-\subsection{\cd{simNodes}, \cd{calcNodes}, and \cd{getLogProbs}}
-\label{sec:cdsimn-cdcalcn-cdget}
-
-
-
-  \cd{simNodes}, \cd{calcNodes} and \cd{getLogProb} are basic nimbleFunctions that simulate, calculate, or get the log probabilities
-  (densities), respectively, of the same set of nodes each time they
-  are called.  Each of these 
-takes a model and a character string of node names 
-  as inputs. If \cd{nodes} is left blank, then all the nodes of the model
-  are used. 
-  
-  For \cd{simNodes}, the nodes provided will be topologically sorted to 
-  simulate in the correct order. For \cd{calcNodes} and \cd{getLogProb},
-  the nodes will be sorted and dependent nodes will be included.  Recall that
- the calculations must be up to date (from a calculate call) for \cd{getLogProb} 
-  to return the values you are probably looking for.
-  
-<<Basic_Utils_Algs>>=
-simpleModelCode <- nimbleCode({
-  for(i in 1:4){
-    x[i] ~ dnorm(0,1)
-    y[i] ~ dnorm(x[i], 1) #y depends on x
-    z[i] ~ dnorm(y[i], 1) #z depends on y
-    #z conditionally independent of x
-  }
-})
-
-simpleModel <- nimbleModel(simpleModelCode, check = FALSE)
-cSimpleModel <- compileNimble(simpleModel)
-
-#simulates all the x's and y's
-rSimXY <- simNodes(simpleModel, nodes = c('x', 'y') ) 
-
-#calls calculate on x and its dependents (y, but not z)
-rCalcXDep <- calcNodes(simpleModel, nodes = 'x')
-
-#calls getLogProb on x's and y's
-rGetLogProbXDep <- getLogProbNodes(simpleModel,
-                  nodes = 'x')
-
-#compiling the functions
-cSimXY <- compileNimble(rSimXY, project = simpleModel)
-cCalcXDep <- compileNimble(rCalcXDep, project = simpleModel)
-cGetLogProbXDep <- compileNimble(rGetLogProbXDep,
-                           project = simpleModel)
-
-cSimpleModel$x
-cSimpleModel$y
-#simulating x and y
-cSimXY$run()
-cSimpleModel$x
-cSimpleModel$y
-
-cCalcXDep$run()
-
-#Gives correct answer because logProbs
-#updated by 'calculate' after simulation
-cGetLogProbXDep$run()
-
-cSimXY$run()
-
-#Gives old answer because logProbs
-#not updated after 'simulate'
-cGetLogProbXDep$run()
-cCalcXDep$run()
-@
-
-
-\subsection{\cd{simNodesMV}, \cd{calcNodesMV}, and \cd{getLogProbsMV}}
-
-There is a similar trio of nimbleFunctions that does each job
-repeatedly for different rows of a modelValues object.  For example,
-\cd{simNodesMV} will simulate in the model multiple times and record
-each simulation in a row of its modelValues.  \cd{calcNodesMV} and
-\cd{getLogProbsMV} iterate over the rows of a modelValues, copy the
-nodes into the model, and then do their job of calculating or
-collecting log probabilities (densities), respectively.  Each of these
-returns a numeric vector with the summed log probabilities of the
-chosen nodes from each
-each row. \cd{calcNodesMV} will 
-  save the log probabilities back into the modelValues object if
-  \cd{saveLP == TRUE}, a run-time argument. 
-
-Here are some examples:
-
-<<Basic_Utils_MV>>=
-mv <- modelValues(simpleModel)
-rSimManyXY <- simNodesMV(simpleModel, nodes = c('x', 'y'), mv = mv)
-rCalcManyXDeps <- calcNodesMV(simpleModel, nodes = 'x', mv = mv)
-rGetLogProbMany <- getLogProbNodesMV(simpleModel,
-                    nodes = 'x', mv = mv)
-
-cSimManyXY <- compileNimble(rSimManyXY, project = simpleModel)
-cCalcManyXDeps <- compileNimble(rCalcManyXDeps, project = simpleModel)
-cGetLogProbMany <- compileNimble(rGetLogProbMany, project = simpleModel)
-
-cSimManyXY$run(m = 5) # simulating 5 times
-cCalcManyXDeps$run(saveLP = TRUE) # calculating 
-cGetLogProbMany$run() #
-@
-  
-  
+ 
 
 \section{Particle Filters / Sequential Monte Carlo}
 
@@ -255,9 +150,9 @@ aEWSamp <- as.matrix(cLWF$mvEWSamples, 'a')
 \subsection{Particle MCMC (PMCMC)}
 \label{sec:particle-mcmc}
 
-In addition to our four particle filters, NIMBLE also has particle MCMC samplers implemented. These sample top-level parameters by using either a bootstrap filter or auxiliary particle filter to obtain estimates of the likelihood of a model for use in a Metropolis-Hastings MCMC step.  The \nm{RW\_PF}  sampler uses a univariate normal proposal distribution, and should be used to sample scalar top-level parameters.  The \nm{RW\_PF\_block} sampler uses a multivariate normal proposal distribution for vectors of top-level parameters.  Each PMCMC sampler also includes an optional algorithm to estimate the optimal number of particles to use in the particle filter at each iteration, based on a trade off between computational time and efficiency.  The PMCMC samplers can be specified with a call to \cd{addSampler} with \cd{type = 'RW\_PF'} or \cd{type = 'RW\_PF\_block'}, a syntax similar to the other MCMC samplers listed in \ref{sec:samplers-provided}.
+In addition to our four particle filters, NIMBLE also has particle MCMC samplers implemented. These sample top-level parameters by using either a bootstrap filter or auxiliary particle filter to obtain estimates of the likelihood of a model for use in a Metropolis-Hastings MCMC step.  The \cd{RW\_PF}  sampler uses a univariate normal proposal distribution, and should be used to sample scalar top-level parameters.  The \cd{RW\_PF\_block} sampler uses a multivariate normal proposal distribution for vectors of top-level parameters.  Each PMCMC sampler also includes an optional algorithm to estimate the optimal number of particles to use in the particle filter at each iteration, based on a trade off between computational time and efficiency.  The PMCMC samplers can be specified with a call to \cd{addSampler} with \cd{type = 'RW\_PF'} or \cd{type = 'RW\_PF\_block'}, a syntax similar to the other MCMC samplers listed in \ref{sec:samplers-provided}.
 
-The \nm{RW\_PF} sampler and \nm{RW\_PF\_block} sampler can be customized using the \cd{control} list argument to set the adaptive properties of the sampler and options for the particle filter algorithm to be run.  In addition, setting the \cd{pfOptimizeNparticles} control list option to \cd{TRUE} will allow the sampler to estimate the optimal number of particles for the bootstrap filter.   See \cd{help(samplers)} for details. The MCMC configuration for the \cd{timeModel} in the previous section will serve as an example for the use of our PMCMC sampler.  Here we use the identity matrix as our proposal covariance matrix.
+The \cd{RW\_PF} sampler and \cd{RW\_PF\_block} sampler can be customized using the \cd{control} list argument to set the adaptive properties of the sampler and options for the particle filter algorithm to be run.  In addition, setting the \cd{pfOptimizeNparticles} control list option to \cd{TRUE} will allow the sampler to estimate the optimal number of particles for the bootstrap filter.   See \cd{help(samplers)} for details. The MCMC configuration for the \cd{timeModel} in the previous section will serve as an example for the use of our PMCMC sampler.  Here we use the identity matrix as our proposal covariance matrix.
 
 <<pmcmc_Chunk, results = "hide">>=
 timeConf <- configureMCMC(rTimeModel)   # default MCMC configuration
