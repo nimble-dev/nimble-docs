@@ -6,67 +6,79 @@
 \label{sec:welcome-nimble}
 
 NIMBLE is a system for building and sharing analysis methods for
-statistical models from R, especially for hierarchical models and
-computationally-intensive methods.  While NIMBLE is embedded in R, it
-goes beyond R by supporting separate programming of models and
-algorithms along with compilation for fast execution.  
-
-As of \ver, NIMBLE has been around for a while and is reasonably
-stable, but we have a lot of plans to expand and improve it.  The
-algorithm library provides MCMC with a lot of user control and ability
-to write new samplers easily.  Other algorithms include particle
-filtering (sequential Monte Carlo) and Monte Carlo Expectation
-Maximization (MCEM).  
-
-But NIMBLE is about much more than providing an algorithm library.  It
-provides a language for writing model-generic algorithms.  We hope you
-will program in NIMBLE and make an R package providing your method.
-Of course, NIMBLE is open-source, so we also hope you'll contribute to
-its development.
-
-Please join the mailing lists
+statistical models, especially for hierarchical models and
+computationally-intensive methods.  This is an early version, 
+\ver. You can do quite a bit with it, but it has some rough edges and
+gaps, and we plan to keep expanding it.  If you want to analyze data,
+we hope you will find something already useful.  If you want to build
+algorithms, we hope you will program in NIMBLE and make an R package
+providing your method.  We also hope you will join the mailing lists
 (\href{http://R-nimble.org}{R-nimble.org}) and help improve NIMBLE by
 telling us what you want to do with it, what you like, and what could
 be better.  We have a lot of ideas for how to improve it, but we want
-your help and ideas too.  You can also follow and contribute to
-developer discussions on the
-\href{https://github.com/nimble-dev/nimble/wiki}{wiki of our GitHub
-  repository}.
+your help and ideas too.
+
+\section{Why something new?}
+\label{sec:why-something-new}
+
+There is a lot of statistical software out there.  Why did we build
+something new?  More and more, statistical models are being customized
+to the details of each project.  That means it is often difficult to
+find a package whose set of available models and methods includes what
+you need.  And more and more, statistical models are hierarchical,
+meaning they have some unobserved random variables between the
+parameters and the data.  These may be random effects, shared
+frailties, latent states, or other such things.  Or a model may be
+hierarchical simply due to putting Bayesian priors on parameters.
+Except for simple cases, hierarchical statistical models are often
+analyzed with computationally-intensive algorithms, the best known of
+which is Markov chain Monte Carlo (MCMC).
+
+Several existing software systems have become widely used by
+providing a flexible way to say what the model is and then
+automatically providing an algorithm such as MCMC.  When these work,
+and when MCMC is what you want, that's great.  Unfortunately, there
+are a lot of hard models out there for which default MCMCs don't work
+very well.  And there are also a lot of useful new and old algorithms that
+are not MCMC, but they can be hard to find implemented for the model you need, and you may have to go learn a new system to use a new algorithm.  That's why we wanted to create a system that combines a
+flexible system for model specification -- the BUGS language -- with
+the ability to program with those models.  That's the goal of NIMBLE.
 
 \section{What does NIMBLE do?}
 \label{sec:what-is-nimble}
 
-NIMBLE makes it easier to program statistical algorithms that will run
-efficiently and work on many different models from R.
+NIMBLE stands for Numerical Inference for statistical Models for Bayesian and
+Likelihood Estimation.  Although NIMBLE was motivated by algorithms
+for hierarchical
+statistical models, you could use it for
+simpler models too.
+% TODO: Chris changed "Inference of statistical" to "Inference for statistical" as 'inference for' is standard phrasing (but it does mean a lot of 'for's in the sentence - OK?
 
-You can think of NIMBLE as comprising four pieces:
+You can think of NIMBLE as comprising three pieces:
 
 \begin{enumerate}
 \item A system for writing statistical models flexibly, which is an
-  extension of the BUGS language\footnote{See Section
-    \ref{sec:supp-feat-bugs} for information about NIMBLE's version of
-    BUGS.}.
+  extension of the BUGS language\footnote{But see Section
+    \ref{sec:supp-feat-bugs} for information about both limitations and
+    extensions to how NIMBLE handles BUGS right now.}.
 \item A library of algorithms such as MCMC.
 \item A language, called NIMBLE, embedded within and similar in style
-  to R, for writing algorithms that operate on models written in BUGS.
-\item  A compiler that generates C++ for your models and algorithms,
-  compiles that C++, and lets you use it seamlessly from R without
-  knowing anything about C++.
+  to R, for writing algorithms that operate on BUGS models.
 \end{enumerate}
 
-NIMBLE stands for Numerical Inference for statistical Models for
-Bayesian and Likelihood Estimation.  
+Both BUGS models and NIMBLE algorithms are automatically processed
+into C++ code, compiled, and loaded back into R with seamless
+interfaces.  
 
-Although NIMBLE was motivated by algorithms for hierarchical
-statistical models, it's useful for other goals too.  You could use it
-for simpler models.  And since NIMBLE can automatically compile R-like
-functions into C++ that use the Eigen library for fast linear algebra,
-you can use it to program fast numerical functions without any model
-involved\footnote{The packages \href{http://www.rcpp.org/}{Rcpp} and
-  RcppEigen provide different ways of connecting C++, the Eigen
-  library and R.  In those packages you program directly in C++, while
-  in NIMBLE you program in R in a nimbleFunction and the NIMBLE compiler
-  turns it into C++.}
+Since NIMBLE can compile R-like functions into C++ that use the Eigen
+library for fast linear algebra, it can be useful for making fast
+numerical functions with or without BUGS models involved\footnote{The
+ packages \href{http://www.rcpp.org/}{Rcpp} and RcppEigen provide different ways of
+  connecting C++, the Eigen library and R.  In those packages you
+  program directly in C++, while in NIMBLE you program in an R-like
+  fashion and the NIMBLE compiler turns it into C++.  Programming
+  directly in C++ allows full access to C++, while programming in
+  NIMBLE allows simpler code.}.
 
 One of the beauties of R is that many of the high-level analysis
 functions are themselves written in R, so it is easy to see their code and modify
@@ -74,20 +86,10 @@ them.  The same is true for NIMBLE: the algorithms are themselves
 written in the NIMBLE language.
 
 \section{How to use this manual}
-
-We suggest everyone start with the Lightning Introduction.
-
-Then, if you want to jump into using NIMBLE's algorithms without learning
-about NIMBLE's programming system, go to Part \ref{part:models} to
-learn how to build your model and Part \ref{part:algorithms} to learn
-how to apply NIMBLE's built-in algorithms to your model.
-
-If you want to learn about NIMBLE programming (nimbleFunctions), go to Part
-\ref{part:programming}. This teaches how to program user-defined
-function or distributions to use in BUGS code, compile your R code for
-faster operations, and write algorithms with NIMBLE. These algorithms
-could be specific algorithms for your particular model (such as a
-user-defined MCMC sampler for a parameter in your model) or general
-algorithms you can distribute to others. In fact the algorithms
-provided as part of NIMBLE and described in Part \ref{part:algorithms}
-are written as nimbleFunctions.
+We emphasize that you can use NIMBLE for data analysis with the
+algorithms provided by NIMBLE without ever using the NIMBLE language
+to write algorithms. So as you get started, feel free to focus on
+Chapters \ref{cha:intro}-\ref{cha:algos-provided}.  The algorithm
+library in Version \ver\ is just a start, so we hope you'll let us know what
+you want to see and consider writing it in NIMBLE.  More about NIMBLE
+programming comes in Chapter \ref{cha:progr-with-models}.

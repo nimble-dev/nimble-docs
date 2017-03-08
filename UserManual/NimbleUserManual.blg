@@ -1,0 +1,50 @@
+This is BibTeX, Version 0.99d (TeX Live 2015)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: NimbleUserManual.aux
+The style file: chicago.bst
+Database file #1: UserManualRefs.bib.bib
+Warning--no number and no volume in 2010arXiv1001.0175M
+Warning--page numbers missing in 2010arXiv1001.0175M
+Warning--page numbers missing in Shaby2011
+You've used 7 entries,
+            2861 wiz_defined-function locations,
+            664 strings with 6104 characters,
+and the built_in function-call counts, 5103 in all, are:
+= -- 421
+> -- 391
+< -- 0
++ -- 118
+- -- 128
+* -- 497
+:= -- 922
+add.period$ -- 21
+call.type$ -- 7
+change.case$ -- 53
+chr.to.int$ -- 7
+cite$ -- 10
+duplicate$ -- 122
+empty$ -- 302
+format.name$ -- 152
+if$ -- 952
+int.to.chr$ -- 1
+int.to.str$ -- 0
+missing$ -- 7
+newline$ -- 38
+num.names$ -- 70
+pop$ -- 32
+preamble$ -- 1
+purify$ -- 95
+quote$ -- 0
+skip$ -- 130
+stack$ -- 0
+substring$ -- 290
+swap$ -- 40
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 140
+warning$ -- 3
+while$ -- 60
+width$ -- 0
+write$ -- 93
+(There were 3 warnings)

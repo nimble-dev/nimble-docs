@@ -174,7 +174,7 @@ Some discrepancy is to be expected since it is a Monte Carlo algorithm.
 Now let's see an example of writing our own algorithm and using it on
 the model. We'll do something simple: simulating multiple values for a
 designated set of nodes and calculating every part of the model that
-depends on them. More details on programming in NIMBLE are in Part \ref{part:programming}.
+depends on them.
 
 Here is our \cd{nimbleFunction}:
 <<nfPump>>=
@@ -206,9 +206,10 @@ Here are a few things to notice about the \cd{nimbleFunction}
   providing \cd{`theta[6:10]'} as an argument.  The returned objects
   are objects of a uniquely
   generated R reference class with fields (member data) for the results of the
-  \cd{setup} code and a \cd{run} method (member function). 
-   % Arbitrary other methods can be provided with a \cd{methods} argument, following the syntax of R's \cd{setRefClass} function.
-  % NOTE: CJP removed previous sentence as I think it is too involved for the lightning intro - CJP
+  \cd{setup} code and a \cd{run} method (member function).  Arbitrary
+  other methods can be provided with a \cd{methods} argument,
+  following the syntax of R's \cd{setRefClass} function.
+  % TODO: I think this last sentence is too involved for the lightning intro - CJP
 \end{enumerate}
 
 By the way, \cd{simNodesMany} is very similar to a standard
