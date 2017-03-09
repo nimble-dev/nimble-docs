@@ -176,24 +176,21 @@ When adding samplers to a configuration, the default control list can be over-ri
 
 \subsubsection{Adding samplers to the configuration: \cd{addSampler}}
 
-Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCconf} object.  The frst argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the type of sampler, which may be provided as a character string or a \cd{nimbleFunction} object. Valid character strings include `posterior\_predictive', `RW', `RW\_block', `slice', `RW\_multinomial', `RW\_dirichlet', `binary', `ess', `crossLevel', and `RW\_llFunction'.  Added samplers can be labeled with a \cd{name} argument, which is used in output of \cd{printSamplers}.
-
-
-{\color{red} Question from PdV: Isn't `conjugate' now a valid sampler type?}
+Samplers may be added to a configuration using the \cd{addSampler} method of the \cd{MCMCconf} object.  The first argument gives the node(s) to be sampled, called the \cd{target}, as a character vector.   The second argument gives the type of sampler, which may be provided as a character string or a \cd{nimbleFunction} object. Valid character strings include `posterior\_predictive', `RW', `RW\_block', `slice', `RW\_multinomial', `RW\_dirichlet', `binary', `ess', `crossLevel', `RW\_llFunction', and `conjugate'.  Added samplers can be labeled with a \cd{name} argument, which is used in output of \cd{printSamplers}.
 
 Writing a new sampler as a \cd{nimbleFunction} is covered in section \ref{}.
 
 The hierarchy of precedence for control list elements for samplers is:
 
 \begin{enumerate}
-\item those supplied in the \cd{control} list argument to \cd{addSampler};
-\item those supplied in the \cd{control} list argument to \cd{configureMCMC};
-\item the defaults, which are in \cd{nimbleOptions(`MCMCcontrolDefaultList')}.
+\item The \cd{control} list argument to \cd{addSampler};
+\item The \cd{control} list argument to \cd{configureMCMC};
+\item The defaults, as defined in \cd{nimbleOptions(`MCMCcontrolDefaultList')}.
 \end{enumerate}
 
 Samplers added by \cd{addSampler} will be appended to the end of current sampler list.  Adding a sampler for a node will \emph{not} automatically remove any existing samplers on that node. 
 
-\subsubsection{Printing, re-ordering, modifying and removing samplers: \cd{printSamplers}, cd{getSamplerDefinition}, and \cd{removeSamplers}}
+\subsubsection{Printing, re-ordering, modifying and removing samplers: \cd{printSamplers}, \cd{getSamplerDefinition}, and \cd{removeSamplers}}
 
 The current, ordered, list of all samplers in the MCMC configuration may be printed by calling the \cd{printSamplers} method. When you want to see only samplers acting on specific model nodes or variables, provide those names as an argument to \cd{printSamplers}.
 
@@ -255,8 +252,6 @@ mcmcConf$removeSamplers()
 
 
 \subsubsection{Customizing individual sampler configurations: \cd{getSamplers}, \cd{setSamplers}, \cd{setName}, \cd{setSamplerFunction}, \cd{setTarget}, and \cd{setControl}}
-
-{\color{red} PdV suggests this new subsubsection.  Should getSamplerDefinition be moved here?}
 
 Each sampler in an \cd{MCMCconf} object is represented by a sampler configuration as a \cd{samplerConf} object.  Each \cd{samplerConf} is a reference class object containing the following (required) fields: name (a character string), samplerFunction (a valid nimbleFunction sampler), target (the model node to be sampled), and control (list of control arguments).  The \cd{MCMCconf} method \cd{getSamplers} allows access to the \cd{samplerConf} objects.  These can be modified and then passed as an argument to \cd{setSamplers} to over-write the current list of samplers in the MCMC configuration object.  However, no checking of the validity of this modified list is performed; if the list of samplerConf objects is corrupted to be invalid, incorrect behavior will result at the time of calling \cd{buildMCMC}.  The fields of a \cd{samplerConf} object can be modified using the access functions \cd{setName(name)}, \cd{setSamplerFunction(fun)}, \cd{setTarget(target, model)}, and \cd{setControl(control)}.
 
@@ -476,23 +471,10 @@ codaMCMClist <- runMCMC(Cmcmc, nchains=3, returnCodaMCMC=TRUE)
 
 Most documentation of MCMC samplers provided with NIMBLE can be found by \cd{help(samplers)} in R.  Here we provide additional explanation of conjugate samplers and how complete customization can be achieved by making a sampler use an arbitrary log likelihood function, such as to build a particle MCMC algorithm.
 
-{\color{red} PdV suggests cutting most of this since it is a copy of what is in the Rd pages.  The example lines could be moved to the roxygen entries.}
-
-% We now describe the samplers provided with NIMBLE.  The MCMC configuration for a model generated from the following model code will serve as our example for this section:
-
-% <<demoModel, eval=FALSE>>=
-% code <- nimbleCode({
-%     a ~ dgamma(1, 1)
-%     b ~ dgamma(1, 1)
-%     p ~ dbeta(a, b)
-%     y1 ~ dbinom(prob = p, size = 1)
-%     y2 ~ dbinom(prob = p, size = 2)
-% })
-% @
 
 
 \subsection{Conjugate (Gibbs) samplers}
-By default, \cd{configureMCMC()} and \cd{buildMCMC()} will assign conjugate samplers to all nodes satisfying a conjugate relationship, unless the option \cd{useConjugacy = FALSE} is specified.  %The conjugate relationships supported are defined in the system-level variable\\ \cd{nimble:::conjugacyRelationshipsInputList}.  %Subsequently, conjugate samplers can be added to particular nodes in an MCMC configuration object (\cd{conf}) using \cd{conf\$addSampler(target = 'x', type = 'conjugate')}, to add a conjugate sampler for model node \cd{'x'}.  If the specified node does not satisfy any conjugate relationship, then an error occurs and no sampler is added to the configuration object.
+By default, \cd{configureMCMC()} and \cd{buildMCMC()} will assign conjugate samplers to all nodes satisfying a conjugate relationship, unless the option \cd{useConjugacy = FALSE} is specified.  
 
 The current release of NIMBLE supports conjugate sampling of the relationships listed in Table~\ref{table:conjugaciesSupported}\footnote{NIMBLE's internal definitions of these relationships can be viewed by \cd{nimble:::conjugacyRelationshipsInputList}.}.
 
