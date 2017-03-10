@@ -281,12 +281,12 @@ except that they return a value (described above) and they have no \cd{includeDa
 
 
 
-\subsection{\cd{simNodes}, \cd{calcNodes}, and \cd{getLogProbs}}
+\subsection{\cd{simNodes}, \cd{calcNodes}, and \cd{getLogProbNodes}}
 \label{sec:cdsimn-cdcalcn-cdget}
 
 {\color{red} under discussion: how to clarify the point of these and where to put this text}
 
-  \cd{simNodes}, \cd{calcNodes} and \cd{getLogProb} are basic nimbleFunctions that simulate, calculate, or get the log probabilities
+  \cd{simNodes}, \cd{calcNodes} and \cd{getLogProbNodes} are basic nimbleFunctions that simulate, calculate, or get the log probabilities
   (densities), respectively, of the same set of nodes each time they
   are called.  Each of these 
 takes a model and a character string of node names 
@@ -294,9 +294,9 @@ takes a model and a character string of node names
   are used. 
   
   For \cd{simNodes}, the nodes provided will be topologically sorted to 
-  simulate in the correct order. For \cd{calcNodes} and \cd{getLogProb},
+  simulate in the correct order. For \cd{calcNodes} and \cd{getLogProbNodes},
   the nodes will be sorted and dependent nodes will be included.  Recall that
- the calculations must be up to date (from a calculate call) for \cd{getLogProb} 
+ the calculations must be up to date (from a calculate call) for \cd{getLogProbNodes}
   to return the values you are probably looking for.
   
 <<Basic_Utils_Algs>>=
