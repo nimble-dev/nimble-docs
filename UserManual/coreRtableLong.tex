@@ -1,0 +1,17 @@
+\begin{longtable}[c]{lllc}
+ \caption{Basic R manipulation functions in NIMBLE.  To find help in R for NIMBLE's version of a function, use the ``nim'' prefix and capitalize the next letter.  E.g. \cd{help(nimC)} for help with \cd{c()}.} \label{table:functions-matrix-bugs} \\
+  \hline
+  Function & Comments (differences from R) \\
+\cd{c()} & no \cd{recursive} argument \\
+\cd{rep()} & no \cd{rep.int} or \cd{rep\_len} \\
+\cd{seq()} and \cd{:} & Negative integer sequences from \cd{:}, e.g. \cd{2:1}, do not work. \\
+\cd{which()} & No \cd{arr.ind} or \cd{useNames} arguments. \\
+\cd{diag()} & Works in three ways: diag(vector) returns a matrix; diag(matrix) returns the diagonal vector; diag(integer) returns an identity matrix.  No \cd{nrow} or \cd{ncol} arguments.\\
+\cd{diag()}<- & Works for assigning the diagonal vector of a matrix.\\
+\cd{dim()} & Works on a vector as well as high-dimensional arguments. \\
+  \hline \hline \\
+\endhead
+\input{functionTableMatrixLong.tex}
+\input{eigenSvdTableMatrixElements.tex}
+ \end{longtable}
+}

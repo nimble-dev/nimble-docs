@@ -72,7 +72,7 @@ nimbleOptions(MCMCprogressBar = FALSE)
 \tableofcontents
 \endgroup
 
-\part{Introduction and Building Models in NIMBLE}
+\part{Introduction}
 \label{part:models}
 
 \Sexpr{knit_child('chapter_WelcomeToNimble.Rnw')}
