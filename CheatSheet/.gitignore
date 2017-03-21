@@ -1,0 +1,8 @@
+.Rhistory
+
+# Latex output files
+*.aux
+*.out
+*.log
+*.toc
+figure
