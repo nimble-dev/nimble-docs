@@ -16,33 +16,37 @@ read_chunk(file.path('chunks', 'programmingWithModels_chunks.R'))  # one can put
 \label{sec:RC-intro}
 
 \nm{nimbleFunctions} are the heart of programming in NIMBLE.  In this
-chapter, we introduce simple nimbleFunctions that contain only the
-code to be executed, in either compiled or uncompiled form, but no setup function.
+chapter, we introduce simple nimbleFunctions that contain only one
+function to be executed, in either compiled or uncompiled form, but no
+setup function or additional methods.
 
-Simple nimbleFunctions behave like R functions: \cd{nimbleFunction}
-returns a function that can be executed and compiled.  This is useful
-for doing math or the other kinds of processing available in NIMBLE
-when no model or modelValues is needed. These can be used for any
-purpose in R programming.  They can also be used as new functions and
-distributions in NIMBLE's extension of BUGS.
+Defining a simple nimbleFunction is like defining an R function:
+\cd{nimbleFunction} returns a function that can be executed, and it
+can also be compiled.  Simple nimbleFunctions are useful for doing math or the other
+kinds of processing available in NIMBLE when no model or modelValues
+is needed. These can be used for any purpose in R programming.  They
+can also be used as new functions and distributions in NIMBLE's
+extension of BUGS.
 
 
   Here's a basic example implementing the textbook calculation of
-  least squares linear regression estimates\footnote{Of course, in general, explicitly
+  least squares estimation of linear regression parameters\footnote{Of course, in general, explicitly
   calculating the inverse is not the recommended numerical recipe for
   least squares.}:
   
 <<nf-RCfun, message=FALSE>>=
 @  
 
-In this example, we fit 100 random response values (\cd{y}) to four columns of
+In this example, we fit a linear model for 100 random response values (\cd{y}) to four columns of
 randomly generated explanatory variables (\cd{X}).  We ran the
 nimbleFunction 
 \cd{solveLeastSquares} uncompiled,
 natively in R, allowing testing and debugging.  Then we compiled it and showed that the compiled version does the same thing,
 but faster\footnote{On the machine this is
   being written on, the compiled version runs a few times faster than
-  the uncompiled version.  However we refrain from formal speed tests.}.
+  the uncompiled version.  However we refrain from formal speed
+  tests.}.  NIMBLE's compiler creates C++ that uses the Eigen (\href{http://eigen.tuxfamily.org}{http://eigen.tuxfamily.org})
+library for linear algebra.
 
 Notice that the actual NIMBLE code is written as an R function
 definition that is passed to \cd{nimbleFunction} as the \cd{run}
@@ -68,120 +72,99 @@ The next sections cover each of these topics in turn.
 \section{R functions (or variants) implemented in NIMBLE}
 \label{sec:r-fiunctions-implemented}
 
+\subsection{Finding help for NIMBLE's versions of R functions}
+
+Often, R help pages are available for NIMBLE's versions of R functions
+using the prefix ``nim'' and capitalizing the next letter.  For
+example, help on NIMBLE's version of \cd{numeric} can be found by \cd{help(nimNumeric)}.
+
 \subsection{Basic operations}
 
-c(), rep(), numeric() etc.
+Basic R operations supported for NIMBLE compilation are listed in
+table \ref{table:functions-coreR}.
 
-\subsubsection{\cd{numeric}, \cd{integer}, and \cd{logical}}
+{
+\footnotesize 
+\LTcapwidth=\textwidth
+\begin{longtable}[c]{ll}
+ \caption{Basic R manipulation functions in NIMBLE.  To find help in R for NIMBLE's version of a function, use the ``nim'' prefix and capitalize the next letter.  E.g. \cd{help(nimC)} for help with \cd{c()}.} \label{table:functions-coreR} \\
+ \hline
+\input{coreRtableLong.tex}
+\end{longtable}
+}
 
+Next we cover some of these functions in more detail. {\color{red}
+  What follows is reduced from some previous content.  I wonder if
+  some examples would be clearer.}
+
+\subsubsection{\cd{numeric}, \cd{integer}, \cd{logical}, \cd{matrix}
+  and \cd{array}}
 
 \cd{numeric}, \cd{integer}, or \cd{logical} will create a 1-dimensional vector of
-floating-point, integer, or logical values, respectively.  The \cd{length} argument specifies the vector 
-length (default 0), and the \cd{value} argument specifies the initial 
-scalar value for all vector elements (default 0). The \cd{init} argument specifies 
-whether or not to initialize the elements (default \cd{TRUE}).  If
-first use of the variable does not rely on initial values, you can use
-\cd{init = FALSE}.
-
-<<exampleNumeric, eval=FALSE>>=
-## Example of creating and resizing a floating-point vector
-## myNumericVector will be of length 10, with all elements initialized to 2 
-myNumericVector <- numeric(10, value = 2) 
-
-## resize this numeric vector to be length 20
-## both calls are equivalent
-setSize(myNumericVector, 20)
-setSize(myNumericVector, c(20))
-@
-
-<<exampleInteger, eval=FALSE>>=
-## Example of creating a length-100 integer vector and filling it with the values 1, 2, ..., 100 
-n <- 100 
-myIntegerVector <- integer(n) 
-for(i in 1:n)
-    myIntegerVector[i] <- i 
-@
-
-<<exampleLogical, eval=FALSE>>=
-## Example of creating a length-100 locical vector and filling it with TRUE 
-x <- 100 
-myIntegerVector <- logical(n, value = TRUE) 
-@
-
-\subsubsection{matrix and identityMatrix}
+floating-point (or ``double''), integer, or logical values, respectively.  The \cd{length} argument specifies the vector 
+length (default 0), and the \cd{value} argument specifies initial 
+ value either as a scaler (used for all vector elements, with default
+ 0) or a non-scalar (used sequentially). The \cd{init} argument specifies 
+whether or not to initialize the elements in compiled code (default \cd{TRUE}).  If
+first use of the variable does not rely on initial values,  using
+\cd{init = FALSE} wil be slightly more efficient performance.
 
 \cd{matrix} creates a 2-dimensional matrix object of either floating-point (if 
 \cd{type = `double'}, the default), integer (if \cd{type = `integer'}), or logical (if \cd{type = `logical'}) values. 
-The \cd{nrow} and \cd{ncol} arguments specify the number of rows and columns, respectively. 
+As in R, \cd{nrow} and \cd{ncol} arguments specify the number of rows and columns, respectively. 
 The \cd{value} and \cd{init} argument are used in the same way as for
 \cd{numeric()} and \cd{integer()}.
-
-<<exampleMatrix, eval=FALSE>>=
-## Example of creating a 10-by-1 column matrix of 1's and resizing it
-onesMatrix <- matrix(1, nrow = 10, ncol = 1) 
-
-## resize this matrix to be a 10-by-10 matrix
-## note that contents are not necessarily preserved
-## both calls are equivalent
-setSize(onesMatrix, 10, 10)
-setSize(onesMatrix, c(10, 10))
-@
-
-
-NIMBLE provides the \cd{identityMatrix} function for quickly creating
-instances of an identity matrix (all 0's with 1's on the main
-diagnol).  This function takes a single
-argument, specifying the number of rows and colums in the resulting matrix.
-
-<<exampleIdentityMatrix, eval=FALSE>>=
-I5 <- identityMatrix(5)
-@
-
-The resulting matrix may have its elements modified, or be used in
-arbitrary matematical expressions, as any variable in the DSL.
-
-
-\subsubsection{array}
 
 \cd{array} creates a vector or higher-dimensional object, depending
 on the \cd{dim} argument, which takes a vector of sizes for each
 dimension.  The \cd{type}, \cd{value} and \cd{init} argument behave
 the same as for \cd{matrix}.
 
-<<exampleArray, eval=FALSE>>=
-## the following three lines are equivalent 
-## each creates a length-10 vector, with elements equal to y 
-a <- numeric(10, value = y) 
-a <- array(y, dim = 10) 
-a <- array(y, dim = c(10)) 
+{\color{red} check if array still requires dims to be provided using c()}
 
-## the following three lines are equivalent 
-## each creates an integer vector of length z[5], with elements equal to x+y 
-b <- integer(z[5], value = x + y) 
-b <- array(x+y, dim = z[5], type = 'integer') 
-b <- array(x+y, dim = c(z[5]), type = 'integer') 
+The best way to create an identity matrix is with \cd{diag(n)}, which
+returns an $n \times n$ identity matrix.  NIMBLE also provides a deprecated
+nimbleFunction \cd{identityMatrix} that does the same thing.
 
-## the following two lines are equivalent 
-## each one creates a matrix of 0's of the same size as matrix x 
-c <- matrix(0, nrow = dim(x)[1], ncol = dim(x)[2]) 
-c <- array(0, dim = c(dim(x)[1], dim(x)[2])) 
+Examples of these functions, and the related function $\cd{setSize}$
+for changing the size of a numeric object, are given in section (\ref{xyz}).
 
-## the following creates a 3-dimensional array of 0's 
-d <- array(0, dim = c(x, y, z)) 
+\subsubsection{\cd{length} and \cd{dim}}
+\label{sec:query-chang-sizes}
 
-## now resize this 3-dimensional array to be (x+1) by (y+1) by (z+1)
-## both calls are equivalent
-setSize(d, x+1, y+1, z+1)
-setSize(d, c(x+1, y+1, z+1))
-@
+\cd{length} behaves like R's \cd{length} function.  It
+  returns the \textit{entire} length of X.  That means if X is
+  multivariate, \cd{length} returns the product of the sizes in
+  each dimension.  NIMBLE's version of \cd{dim}, which has synonym \cd{nimDim}, behaves like R's
+  \cd{dim} function for matrices or arrays and like R's
+  \cd{length} function for vectors.  In other words, regardless of
+  whether the number of dimensions is 1 or more, it returns a vector
+  of the sizes. 
+
+\paragraph*{Deprecated method of creating non-scalar objects using \cd{declare}:}
+
+Previous versions of NIMBLE provided a function \cd{declare} for
+declaring variables.  The more R-like functions \cd{numeric},
+\cd{integer}, \cd{matrix} and \cd{array} are intended to replace
+\cd{declare}, but \cd{declare} is still supported for backward
+compatibility.  In a future version of NIMBLE, \cd{declare} may be removed.
 
 \subsection{Math and linear algebra}
 \label{sec:basic-math-linear}
 
 Numeric scalar and matrix mathematical operations are listed in tables
-\ref{table:functions-dsl} and \ref{table:functions-matrix-dsl}. 
+\ref{table:functions-dsl} and \ref{table:functions-matrix-dsl}.  
 
-{\color{red} Perry please scan through these tables for accuracy. In particular, do we now allow vector inputs to distribution functions?}
+As in R, many scalar operations in NIMBLE will work component-wise on vectors or
+higher dimensional objects.  For example if B and C are vectors, \cd{A
+  = B + C} will add them and create vector C by component-wise
+addition of B and C.  In NIMBLE v\ver, component-wise operations
+generally only work for vectors and matrices, not arrays with more
+than 2 dimensions.  The only exception is assignment: \cd{A = B} will
+work up to NIMBLE's current limit of four dimensions.
+
+{\color{red} I updated about vectorized distributions.  I still need
+  to review some cases in these tables. -Perry}
 
 {
 \footnotesize 
@@ -220,106 +203,115 @@ Numeric scalar and matrix mathematical operations are listed in tables
 
 More information on the \cd{nimbleList}s returned by the \cd{eigen()} and \cd{svd()} functions in NIMBLE can be found in Section \ref{sec:eigen-nimFunctions}.
 
-NIMBLE uses the \nm{Eigen} library in C++ to accomplish linear algebra.  In
-Version \ver, we use a lot of Eigen's capabilities, but not all of them.  
-
-No vectorized operations other than assignment are supported for more
-than two dimensions in
-v\ver.  That means \cd{A = B + C} will work only if B and C have dimensions
-$\le$ 2.
 
 \subsection{Distribution functions}
 \label{sec:nimble-dist-funs}
 
 Distribution ``d'', ``r'', ``p'', and ``q'' functions can all be used
-from nimbleFunctions (and in BUGS model code), but the care is needed in the syntax. 
+from nimbleFunctions (and in BUGS model code), but care is needed in the syntax: 
 \begin{itemize}
-  \item We support only the canonical
-NIMBLE parameterization, as listed below (with a small number of exceptions, also listed). 
-\item The names of the distributions are the names used under the hood in NIMBLE and differ from the standard BUGS distribution names.
-  \item Currently ``r'' functions only return one random
+\item Names of the distributions generally (but not always) match those of R, which
+  sometimes differ from BUGS.  See the list below.
+\item Supported parameterizations are also indicated in the list below. 
+  \item For multivariate distributions,  ``r'' functions only return one random
 draw at a time, and the first argument must always be 1.
-\item For the multivariate normal and Wishart distributions the \cd{prec\_param} or
-\cd{scale\_param} argument must be provided, indicating when a
-covariance or precision matrix has been given. 
+%%\item For the multivariate normal and Wishart distributions the \cd{prec\_param} or
+%%\cd{scale\_param} argument must be provided, indicating when a
+%%covariance or precision matrix has been given.  %% this is stated below.
+\item R's recycling rule (re-use of an argument as needed to accommodate
+  longer values of other arguments) is generally followed, but the
+  returned object is always a scalar or a vector, not a matrix or
+  array.
 \end{itemize}
 
-Arguments are matched by order or by name (if given). If omitted, default argument values based on the standard R distribution functions will be used. Standard arguments to distribution functions in R (\cd{log}, \cd{log.p}, \cd{lower.tail}) can be used and take the usual default values as in R. User-defined distributions can also be used from nimbleFunctions and are handled analogously with regard to matching by position and  use of defaults (when provided via the nimbleFunction run function arguments) (Chapter \ref{cha:user-defined}).
+As in R (and nimbleFunctions), arguments are matched by order or by name
+(if given). Standard arguments to distribution functions in R
+(\cd{log}, \cd{log.p}, \cd{lower.tail}) can be used and have the same
+defaults. User-defined distributions for BUGS (Chapter
+\ref{cha:user-defined}) can also be used from
+nimbleFunctions. 
 
+For standard distributions, we rely on R's regular help pages
+(e.g. \cd{help(dgamma)}.  For distributions unique to NIMBLE
+(e.g. \cd{dexp\_nimble}, \cd{ddirch}), we provide help pages.
+{\color{red} Is that true? Do we have a system for roxygen entries
+  for our version of these, or only on an as-needed basis?  Maybe one
+  roxygen entry for all?} 
 
-Supported distributions include:
+Supported distributions, listed by their ``d'' function, include:
+\begin{multicols}{2}
 \begin{itemize}
-\item \cd{dbinom(size, prob)}
-\item \cd{dcat(prob)}
-\item \cd{dmulti(size, prob)}
-\item \cd{dnbinom(size, prob)}
-\item \cd{dpois(lambda)}
-\item \cd{dbeta(shape1, shape2)}
-\item \cd{dchisq(df)}
-\item \cd{dexp(rate)}
-\item \cd{dexp\_nimble(rate)}
-\item \cd{dexp\_nimble(scale)}
-\item \cd{dgamma(shape, rate)}
-\item \cd{dgamma(shape, scale)}
-\item \cd{dlnorm(meanlog, sdlog)}
-\item \cd{dlogis(location, scale)}
-\item \cd{dnorm(mean, sd)}
- \item \cd{dt\_nonstandard(df, mu, sigma)}
- \item \cd{dt(df)}
- \item \cd{dunif(min, max)}
- \item \cd{dweibull(shape, scale)}
-  \item \cd{ddirch(alpha)}
-  \item \cd{dmnorm\_chol(mean, cholesky, prec\_param)}
-  \item \cd{dwish\_chol(cholesky, df, scale\_param)}
+\item \cd{dbinom(x, size, prob, log)}
+\item \cd{dcat(x, prob, log)}
+\item \cd{dmulti(x, size, prob, log)}
+\item \cd{dnbinom(x, size, prob, log)}
+\item \cd{dpois(x, lambda, log)}
+\item \cd{dbeta(x, shape1, shape2, log)}
+\item \cd{dchisq(x, df, log)}
+\item \cd{dexp(rate, log)} {\color{red} Is this equivalent to dexp\_nimble?
+    If so can we combine rows?  I remember there was some reason for
+    this situation but it is awkward.}
+\item \cd{dexp\_nimble(x, rate, log)}
+\item \cd{dexp\_nimble(x, scale, log)}
+\item \cd{dgamma(x, shape, rate, log)}
+\item \cd{dgamma(x, shape, scale, log)}
+\item \cd{dlnorm(x, meanlog, sdlog, log)}
+\item \cd{dlogis(x, location, scale, log)}
+\item \cd{dnorm(x, mean, sd, log)}
+ \item \cd{dt\_nonstandard(x, df, mu, sigma, log)}
+ \item \cd{dt(x, df, log)}
+ \item \cd{dunif(x, min, max, log)}
+ \item \cd{dweibull(x, shape, scale, log)}
+  \item \cd{ddirch(x, alpha, log)}
+  \item \cd{dmnorm\_chol(x, mean, cholesky, prec\_param, log)}
+  \item \cd{dwish\_chol(x, cholesky, df, scale\_param, log)}
 \end{itemize}
+\end{multicols}
 
 In the last two, \cd{cholesky} stands for Cholesky decomposition of the relevant matrix; 
-\cd{prec\_param} indicates whether the Cholesky is of a precision matrix or covariance
-matrix; and \cd{scale\_param} indicates whether the Cholesky is of a scale
-matrix or an inverse scale matrix.
+\cd{prec\_param} is a logical indicating whether the Cholesky is of a
+precision matrix (TRUE) or covariance
+matrix (FALSE); and \cd{scale\_param} is a logical indicating whether the Cholesky is of a scale
+matrix (TRUE) or an inverse scale matrix (FALSE).
 
-In a future release, we will also extend the
-alternative parameterizations given in Section \ref{subsec:dists-and-functions}  to \cd{nimbleFunctions}.
-
-
-\subsection{Flow control: if-then-else, for,  while, and stop}
+\subsection{Flow control: \cd{if-then-else}, \cd{for},  \cd{while}, and \cd{stop}}
 \label{sec:basic-flow-control}
 
-These basic control flow structures use the same syntax as in R.
+These basic flow-control structures use the same syntax as in R.
 However, \cd{for}-loops are limited to sequential integer
 indexing.  For example, \cd{for(i in 2:5) \{...\} } works as it does
-in R.  Decreasing index sequences are not allowed.  
+in R.  Decreasing index sequences are not allowed.  Unlike in R,
+\cd{if} is not itself a function that returns a value.
 
 We plan to include more flexible \cd{for}-loops in the future, but for
 now we've included just one additional useful feature:  \cd{for(i in
   seq\_along(NFL))} will work as in R, where \cd{NFL} is a
-\cd{nimbleFunctionList}.  This is described below.
+\cd{nimbleFunctionList}.  This is described in section (\ref{XYZ}).
 
-The NIMBLE function 
 \cd{stop}, or equivalently \cd{nimStop}, throws
-control to R's error-handling system and can take one string
-(character) argument.
-
+control to R's error-handling system and can take a character
+argument that will be displayed in an error message.
 
 \subsection{\cd{print} and \cd{cat}}
 \label{sec:print}
 
-As demonstrated above, the NIMBLE function \cd{print}, or equivalently
+\cd{print}, or equivalently
 \cd{nimPrint}, prints an arbitrary set of outputs in order and adds a
 newline character at the end.  \cd{cat} or \cd{nimCat} is identical,
 except without a newline at the end.  
 
-\subsection{Checking for user interrupts}
+\subsection{Checking for user interrupts: \cd{checkInterrupt}}
 \label{sec:check-user-interr}
 
 When you write algorithms that will run for a long time in C++, you
 may want to explicitly check whether a user has tried to interrupt the
 execution (e.g. by pressing Control-C).  Simply include
-\cd{checkInterrupt()} in \cd{run} code to do so.  If there has been an
-interrupt, the process will stop and return control to R.
+\cd{checkInterrupt()} in \cd{run} code at places where a check should
+be done.  If there has been an
+interrupt waiting to be handled, the process will stop and return control to R.
 
 
-\subsection{Alternative keywords for some functions}
+\subsection{``nim'' synonyms for some functions}
 \label{sec:altern-keyw-some}
 
 NIMBLE uses some keywords, such as \cd{dim} and \cd{print}, in ways
@@ -330,9 +322,10 @@ R function for stepwise model selection.  And \cd{equals} is part of
 the BUGS language but is also used in the \cd{testthat} package, which
 we use in testing NIMBLE.
 
-The way NIMBLE handles this to try to avoid conflicts is to replace
+NIMBLE tries to avoid conflicts by replacing
 some keywords immediately upon creating a nimbleFunction.  These
 replacements include
+\begin{multicols}{2}
 \begin{itemize}
 \item \cd{c} $\rightarrow$ \cd{nimC}
 \item \cd{copy} $\rightarrow$ \cd{nimCopy}
@@ -348,149 +341,245 @@ replacements include
 \item \cd{switch} $\rightarrow$ \cd{nimSwitch}
 \item \cd{numeric, integer, logical} $\rightarrow$ \cd{nimNumeric, nimInteger, nimLogical}
 \item \cd{matrix, array} $\rightarrow$ \cd{nimMatrix, nimArray}
-
 \end{itemize}
+\end{multicols}
 
 This system gives programmers the choice between using the keywords like
 \cd{nimPrint} directly, to avoid confusion in their own code about
 which ``print'' is being used, or to use the more intuitive keywords
 like \cd{print} but remember that they are not the same as R's functions.
 
-\subsection{Using functions}
-
-You can call another nimbleFunction from within your nimbleFunction. Simply define the two functions and call one within the other. Similarly, you can define and use a nimbleFunction within another nimbleFunction.
-
-{\color{red} please confirm these statements are true for RC functions}
-
 \section{How NIMBLE handles types of variables}
 \label{sec:how-nimble-handles}
 
+Variables in the NIMBLE language are statically typed. Once a variable
+is used for one type, it can't subsequently be used for a different
+type.  This rule facilitates NIMBLE's compilation to C++.  The NIMBLE
+compiler often determines types automatically, but sometimes the
+programmer needs to explicitly provide them.
 
-\subsection{How numeric types work in NIMBLE}
+The elemental types supported by NIMBLE include double
+(floating-point), integer, logical, and character.   The \textit{type} of
+a numeric or logical object refers to the number
+of dimensions and the elemental type of the elements.  Hence if \cd{x}
+is created as a double matrix, it can only be used subsequently for a double
+matrix.  The size of each dimension is not part of its type and thus
+can be changed.  Up to four
+dimensions are supported for double, integer, and logical.  Only
+vectors (one dimension) are supported for character.  Unlike R, NIMBLE supports true
+scalars, which have 0 dimensions.
+
+A nimbleList data structure can contain arbitrary other NIMBLE objects,
+including other nimbleLists.  Like other NIMBLE types, nimbleLists are
+strongly typed: each nimbleList is created from a configuration that
+declares what types of objects it will hold.  nimbleLists are covered
+in chapter (\ref{XYZ}).
+
+\subsection{How numeric types work}
 \label{sec:how-types-work}
 
-Variables in the NIMBLE language are typed -- a given variable can only represent a specific kinds of value, such as a real number, integer, or character string, and the dimension (scalar, vector, matrix, etc.) cannot change once it is set. 
+R's dynamic types support easy programming because one type can sometimes
+be transformed to another type automatically when an expression is
+evaluated.  NIMBLE's static types makes it stricter than R.
 
-Numeric types in NIMBLE are much less flexible than in R, a reflection
-of the fact that NIMBLE code can be compiled into C++\footnote{C++ is a
-  statically typed language, which means the type of a variable cannot
-  change.}.  In NIMBLE, the \textit{type} of a numeric object refers to the number
-of dimensions and the numeric type of the elements.  In Version \ver, objects
-from 0 (scalar) to 4 dimensions are supported, and the numeric types
-\nm{integer} and \nm{double} are supported, as is a \nm{logical} type.  While the number of dimensions
-cannot change during run-time, numeric objects can be resized using
-\cd{setSize} or by full (non-indexed) assignment.
+\subsubsection{When NIMBLE can automatically set a numeric type}
+\label{sec:when-nimble-can}
 
-Arguments and return values for functions must have their types and dimensions declared by the programmer.  
+When a variable is first created by assignment, its type is determined
+automatically by that assignment. For example, if \cd{x} has not appeared before, then
+<<>>=
+x <- A %*% B ## assume A and B are double matrices or vectors
+@ 
+will create \cd{x} to be a double matrix of the correct size
+(determined during execution).  If \cd{x} is used subsequently, it can
+only be used as a double matrix. This is true even if it is assigned a
+new value, which will again set its size automatically but cannot
+change its type.
 
-Types and dimensions for variables declared within run code are handled differently. When possible, NIMBLE will determine the type of a local variable that is defined in run code for you.
-In particular, when a numeric variable is created by
-  assignment, its type is determined by that assignment.  Subsequent
-  uses of that variable must be consistent with that type. 
-  In contrast, if the first uses of a variable involves indexing, the
-  type must
-  be declared explicitly and the size set as discussed in Section \ref{decl-local-vars}.  In addition, its size must
-  be set before assigning into it. 
-  
-  Treatment of vectors of length 1 presents special challenges because
-  they could be treated as scalars or vectors.  Currently they are
-  treated as scalars.  
-  {\color{red} I think we should say more here - we do allow length-one vectors and passing in a scalar from R into a double(1) (e.g.) will work. Perry, can you frame this more comprehensively here or somewhere else appropriate - I'm wondering if this should be its own subsection and also have a bullet on it in the previous subsection}
+\subsubsection{When a numeric object needs to be created before being
+  used}
+\label{sec:when-numeric-object}
 
-\cd{nimbleList}s provide containers for numeric, logical, and character type variables in NIMBLE.  More information on using \cd{nimbleList}s in \cd{nimbleFunction}s can be found in Section \ref{sec:nimbleLists}.
-
-
-\subsection{Creating non-scalar variables: \cd{numeric}, \cd{integer}, \cd{logical}, \cd{matrix}, \cd{array}, and \cd{nimbleList}}
-\label{sec:decl-local-vars}
-
-When local variables in run code are created by assignment, their types will be 
-automatically inferred.  For example, \cd{x <- A \%*\% B} will create 
-\cd{x} as a matrix.  However, if a variable is to be filled by indexed 
-assignment, then it must be explicitly created or re-sized first.  For 
-example, in the following code \cd{x} must be created before being 
-filled by indexed assignment:
+If the contents of a variable are to be populated by assignment into
+some indices in steps, the variable must be created first.  Further,
+it must be large enough for its eventual contents; it will not be automatically
+resized if assignments are made beyond its current size.  For example,
+in the following code, \cd{x} must be created before being filled with
+contents for specific indices.
 
 <<exampleDeclare, eval=FALSE>>=
-
-## NOTE: must create x as a matrix here, first 
+x <- vector(10)
 
 for(i in 1:10) 
-    for(j in 1:5) 
-        x[i, j] <- foo(y[i, j]) 
+   x[i] <- foo(y[i]) 
 @
 
-Scalar variables never need to be created in advance. 
-
-NIMBLE provides several functions for creating non-scalar variables. 
-These functions are similar to those of R, but they take additional 
-arguments to set an initialization value, indicate floating-point or
-integer elements, and/or indicate no initialization
-is needed\footnote{Skipping initialization is more efficient, but
-  this will typically be noticeable only for functions called many,
-  many times.}. \cd{numeric}, \cd{integer}, and \cd{logical} create floating-point, integer, and logical
-vectors (1-dimensional objects), respectively.  \cd{matrix} creates 2-dimensional
-objects, and \cd{array} creates objects of 1, 2 or more dimensions.
-The latter two functions can be used for floating-point, integer, or logical objects.
-
-After a variable has been created, its size may be changed either by
-non-indexed assignment or by \cd{setSize}, as illustrated below.
-Note that \cd{setSize} cannot change the number of dimensions of a
-variable, and it does \emph{not} necessarily preserve the contents of
-the variable.
 
 
-%represents the creation of \cd{x} by construction.  For a compiled 
-%nimbleFunction, prior to the above block of code, one would need to 
-%declare \cd{x} before filling it with values.  If the sizes are known
-%beforehand, they can be included when declaring \cd{x}. Either of the
-%following are valid and equivalent.
+\subsubsection{Changing the sizes of existing objects}
+\label{sec:chang-sizes-exist}
 
-\subsubsection{Deprecated method of creating non-scalar objects using \cd{declare}}
+{\color{red} Check if we still don't preserve contents during
+  setSize. Also check if use of c() is required for correct processing.
 
-Previous versions of NIMBLE provided a function \cd{declare} for
-declaring variables.  The more R-like functions \cd{numeric},
-\cd{integer}, \cd{matrix} and \cd{array} are intended to replace
-\cd{declare}, but \cd{declare} is still supported for backward
-compatibility.  In a future version of NIMBLE, \cd{declare} may be removed.
+A lot of the following example could be cut.}
 
+<<exampleNumeric, eval=FALSE>>=
+## Example of creating and resizing a floating-point vector
+## myNumericVector will be of length 10, with all elements initialized to 2 
+myNumericVector <- numeric(10, value = 2) 
+## resize this numeric vector to be length 20
+setSize(myNumericVector, 20)
+@
 
-\subsection{Querying sizes}
-\label{sec:query-chang-sizes}
+{\color{red} CHECK ON THESE}
 
-Sizes can be queried as follows:
-\begin{itemize}
-\item \cd{length} behaves like R's \cd{length} function.  It
-  returns the \textit{entire} length of X.  That means if X is
-  multivariate, \cd{length} returns the product of the sizes in
-  each dimension.
-\item \cd{dim}, which has synonym \cd{nimDim}, behaves like R's
-  \cd{dim} function for matrices or arrays, and like R's
-  \cd{length} function for vectors.  In other words, regardless of
-  whether the number of dimensions is 1 or more, it returns a vector
-  of the sizes.  Using \cd{dim} vs. \cd{nimDim} is a personal choice,
-  but if you use \cd{dim}, you should keep in mind that
-  it behaves differently from R's \cd{dim}.
-  \begin{itemize}
-  \item A quirky limitation in Version \ver: It not currently possible to
-    assign the results from \cd{nimDim} to another object using
-    vector assignment.  So the only practical way to use
-    \cd{nimDim} is to extract elements immediately, such as
-    \cd{nimDim(X)[1]}, \cd{nimDim(X)[2]}, etc.
-  \end{itemize}
-\end{itemize}
+<<exampleMatrix, eval=FALSE>>=
+## Example of creating a 10-by-1 column matrix of 1's and resizing it
+onesMatrix <- matrix(1, nrow = 10, ncol = 1) 
+## resize this matrix to be a 10-by-10 matrix
+## note that contents are not necessarily preserved
+## both calls are equivalent
+setSize(onesMatrix, 10, 10)
+setSize(onesMatrix, c(10, 10))
+@
+
+<<exampleArray, eval=FALSE>>=
+## the following two lines are equivalent 
+## each one creates a matrix of 0's of the same size as matrix x 
+c <- matrix(0, nrow = dim(x)[1], ncol = dim(x)[2]) 
+c <- array(0, dim = c(dim(x)[1], dim(x)[2])) 
+
+## the following creates a 3-dimensional array of 0's 
+d <- array(0, dim = c(x, y, z)) 
+@
 
 
-\subsubsection{Managing dimensions, sizes and indices}
+\subsubsection{Confusions between scalars and length-one vectors}
+\label{sec:conf-betw-scal}
+
+In R, there is no such thing is a true scalar; scalars can always be
+treated as vectors of length one.  NIMBLE allows true scalars, which
+can create confusions.  For example, consider the following code:
+
+<<>>=
+myfun <- nimbleFunction(
+    run = function(i = integer()) { ## i is an integer
+        randomValues <- rnorm(10)   ## double vector
+        a <- randomValues[i]        ## double scalar
+        b <- randomValues[i:i]      ## double vector
+        c <- a + b                  ## double vector
+    })
+@ 
+
+In the line that creates \cd{b}, the index range \cd{i:i} is not
+evaluated until run time.  Even though \cd{i:i} will always evaluate
+to simpy \cd{i}, the compiler does not determine that.  Since there is
+a vector index range provided, the result of \cd{randomValues[i:i]} is
+determined to be a vector.  The following line then creates \cd{c} as
+a vector, because a vector plus a scalar returns a vector.
+
+\subsubsection{Confusions between vectors and one-column or one-row matrices}
+\label{sec:conf-betw-scal}
+
+Consider the following code:
+<<>>=
+myfun <- nimbleFunction(
+    run = function() { 
+        A <- matrix(value = rnorm(9), nrow = 3)
+        B <- rnorm(3)
+        Cmatrix <- A %*% B                ## double matrix
+        Cvector <- (A %*% B)[,1]          ## double vector
+        Cmatrix <- (A %*% B)[,1]          ## error, vector assigned to matrix
+        Cmatrix[,1] <- (A %*% B)[,1]      ## ok, if Cmatrix is large enough
+    })
+@ 
+This creates a matrix \cd{A}, a vector \cd{B}, and matrix-multiplies
+them.  The vector \cd{B} is automatically treated as a one-column
+matrix.  The result of matrix multiplication is always a matrix, but
+a programmer may expect a vector, since they know the result will have
+one column.  To make it a vector, simply extract the first column.
+More information about such handling is provided in the next section.
+
+{\color{red} If this bit is redundant with what follows, we can cut
+  it.}
+
+% \subsection{Creating non-scalar variables: \cd{numeric}, \cd{integer}, \cd{logical}, \cd{matrix}, \cd{array}, and \cd{nimbleList}}
+% \label{sec:decl-local-vars}
+
+% When local variables in run code are created by assignment, their types will be 
+% automatically inferred.  For example, \cd{x <- A \%*\% B} will create 
+% \cd{x} as a matrix.  However, if a variable is to be filled by indexed 
+% assignment, then it must be explicitly created or re-sized first.  For 
+% example, in the following code \cd{x} must be created before being 
+% filled by indexed assignment:
+
+% <<exampleDeclare, eval=FALSE>>=
+
+% ## NOTE: must create x as a matrix here, first 
+
+% for(i in 1:10) 
+%     for(j in 1:5) 
+%         x[i, j] <- foo(y[i, j]) 
+% @
+
+% Scalar variables never need to be created in advance. 
+
+% NIMBLE provides several functions for creating non-scalar variables. 
+% These functions are similar to those of R, but they take additional 
+% arguments to set an initialization value, indicate floating-point or
+% integer elements, and/or indicate no initialization
+% is needed\footnote{Skipping initialization is more efficient, but
+%   this will typically be noticeable only for functions called many,
+%   many times.}. \cd{numeric}, \cd{integer}, and \cd{logical} create floating-point, integer, and logical
+% vectors (1-dimensional objects), respectively.  \cd{matrix} creates 2-dimensional
+% objects, and \cd{array} creates objects of 1, 2 or more dimensions.
+% The latter two functions can be used for floating-point, integer, or logical objects.
+
+% After a variable has been created, its size may be changed either by
+% non-indexed assignment or by \cd{setSize}, as illustrated below.
+% Note that \cd{setSize} cannot change the number of dimensions of a
+% variable, and it does \emph{not} necessarily preserve the contents of
+% the variable.
+
+
+
+
+% \subsection{Querying sizes}
+% \label{sec:query-chang-sizes}
+
+% Sizes can be queried as follows:
+% \begin{itemize}
+% \item \cd{length} behaves like R's \cd{length} function.  It
+%   returns the \textit{entire} length of X.  That means if X is
+%   multivariate, \cd{length} returns the product of the sizes in
+%   each dimension.
+% \item \cd{dim}, which has synonym \cd{nimDim}, behaves like R's
+%   \cd{dim} function for matrices or arrays, and like R's
+%   \cd{length} function for vectors.  In other words, regardless of
+%   whether the number of dimensions is 1 or more, it returns a vector
+%   of the sizes. 
+% \end{itemize}
+
+
+\subsubsection{Understanding dimensions and sizes from linear algebra}
 \label{sec:manag-dimens-sizes}
 
 {\color{red} do we want to say anything else here about indexing? Vague memory that Perry had a vision for something more here (or perhaps somewhere else where we talk about indexing!)}
 
-It can be tricky to determine the dimensions returned by a linear
-algebra expression.  As much as possible, NIMBLE behaves like R, but
-in some cases this is not possible because R uses run-time information
-while NIMBLE must determine dimensions at compile-time.
+As much as possible, NIMBLE behaves like R when determining types and
+sizes returned from linear algebra expressions, but in some cases this
+is not possible because R uses run-time information while NIMBLE must
+determine dimensions at compile time. For example, when matrix
+multiplying a matrix by a vector, R treats the vector as a one-column
+matrix unless treating it as a one-row matrix is the only way to make
+the expression valid, as determine at run time.  NIMBLE usually must assume during compilation
+that it should be a one-column matrix, unless it can determine not
+just the number of dimensions but the actual sizes during
+compilation.  When needed \cd{asRow} and \cd{asCol} can control how a
+vector will be treated as a matrix.
 
-Suppose v1 and v2 are vectors, and M1 is a matrix.  Then
+Here is a guide to such issues.  Suppose v1 and v2 are vectors, and M1 is a matrix.  Then
 
 \begin{itemize}
 \item  \cd{v1 + M1} generates a compilation error unless one dimension of
@@ -528,12 +617,12 @@ product of v1 and v2.  If you want the inner product as a scalar, use
   
 \item The left-hand side of an assignment can use indexing, but if so
   it must already be correctly sized for the result.  For example,
-  \cd{Y[5:10, 20:30] <- model\$x} will not work -- and could crash
+  \cd{Y[5:10, 20:30] <- x} will not work -- and could crash
   your R session with a segmentation fault --  if Y is not
   already at least 10x30 in size.  This can be done by \cd{setSize(Y,
     c(10, 30))}.  See Section \ref{sec:decl-local-vars} for more
   details.  Note that non-indexed assignment to \cd{Y}, such as \cd{Y
-    <- model\$x}, will automatically set \cd{Y} to the necessary size. 
+    <-x}, will automatically set \cd{Y} to the necessary size. 
   
 \end{itemize}
 
@@ -564,7 +653,7 @@ NIMBLE will output a warning that the number of rows of M1 does not
 match the number of columns of M2.  After that warning the statement
 will be executed and may result in a crash.  Another easy way to write
 code that will crash is to do things like \cd{Y[5:10, 20:30] <-
-  model\$x} without ensuring Y is at least 10x30.  In the future we hope to
+  x} without ensuring Y is at least 10x30.  In the future we hope to
 prevent crashes, but in Version \ver\ we limit ourselves to trying to provide
 useful information.
 
@@ -580,18 +669,27 @@ useful information.
 NIMBLE requires that types of arguments and the type of the return value be
 explicitly declared.
 
-As illustrated in the example in Section \ref{sec:RC-intro},  the syntax for a type declaration is: \cd{type(nDim, sizes)}.
+As illustrated in the example in Section \ref{sec:RC-intro},  the
+syntax for a type declaration is either:
+\begin{itemize}
+\item \cd{type(nDim, sizes)}, where \cd{type} is \cd{double},
+\cd{integer}, \cd{logical} or \cd{character}; or
+\item cd{nimbleListType()}, where \cd{nimbleListType} is a nimleList
+  configuration created by \cd{nimbleList}.  Section \ref{nimbleLists} covers nimbleLists.
+\end{itemize}
 
-\cd{type} can be any of \cd{double},
-\cd{integer}, \cd{logical} or \cd{character} (for scalars or vectors only).  In a
-\cd{returnType} statement, a type of \cd{void()} is valid, and is the default if no
-\cd{returnType} statement is included.
-\cd{nDim} is the number of dimensions, with 0 indicating scalar.
-\cd{sizes} is an optional vector of fixed, known sizes.  These
-should use R's \cd{c} function if \cd{nDim} $>1$ (e.g. \cd{double(2,
+For \cd{type(nDim, sizes)}, \cd{nDim} is the number of dimensions, with 0 indicating scalar.
+\cd{sizes} is an optional vector of fixed, known sizes.  Since sizes
+cannot be dynamic if they are provided in the declaration, the
+declaration must enclose multiple sizes in \cd{c()} if \cd{nDim} $>1$.
+ For example, \cd{double(2,
   c(4, 5))} declares a \cd{4-$\times$-5} matrix).  If sizes
-are omitted, they will either be set when the entire object is
-assigned to, or an explicit call to \cd{setSize} is needed.
+are omitted, they will be set either by assignment or by \cd{setSize}.
+
+In a \cd{returnType} statement, a type of \cd{void()} means there is
+no return value, which is the default if no \cd{returnType} statement
+is included.  The \cd{returnType} statement can appear anywhere in a
+run function.
 
 In the case of scalar arguments only, a default value can be
 provided.  For example, to provide 1.2 as a default:
@@ -602,67 +700,80 @@ myfun <- nimbleFunction(
 })
 @ 
 
-If one would like to use a \cd{nimbleList} as an argument or the return value, one needs to specify the type as a \cd{nimbleList} definition (see Section \ref{nimbleLists}).
-
 
 \section{Compiled nimbleFunctions pass arguments by reference}
 \label{sec:comp-nimbl-pass}
 
-\section{The nimbleList data structure}
-\label{sec:nimbl-data-struct}
+Uncompiled nimbleFunctions pass arguments like R does, by copy.  If
+\cd{x} is passed as an argument to function \cd{foo}, and \cd{foo}
+modifies \cd{x} internally, it is modifying its copy of \cd{x}, not
+the original \cd{x} that was passed to it.  
 
-
-
-\subsubsection{nimbleLists}
-
-\cd{nimbleList}s can be created from a \cd{nimbleList} definition as discussed in Section \ref{sec:nimbleLists}. 
-
-\subsection{Basics}
-\label{sec:basics}
-
-There are several general points that will be useful before describing
-the NIMBLE language in more detail.
-\begin{itemize}
-\item NIMBLE language functions are not R functions.  In many cases we
-  have used syntax identical or nearly so to R, and in most cases we
-  have provided a matching R function, but it is important not to
-  confuse the NIMBLE language definition with the behavior of the
-  corresponding R function. 
+Compiled nimbleFunctions pass arguments to other compiled
+nimbleFunctions by reference (or pointer).  This is very different.
+Now if \cd{foo} modifies \cd{x} internally, it is modifying the same
+\cd{x} that was passed to it.  This allows much faster execution but
+  is obviously a fundamentally different behavior.
   
-\item Like R, NIMBLE uses 1-based indexing.  For example, the first
-  element of a vector \cd{x} is \cd{x[1]}, not \cd{x[0]}.
-
-\item As in R, function calls in NIMBLE can provide arguments by name
-  or in a default order.  
-
-\item NIMBLE is the opposite of R for argument passing.  R nearly
-  always uses pass-by-value (formally call-by-value).  NIMBLE nearly always uses
-  pass-by-reference (or pointer).  That means that in compiled
-  execution only, changing the value of a variable that was a function
-  input will change the value in the calling function.  Thus it is
-  possible to write a nimbleFunction that returns information by
-  modifying an argument.  Yes, that's a big difference in behavior!
+  Uncompiled execution of nimbleFunctions is primarily intended for
+  debugging.  However, debugging of how nimbleFunctions interact via
+  arguments requires testing the compiled versions.
   
-  Although compiled nimbleFunctions can modify arguments, the R
-  interface to a compiled nimbleFunction performs a copy to protect the
-  original R argument from modification.  (If you want to see arguments
-  -- potentially modified -- as well as any return value from R, you can
-  modify the \cd{control} argument to compileNimble to include
-  ``\cd{returnAsList = TRUE}''.  Then the returned object will be a
-  list with the nimbleFunction's return value as the last element.)
-  {\color{red} perhaps this should be its own subsection with a single sentence as a bullet here?}
-  
-  \item Variables in the NIMBLE language are typed, and types must be
-    declared for arguments and return values. 
+  nimbleLists are always passed by reference, whether compiled or uncompiled.
 
-\item BUGS model nodes are implemented as nimbleFunctions with member
-  functions for \cd{calculate}, \cd{calculateDiff}, \cd{simulate}, 
-  \cd{getLogProb}, \cd{getParam}, and \cd{getBound}.
+% \section{The nimbleList data structure}
+% \label{sec:nimbl-data-struct}
+
+% \subsubsection{nimbleLists}
+
+% \cd{nimbleList}s can be created from a \cd{nimbleList} definition as discussed in Section \ref{sec:nimbleLists}. 
+
+% \subsection{Basics}
+% \label{sec:basics}
+
+% There are several general points that will be useful before describing
+% the NIMBLE language in more detail.
+% \begin{itemize}
+% \item NIMBLE language functions are not R functions.  In many cases we
+%   have used syntax identical or nearly so to R, and in most cases we
+%   have provided a matching R function, but it is important not to
+%   confuse the NIMBLE language definition with the behavior of the
+%   corresponding R function. 
   
-  \item nimbleFunctions cannot generally be copied safely. Instead
-    rerun \cd{nimbleFunction} and record the result in a new object.
-    {\color{red} useful to say here? Is there a case in which one
-      would want to copy an RC function?}
+% \item Like R, NIMBLE uses 1-based indexing.  For example, the first
+%   element of a vector \cd{x} is \cd{x[1]}, not \cd{x[0]}.
+
+% \item As in R, function calls in NIMBLE can provide arguments by name
+%   or in a default order.  
+
+% \item NIMBLE is the opposite of R for argument passing.  R nearly
+%   always uses pass-by-value (formally call-by-value).  NIMBLE nearly always uses
+%   pass-by-reference (or pointer).  That means that in compiled
+%   execution only, changing the value of a variable that was a function
+%   input will change the value in the calling function.  Thus it is
+%   possible to write a nimbleFunction that returns information by
+%   modifying an argument.  Yes, that's a big difference in behavior!
+  
+%   Although compiled nimbleFunctions can modify arguments, the R
+%   interface to a compiled nimbleFunction performs a copy to protect the
+%   original R argument from modification.  (If you want to see arguments
+%   -- potentially modified -- as well as any return value from R, you can
+%   modify the \cd{control} argument to compileNimble to include
+%   ``\cd{returnAsList = TRUE}''.  Then the returned object will be a
+%   list with the nimbleFunction's return value as the last element.)
+%   {\color{red} perhaps this should be its own subsection with a single sentence as a bullet here?}
+  
+%   \item Variables in the NIMBLE language are typed, and types must be
+%     declared for arguments and return values. 
+
+% \item BUGS model nodes are implemented as nimbleFunctions with member
+%   functions for \cd{calculate}, \cd{calculateDiff}, \cd{simulate}, 
+%   \cd{getLogProb}, \cd{getParam}, and \cd{getBound}.
+  
+%   \item nimbleFunctions cannot generally be copied safely. Instead
+%     rerun \cd{nimbleFunction} and record the result in a new object.
+%     {\color{red} useful to say here? Is there a case in which one
+%       would want to copy an RC function?}
     
 
 \end{itemize}

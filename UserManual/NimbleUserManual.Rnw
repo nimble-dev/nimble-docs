@@ -16,6 +16,7 @@
 %\setlist{nosep}
 \setlist{noitemsep}
 \usepackage[numbers]{natbib}
+\usepackage{multicol}
 
 \geometry{tmargin = 1in, bmargin = 1in, lmargin = 1in, rmargin = 1in}
 
@@ -37,7 +38,7 @@
 ## width controls (not perfectly) width of R code lines, hopefully avoiding some of the margin overflow
 options(replace.assign=TRUE, width=65)
 runMCEMs <- FALSE
-opts_chunk$set(eval = FALSE)
+opts_chunk$set(eval = FALSE, message = FALSE) ## turned off message() output
 ##options(replace.assign=TRUE, cache.rebuild = TRUE, width=65)
 @
 
