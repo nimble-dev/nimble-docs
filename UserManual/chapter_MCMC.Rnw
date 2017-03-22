@@ -489,32 +489,17 @@ If one wants information about conjugate node relationships for other purposes, 
 
 % The \cd{binary} sampler performs Gibbs sampling for binary-valued nodes (strictly taking values 0 or 1).  This can only be used for nodes following either a \cd{dbern(p)} or \cd{dbinom(p, size=1)} distribution.  The \cd{binary} sampler accepts no control list arguments.
 
-% Example usage:
-%  <<binary-sampler, eval=FALSE>>=
-% mcmcConf$addSampler(target = 'y[1]', type = 'binary')  
-% @
-
 % \subsection{\cd{RW\_multinomial} sampler}
 
 % The \cd{RW\_multinomial} sampler operates exclusively on nodes following a multinomial distribution.  The sampler performs a series of Metropolis-Hastings steps between pairs of groups.  Proposals are generated via a draw from a binomial distribution, whereafter the proposed number density is moved from one group to another group.  The acceptance or rejection of these proposals follows a standard Metropolis-Hastings procedure.  Probabilities for the random binomial proposals are adapted to a target acceptance rate of 0.5.
 
 % The \cd{RW\_multinomial} sampler can be customized using \cd{control} list arguments to set the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
  
-% Example usage:
-% <<multinomial-sampler, eval=FALSE>>=
-% mcmcConf$addSampler(target = 'x[1:5]', type = 'RW_multinomial') 
-% @
-
 % \subsection{\cd{RW\_dirichlet} sampler}
 
 % The \cd{RW\_dirichlet} sampler operates exclusively on nodes following a Dirichlet distribution, and is designed for the non-conjugate Dirichlet case.  The sampler performs independent adaptive Metropolis-Hastings updates on a reparameterization of the target distribution, expressed in terms of component univariate gamma distributions.
 
 % The \cd{RW\_dirichlet} sampler can be customized using \cd{control} list arguments to set the adaptive properties of the sampler.  See \cd{help(samplers)} for details.
-
-% Example usage:
-% <<dirichlet-sampler, eval=FALSE>>=
-% mcmcConf$addSampler(target = 'p[1:5]', type = 'RW_dirichlet')
-% @
 
 % \subsection{Scalar Metropolis-Hastings random walk \cd{RW} sampler}
 
@@ -522,18 +507,6 @@ If one wants information about conjugate node relationships for other purposes, 
 
 % The \cd{RW} sampler can be customized using the \cd{control} list argument to set the initial proposal distribution scale, the adaptive properties of the sampler, the reflective property of proposals, and whether to sample on a log scale.  See \cd{help(samplers)} for details. 
  
-% Example usage:
-% <<RW-sampler, eval=FALSE>>=
-% mcmcConf$addSampler(target = 'a', type = 'RW',
-%      control = list(log = TRUE, adaptive = FALSE, scale = 3))
-
-% mcmcConf$addSampler(target = 'b', type = 'RW',
-%      control = list(adaptive = TRUE, adaptInterval = 200))
-
-% mcmcConf$addSampler(target = 'p', type = 'RW',
-%      control = list(reflective = TRUE))
-% @
-
 % Note that because we use a simple normal proposal distribution on all nodes, negative proposals may be simulated for non-negative random variables. These will be rejected, so the only downsides to this are some inefficiency and the presence of warnings during uncompiled (but not compiled) execution indicating \cd{NA} or \cd{NaN} values.  This can be avoided in some cases by using the option \cd{reflective = TRUE}, which reflects proposal values to stay within the range of the target node distribution.
 
 % \subsection{Multivariate Metropolis-Hastings \cd{RW\_block} sampler}
@@ -542,25 +515,11 @@ If one wants information about conjugate node relationships for other purposes, 
 
 % The \cd{RW\_block} sampler can be customized using the \cd{control} list argument to set the initial proposal covariance, and the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
 
-% Example usage:
-% <<block-sampler, eval=FALSE>>=
-% mcmcConf$addSampler(target = c('a', 'b', 'c'), type = 'RW_block') 
-% @
-
 % \subsection{\cd{slice} sampler}
 
 % The \cd{slice} sampler performs slice sampling of the scalar node to which it is applied \citep{Neal2003}.  This sampler can operate on either continuous-valued or discrete-valued scalar nodes.  The slice sampler performs a ``stepping out'' procedure, in which the slice is iteratively expanded to the left or right by an amount \cd{sliceWidth}.  This sampler is optionally adaptive, whereby the value of \cd{sliceWidth} is adapted towards the observed absolute difference between successive samples.
 
 % The \cd{slice} sampler can be customized using the \cd{control} list argument to set the initial slice width, and the adaptive properties of the sampler.  See \cd{help(samplers)} for details. 
-
-% Example usage:
-% <<slice-sampler, eval=FALSE>>=
-% mcmcConf$addSampler(target = 'y[1]', type = 'slice',
-%      control = list(adaptive = FALSE, sliceWidth = 3)) 
-
-% mcmcConf$addSampler(target = 'y[2]', type = 'slice',
-%      control = list(adaptive = TRUE, sliceMaxSteps = 1)) 
-% @
 
 % \subsection{Elliptical slice sampling: \cd{ess} sampler}
 
@@ -568,22 +527,11 @@ If one wants information about conjugate node relationships for other purposes, 
 
 % The \cd{ess} sampler accepts no control list arguments.  See \cd{help(samplers)} for details.
 
-% Example usage:
-% <<ess-sampler, eval=FALSE>>=
-% ## assuming node 'x[1:10]' follows a multivariate normal distribution
-% mcmcConf$addSampler(target = 'x[1:10]', type = 'ess')
-% @
-
 % \subsection{Hierarchical \cd{crossLevel} sampler}
 
 % This sampler is constructed to perform simultaneous updates across two levels of stochastic dependence in the model structure.  This is possible when all stochastic descendants of node(s) at one level have conjugate relationships with their own stochastic descendants.  In this situation, a Metropolis-Hastings algorithm may be used, in which a multivariate normal proposal distribution is used for the higher-level nodes, and the corresponding proposals for the lower-level nodes undergo Gibbs (conjugate) sampling.  The joint proposal is either accepted or rejected for all nodes involved based upon the Metropolis-Hastings ratio.
 
 % The \cd{crossLevel} sampler can be customized using the \cd{control} list argument to set the initial proposal covariance and the adaptive properties for the Metropolis-Hastings sampling of the higher-level nodes.  See \cd{help(samplers)} for details. 
-
-% Example usage:
-% <<crossLevel-sampler, eval=FALSE>>=
-% mcmcConf$addSampler(target = c('a', 'b', 'c'), type = 'crossLevel')
-% @
 
 % The requirement that all stochastic descendants of the \cd{target} nodes must themselves have only conjugate descendants will be checked when the MCMC algorithm is built.  This sampler is useful when there is strong dependence across the levels of a model that causes problems with convergence or mixing.
 
@@ -631,10 +579,6 @@ Rmcmc <- buildMCMC(mcmcConf)
 
 % The \cd{posterior\_predictive} sampler functions by calling the \cd{simulate} method of the relevant node, then updating model probabilities and deterministic dependent nodes.  The \cd{posterior\_predictive} sampler will automatically be assigned to all terminal, non-data stochastic nodes in a model by the default MCMC configuration, so it is uncommon to manually assign this sampler.  The \cd{posterior\_predictive} sampler accepts no control list arguments.
 
-% Example usage:
-% <<terminal-sampler, eval=FALSE>>=
-% mcmcConf$addSampler(target = 'y[1]', type = 'posterior_predictive')
-%@
 
 \subsection{Particle MCMC \cd{PMCMC} sampler}
 For state space models, a particle MCMC (PMCMC) sampler can be specified for top-level parameters.  This sampler is described in Section \ref{sec:particle-mcmc}.
