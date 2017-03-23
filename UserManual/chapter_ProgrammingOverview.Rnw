@@ -8,9 +8,20 @@ require(nimble)
 % \label{cha:intro-programming}
 
 
-Part \ref{part:programming} is the programmer's guide to NIMBLE. At the heart of programming in NIMBLE are nimbleFunctions, which are written using the NIMBLE language (also called the NIMBLE DSL).
+Part \ref{part:programming} is the programmer's guide to NIMBLE. At the heart of programming in NIMBLE are nimbleFunctions.  These support two principle features: separation of a setup function to be run once for each model, nodes, or other setup arguments; and compilation to C++ of other functions writeen in a subset of R enhanced with features to operate models.  Formally, what can be compiled in the NIMBLE language, which is designed to be R-like.
 
-In Chapter \ref{cha:RCfunctions}, we describe how to write simple nimbleFunctions (nimbleFunctions that don't interact with models) to compile parts of R for fast calculations. We then show how to use these simple nimbleFunctions to write user-defined distributions and user-defined functions that you can use within the BUGS code of a model to extend the distributions and functions build into NIMBLE (Chapter \ref{cha:user-defined}).
+The part of the manual is organized as follows:
 
-We then move into the functionality in NIMBLE that allows one to program with models, namely writing nimbleFunctions that interact with models. We first describe how one interacts with models by querying model structure and carrying out model calculations (Chapter \ref{cha:using-bugs-models}). We then discuss the \cd{modelValues} and \cd{nimbleList} data structures in Chapter \ref{cha:data-structures}. 
-The functionality for interacting with models and \cd{modelValues} is central to writing nimbleFunctions that operate on models, described in Chapter {\ref{cha:progr-with-models}. In particular one will often query model structure within nimbleFunction setup code and then carry out model calculations based on that structural information within nimbleFunction run code. Together Sections \ref{sec:nimble-lang-comp-simple} and \ref{sec:nimble-lang-comp} describe what is allowed within the NIMBLE language, the language used for run code. 
+\begin{itemize}
+\item Chapter \ref{cha:RCfunctions} describes how to write simple nimbleFunctions, which have no setup code and hence don't interact with models, to compile parts of R for fast calculations. This covers the subset of R that is compilable, how to declare argument types and return types, and other information.
+
+\item Chapter \ref{cha:user-defined} explains how to write nimbleFunctions that can be included in BUGS code as user-defined distributions or user-defined functions.
+
+\item Chapter \ref{cha:using-bugs-models} introduces more features of NIMBLE models that are useful for writing nimbleFunctions to use models.  
+We then move into the functionality in NIMBLE that allows one to program with models, namely writing nimbleFunctions that interact with models. It describe how to query model structure and carry out model calculations.
+
+\item Chapter \ref{cha:data-structures} introduces two kinds of data structures: \cd{modelValues} are usedful for holding multiple sets of model variables; \cd{nimbleList} data structures are similar to R lists but require fixed element names and types, allowing the NIMBLE compiler to use them. 
+
+\item Chapter \ref{sec:nimble-lang-comp} draws on the previous chapters to show how to write nimbleFunctions that work with models, or more generally that have a setup function for any purpose.  Typically a setup function queries model structure (Ch. \ref{cha:using-bugs-models}) and may establish some \cd{modelValues} or \cd{nimbleList} data structures or configurations (Ch. \ref{cha:data-structures}).  Then run functions written in the same way as simple nimbleFunctions (Ch. \ref{cha:RCfunctions}) along with model operations (Ch. \ref{cha:using-bugs-models}) define algorithm computations that can be compiled via C++.
+
+\end{itemize}

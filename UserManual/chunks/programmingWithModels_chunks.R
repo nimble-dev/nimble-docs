@@ -83,10 +83,10 @@ CtestModel$a     ## a == 1.5 + 3
 ## @knitr nf-RCfun
 
 solveLeastSquares <- nimbleFunction(
-    run = function(X = double(2), y = double(1)) {
+    run = function(X = double(2), y = double(1)) { ## type declarations
         ans <- inverse(t(X) %*% X) %*% (t(X) %*% y)
         return(ans)
-        returnType(double(2))
+        returnType(double(2))  ## return type declaration
     } )
 
 X <- matrix(rnorm(400), nrow = 100)
