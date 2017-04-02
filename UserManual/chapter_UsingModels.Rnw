@@ -369,7 +369,7 @@ MCMC, for example.
 \subsection{\cd{isData}}
 \label{sec:cdisdata}
 
-Finally, you can query whether a node is flagged as data using the \cd{isData} method applied to one or more nodes:
+You can query whether a node is flagged as data using the \cd{isData} method applied to one or more nodes:
 <<isData>>=
 pump$isData('x[1]')
 pump$isData(c('x[1]', 'x[2]', 'alpha'))
@@ -381,6 +381,31 @@ You can also query variables to determine if the nodes that are part of a variab
 <<isData2>>=
 pump$isData('x')
 pump$isData('x[1:3]')
+@ 
+
+\subsection{\cd{getNodeValueExpr}, \cd{getNodeType}, \cd{getNodeDistribution} and \cd{getNodeParamExpr}}
+\label{sec:moreNodeInfo}
+These functions provide further information about nodes that can be useful when writing setup code.
+
+<<getNodeValueExpr>>=
+pump$getNodeValueExpr('alpha')
+pump$getNodeValueExpr('lambda[1]')
+pump$getNodeType('beta')
+pump$getNodeType('lambda[1]')
+pump$getNodeDistribution('theta')
+pump$getNodeDistribution('lambda') ## NA because node is deterministic
+pump$getNodeParamExpr('alpha', 'rate')
+@ 
+
+
+\subsection{\cd{isDiscrete}, \cd{isBinary} and \cd{isTruncated}}
+\label{sec:evenMoreNodeInfo}
+Finally, the outputs of the following might also be useful in setup code.
+
+<<>>=
+pump$isBinary('alpha')
+pump$isDiscrete('alpha')
+pump$isTruncated('alpha')
 @ 
 
 
