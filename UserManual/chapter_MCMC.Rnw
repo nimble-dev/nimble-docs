@@ -192,7 +192,7 @@ Samplers added by \cd{addSampler} will be appended to the end of current sampler
 
 \subsubsection{Printing, re-ordering, modifying and removing samplers: \cd{printSamplers}, \cd{getSamplerDefinition}, and \cd{removeSamplers}}
 
-The current, ordered, list of all samplers in the MCMC configuration may be printed by calling the \cd{printSamplers} method. When you want to see only samplers acting on specific model nodes or variables, provide those names as an argument to \cd{printSamplers}.
+The current, ordered, list of all samplers in the MCMC configuration may be printed by calling the \cd{printSamplers} method. When you want to see only samplers acting on specific model nodes or variables, provide those names as an argument to \cd{printSamplers}.  The \cd{printSamplers} method accepts arguments controlling the level of detail displayed; see `help(printSamplers)` for details.
 
 The \cd{nimbleFunction} definition underlying a particular sampler may be viewed using the \cd{getSamplerDefinition} method, using the sampler index as an argument.  A node name argument may also be supplied, in which case the definiton of the first sampler acting on that node is returned.  In all cases, \cd{getSamplerDefinition} only returns the definition of the \emph{first} sampler specified either by index or node name.
 <<getSamplerDefinition, eval=FALSE>>=
