@@ -12,16 +12,17 @@
 %   &  &  &  & vector input  \\
 %  \hline \hline \\
 %\endhead
-  \verb+x | y+, \verb|x & y| & logical OR ($|$) and AND(\&) &  & \Checkmark & \\
-  \cd{!x} & logical not &  & \Checkmark & \\
-  \cd{x > y}, \cd{x >= y}  & greater than (and or equal to) &  & \Checkmark & \\
-  \cd{x < y}, \cd{x <= y}  & less than (and or equal to) &  & \Checkmark & \\
-  \cd{x != y}, \cd{x == y}  & (not) equals  &  & \Checkmark & \\
+  \verb+x | y+, \verb|x & y| & logical OR ($|$) and AND(\&) &  & \Checkmark & \Checkmark \\
+  \cd{!x} & logical not &  & \Checkmark & \Checkmark \\
+  \cd{x > y}, \cd{x >= y}  & greater than (and or equal to) &  & \Checkmark & \Checkmark \\
+  \cd{x < y}, \cd{x <= y}  & less than (and or equal to) &  & \Checkmark & \Checkmark \\
+  \cd{x != y}, \cd{x == y}  & (not) equals  &  & \Checkmark & \Checkmark \\
   \cd{x + y}, \cd{x - y}, \cd{x * y} & component-wise operators  & mix of scalar and vector ok  & \Checkmark & \Checkmark \\    
   \cd{x / y}, & component-wise division  & vector $x$ and scalar $y$ ok  & \Checkmark & \checkmark \\    
 \verb|x^y|, \cd{pow(x, y)} & power & $x^y$; vector $x$ and scalar $y$ ok & \Checkmark & \checkmark \\
 \cd{x \%\% y} & modulo (remainder) & & \Checkmark & \\
- \cd{min(x1, x2)}, \cd{max(x1, x2)} & min. (max.) of two scalars & & \Checkmark &  \\
+ \cd{min(x1, x2)}, \cd{max(x1, x2)} & min. (max.) of two scalars & &
+  \Checkmark &  See \cd{pmin}, \cd{pmax}\\
 
  \cd{exp(x)} & exponential &  & \Checkmark & \Checkmark \\
  \cd{log(x)} & natural logarithm &  & \Checkmark & \Checkmark \\
@@ -53,10 +54,10 @@
 % \cd{factorial(x)} & factorial & $x!$ [DISABLE!]   & \Checkmark & \Checkmark\\
  \cd{lfactorial(x)}, \cd{logfact(x)} & log factorial & $\log x!$  & \Checkmark & \Checkmark\\
  \cd{log1p(x)} & log one-plus & $log(x + 1)$ & \Checkmark & \Checkmark \\
- \cd{qDIST(x, PARAMS)} &``q''  distribution functions &  canonical parameterization & \Checkmark & \\
- \cd{pDIST(x, PARAMS)} &``p''  distribution functions &  canonical parameterization & \Checkmark & \\
- \cd{rDIST(1, PARAMS)} & ``r''  distribution functions &  canonical parameterization & \Checkmark & \\
- \cd{dDIST(x, PARAMS)} &``d''  distribution functions &  canonical parameterization & \Checkmark & \\
+ \cd{qDIST(x, PARAMS)} &``q''  distribution functions &  canonical parameterization & \Checkmark & \Checkmark \\
+ \cd{pDIST(x, PARAMS)} &``p''  distribution functions &  canonical parameterization & \Checkmark & \Checkmark \\
+ \cd{rDIST(1, PARAMS)} & ``r''  distribution functions &  canonical parameterization & \Checkmark & \Checkmark \\
+ \cd{dDIST(x, PARAMS)} &``d''  distribution functions &  canonical parameterization & \Checkmark & \Checkmark \\
  \cd{sort(x)}& & & & \\
  \cd{rank(x, s)}& & & & \\
  \cd{ranked(x, s)}& & & & \\

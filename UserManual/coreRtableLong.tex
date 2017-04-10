@@ -4,14 +4,16 @@
   Function & Comments (differences from R) \\
 \hline \hline \\
 \endhead
-\cd{c()} & No \cd{recursive} argument. \\
-\cd{rep()} & No \cd{rep.int} or \cd{rep\_len}. \\
+\cd{c()} & No ``\cd{recursive}'' argument. \\
+\cd{rep()} & No ``\cd{rep.int}'' or ``\cd{rep\_len}'' arguments. \\
 \cd{seq()} and `\cd{:}' & Negative integer sequences from `\cd{:}', e.g. \cd{2:1}, do not work. \\
-\cd{which()} & No \cd{arr.ind} or \cd{useNames} arguments. \\
-\cd{diag()} & \parbox{5in}{Works like R in three ways: diag(vector) returns a matrix;
-diag(matrix) returns the diagonal vector; diag(integer) returns an identity matrix.  No \cd{nrow} or \cd{ncol} arguments.}\\
+\cd{which()} & No ``\cd{arr.ind}'' or ``\cd{useNames}'' arguments. \\
+\cd{diag()} & \parbox{5in}{Works like R in three ways:
+\cd{diag(vector)} returns a matrix with \cd{vector} on the diagonal;
+\cd{diag(matrix)} returns the diagonal vector of \cd{matrix};
+\cd{diag(n)} returns an $n \times n$ identity matrix.  No ``\cd{nrow}'' or ``\cd{ncol}'' arguments.}\\
 \cd{diag()<-} & Works for assigning the diagonal vector of a matrix.\\
-\cd{dim()} & Works on a vector as well as high-dimensional arguments. \\
+\cd{dim()} & Works on a vector as well as higher-dimensional arguments. \\
 \cd{length()} & \\
 \cd{numeric()} & Allows additional arguments to control initialization. \\
 \cd{logical()} & Allows additional arguments to control initialization. \\
