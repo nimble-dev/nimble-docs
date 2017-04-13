@@ -266,4 +266,4 @@ pumpMLE <- pumpMCEM(initM = 1000)
 pumpMLE
 @ 
 
-Direct maximization after analytically integrating over the latent nodes (possible for this model but often not feasible) gives estimates of $\hat\alpha=0.823$ and $\hat\beta = 1.261$, so the MCEM seems to do pretty well. 
+Direct maximization after analytically integrating over the latent nodes (possible for this model but often not feasible) gives estimates of $\hat\alpha=0.823$ and $\hat\beta = 1.261$, so the MCEM seems to do pretty well, though tightening the convergence criteria may be warranted in actual usage. 

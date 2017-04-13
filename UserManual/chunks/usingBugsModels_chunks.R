@@ -41,9 +41,6 @@ model$z[1,]
 model$getVarNames()
 
 model$getNodeNames()
-model$getNodeNames(determOnly = TRUE)
-model$getNodeNames(stochOnly = TRUE)
-model$getNodeNames(dataOnly = TRUE)
 
 ## @knitr usingModelLogProbs
 
@@ -67,8 +64,8 @@ multiVarCode <- nimbleCode({
     X[6:10, 3] ~ dmnorm(mu[], cov[,])
 })
 
-multiVarModel <- nimbleModel(multiVarCode, dimensions = list(mu = 5,
-                   cov = c(5,5)), calculate = FALSE)
+multiVarModel <- nimbleModel(multiVarCode, dimensions =
+                   list(mu = 5, cov = c(5,5)), calculate = FALSE)
 
 multiVarModel$expandNodeNames("X[1,1:5]")
 
@@ -86,18 +83,10 @@ mc <- nimbleCode({
 
 model <- nimbleModel(mc, data = list(z = matrix(rnorm(15), nrow = 5)))
 
-model$a <- 5
-model$a
-model[['a']]
-model$y[2:4] <- rnorm(3)
-model$y
-model[['y']][c(1, 5)] <- rnorm(2)
-model$y
-model$z[1,]
-
+model$a <- 1
 model$y
 model$simulate('y[1:3]')
-## model$simulate('y[1:3]') does the same thing
+## simulate(model, 'y[1:3]')
 model$y
 model$simulate('y')
 model$y
@@ -108,7 +97,7 @@ model$z
 model$simulate(c('z[1:5, 1:3]'), includeData = TRUE)
 model$z
 
-## ## @knitr calcSimGLPdirect
+## @knitr calcSimGLPdirect
 
 ## y2lp <- model$nodes[['y[2]']]$calculate()
 ## y2lp

@@ -76,8 +76,7 @@ which case NIMBLE handles values for stochastic nodes as data and
 everything else as constants.
 
 Values for nodes that appear only on the right-hand side of BUGS
-declarations (e.g., covariates/predictors) can be provided as data or
-constants.
+declarations (e.g., covariates/predictors) can be provided as constants or as data or initial values. There is no real difference between providing as data or initial values and the values can be added after building a model via \cd{setInits} or \cd{setData}. 
 
 \subsubsection{Providing data and initial values to an existing model}
 
@@ -344,7 +343,7 @@ In NIMBLE terminology:
 \subsection{Determining the nodes and variables in a model}
 
   
-One can determine the variables in a model using \cd{getVarNames} and the  nodes in a model using \cd{getNodeNames}, with optional arguments allowing you to select only certain types of nodes. 
+One can determine the variables in a model using \cd{getVarNames} and the  nodes in a model using \cd{getNodeNames}. Optional arguments to \cd{getNodeNames} allow you to select only certain types of nodes, as discussed in Section \ref{sec:get-nodes} and in the R help for \cd{getNodeNames}. 
 
 <<getVarAndNodeNames>>=
 @ 

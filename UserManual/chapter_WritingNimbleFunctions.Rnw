@@ -21,7 +21,7 @@ read_chunk(file.path('chunks', 'programmingWithModels_chunks.R'))
 When you write an R function, you say what the input arguments are,
 you provide the code for execution, and in that code you give the
 returned value\footnote{Normally this is the value of the last
-  evaluated code, or the argument to return().}.  Using the
+  evaluated code, or the argument to \cd{return}.}.  Using the
 \cd{function} keyword in R triggers the operation of
 creating an object that is the function.
 

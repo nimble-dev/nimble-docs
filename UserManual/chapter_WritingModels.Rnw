@@ -192,9 +192,7 @@ NIMBLE's version of BUGS.
 }
 @ 
 
-When a variable appears only on the right-hand side, it must be
-provided in the \cd{data} or \cd{constants} argument to
-\cd{nimbleModel}, covered in Chapter \ref{cha:building-models}.  
+When a variable appears only on the right-hand side, it can be provided via \cd{constants} (in which case it can never be changed) or via \cd{data} or \cd{inits}, as discussed in Chapter \ref{cha:building-models}.  
 
 Notes on the comment-numbered lines are:
 
@@ -361,7 +359,7 @@ We plan to, but do not currently, include the following distributions as part of
 \label{subsec:BUGS-lang-fxns}
 
 Tables \ref{table:functions-bugs}-\ref{table:functions-matrix-bugs} show the
-available operators and functions. {\color{red} This table needs updating.}
+available operators and functions. 
 % These are also available for \cd{nimbleFunction} programming (see Chapter \ref{cha:progr-with-models}).  In fact, BUGS model nodes are implemented as \cd{nimbleFunction}s that are custom-generated from BUGS declarations, so it would be more correct to say that functions and operators available for \cd{nimbleFunction}s are also available for the model declarations.
 Support for more general R expressions
 is covered in Chapter \ref{cha:RCfunctions} about programming
