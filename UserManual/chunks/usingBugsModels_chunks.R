@@ -60,7 +60,7 @@ model[['z[2, 3]']]
 model[['z[2:4, 1:2]']][1, 2]
 model$z[2, 2]
 
-## @knitr multivariateDecExample
+## @knitr multivariateExpandNodeNames
 
 multiVarCode <- nimbleCode({
     X[1, 1:5] ~ dmnorm(mu[], cov[,])
@@ -69,10 +69,6 @@ multiVarCode <- nimbleCode({
 
 multiVarModel <- nimbleModel(multiVarCode, dimensions = list(mu = 5,
                    cov = c(5,5)), calculate = FALSE)
-
-multiVarModel$getNodeNames()
-
-## @knitr multivariateExpandNodeNames
 
 multiVarModel$expandNodeNames("X[1,1:5]")
 

@@ -14,7 +14,7 @@ storing values for models. Then in Section \ref{sec:nimbleLists} we'll describe 
 
 \cd{modelValues} can be created in either \cd{R} or in \cd{nimbleFunction} setup code.  \cd{nimbleList}s can be created in \cd{R} code, in \cd{nimbleFunction} setup code, and in \cd{nimbleFunction} run code, from a nimbleList definition created in R or setup code. Once created, \cd{modelValues} and \cd{nimbleLists} can then be used either in \cd{R} or in \cd{nimbleFunction} setup or run code.  If used in run code, they will be compiled along with the \cd{nimbleFunction}.
 
-\section{The \nm{modelValues} data structure}
+\section{The modelValues data structure}
 \label{sec:modelValues-struct}
 
 \cd{modelValues} are containers designed for
@@ -144,6 +144,7 @@ getsize(customMV)
 customMV$a
 @
 
+
 Often it is useful to convert a modelValues object to a matrix for use
 in R.  For example, we may want to convert MCMC output into a matrix
 for use with the \cd{coda} package for processing MCMC samples. This
@@ -199,10 +200,10 @@ However, when you retrieve a variable from a modelValues object, the result is a
 
 \subsubsection{Automating calculation and simulation using modelValues}
 
-{\color{red} as with calcNodes, I'd like to discuss when a user would be expected to use this and figure out if this is where to talk about it in light of that}
+% At some point Chris would still  like to discuss when a user would be expected to use this and figure out if this is where to talk about it in light of that.
 
 
-The nimbleFunctions \cd{simNodesMV}, \cd{calcNodesMV}, and \cd{getLogProbsMV}}
+The nimbleFunctions \cd{simNodesMV}, \cd{calcNodesMV}, and \cd{getLogProbsMV}
 can be used to operate on a model based on rows in a modelValues object.
 For example,
 \cd{simNodesMV} will simulate in the model multiple times and record
@@ -234,13 +235,11 @@ cCalcManyXDeps$run(saveLP = TRUE) # calculating
 cGetLogProbMany$run() #
 @
   
-\section{The \nm{nimbleList} data structure}
+\section{The nimbleList data structure}
 \label{sec:nimbleLists}
 
-\cd{nimbleList}s provide a container for storing different types of objects in \cd{nimble}, similar to the \cd{list} data structure in \cd{R}.  Before a \cd{nimbleList} can be created and used, a definition  for that \cd{nimbleList} must be created that provides the names, types, and dimensions of the elements in the \cd{nimbleList}.  nimbleList definitions must be created in R, but the nimbleList instances can be created in run code, provided the definition is created or passed into setup code. 
-
-{\color{red} Nick, please check last sentence}
-
+\cd{nimbleList}s provide a container for storing different types of objects in \cd{nimble}, similar to the \cd{list} data structure in \cd{R}.  Before a \cd{nimbleList} can be created and used, a definition  for that \cd{nimbleList} must be created that provides the names, types, and dimensions of the elements in the \cd{nimbleList}.  nimbleList definitions must be created in R (either in R's global environment or in setup code), but the nimbleList
+instances can be created in run code.
 
 Unlike \cd{list}s in \cd{R}, \cd{nimbleList}s must have the names and types of all list elements provided by a definition before the list can be used.  A \cd{nimbleList} definition can be made by using the \cd{nimbleList} function in one of two manners.  The first manner is to provide the \cd{nimbleList} function with a series of expressions of the type
 \begin{itemize}
@@ -319,14 +318,16 @@ outerNimList$innerNimList$someText <- "hello, world"
 Note that definitions for inner, or nested, \cd{nimbleList}s must be created before the definition for an outer \cd{nimbleList}.
 
 
-\subsection{Using \cd{eigen()} and \cd{svd()} in \cd{nimbleFunction}s}
+\subsection{Using \cd{eigen} and \cd{svd} in \cd{nimbleFunction}s}
 \label{sec:eigen-nimFunctions}
 
-\cd{nimble} has two linear algebra functions that return \cd{nimbleList}s.  The \cd{eigen()} function takes a symmetic matrix \cd{X} as an argument, and returns a \cd{nimbleList} of type \cd{eigenNimbleList()}. \cd{nimbleList}s of type  \cd{eigenNimbleList()} have two elements: \cd{values}, a vector with the eigenvalues of \cd{X}, and \cd{vectors}, a square matrix with the same dimension as \cd{X} whose columns are the eigenvectors of \cd{X}.  The \cd{eigen()} function has an optional argument named \cd{only.values}, which defaults to \cd{FALSE}.  If \cd{only.values = TRUE}, the \cd{eigen()} function will not calculate the eigenvectors of \cd{X}, leaving the \cd{vectors} \cd{nimbleList} element empty.  This can reduce calculation time if only the eigenvalues of \cd{X} are needed.
+\cd{nimble} has two linear algebra functions that return \cd{nimbleList}s.  The \cd{eigen} function takes a symmetic matrix \cd{X} as an argument, and returns a \cd{nimbleList} of type \cd{eigenNimbleList()}. \cd{nimbleList}s of type  \cd{eigenNimbleList()} have two elements: \cd{values}, a vector with the eigenvalues of \cd{X}, and \cd{vectors}, a square matrix with the same dimension as \cd{X} whose columns are the eigenvectors of \cd{X}.  The \cd{eigen} function has an optional argument named \cd{only.values}, which defaults to \cd{FALSE}.  If \cd{only.values = TRUE}, the \cd{eigen} function will not calculate the eigenvectors of \cd{X}, leaving the \cd{vectors} \cd{nimbleList} element empty.  This can reduce calculation time if only the eigenvalues of \cd{X} are needed.
 
-The \cd{svd()} function takes an \cd{n-by-p} matrix \cd{Y} as an argument, and returns a \cd{nimbleList} of type \cd{svdNimbleList().   \cd{nimbleList}s of type  \cd{svdNimbleList()} have three elements: \cd{d}, a vector with the singular values of \cd{Y}, \cd{u} a matrix with the left singular vectors of \cd{Y}, and \cd{v}, a matrix with the right singular vectors of \cd{Y}.  The \cd{svd()} function has an optional argument \cd{vectors} which defaults to a value of \cd{"full"}.  The \cd{vectors} argument can be used to specify the number of singular vectors that are returned.  If \cd{vectors = "full"}, \cd{v} will be an \cd{n-by-n} matrix and \cd{u} will be an \cd{p-by-p} matrix.  If \cd{vectors = "thin"}, \cd{v} will be an \cd{n-by-m} matrix, where \cd{m = min(n,p)}, and \cd{u} will be an \cd{m-by-p} matrix.  If \cd{vectors = "none"}, the \cd{u} and \cd{v} elements of the returned \cd{nimbleList} will not be populated. 
 
-\cd{nimbleList}s created by either \cd{eigen()} or \cd{svd()} can be returned from a \cd{nimbleFunction}, using \cd{returnType(eigenNimbleList())} or \cd{returnType(svdNimbleList())} respectively.  \cd{nimbleList}s created by \cd{eigen()} and \cd{svd()} can also be used as nested lists within other \cd{nimbleList}s by specifyng the \cd{nimbleList} element types as \cd{eigenNimbleList()} and \cd{svdNimbleList()}.  The below example demonstrates the use of \cd{eigen()} and \cd{svd()} within a \cd{nimbleFunction}.
+The \cd{svd} function takes an \cd{n-by-p} matrix \cd{Y} as an argument, and returns a \cd{nimbleList} of type \cd{svdNimbleList()}.   \cd{nimbleList}s of type  \cd{svdNimbleList()} have three elements: \cd{d}, a vector with the singular values of \cd{Y}, \cd{u} a matrix with the left singular vectors of \cd{Y}, and \cd{v}, a matrix with the right singular vectors of \cd{Y}.  The \cd{svd} function has an optional argument \cd{vectors} which defaults to a value of \cd{"full"}.  The \cd{vectors} argument can be used to specify the number of singular vectors that are returned.  If \cd{vectors = "full"}, \cd{v} will be an \cd{n-by-n} matrix and \cd{u} will be an \cd{p-by-p} matrix.  If \cd{vectors = "thin"}, \cd{v} will be an \cd{n-by-m} matrix, where \cd{m = min(n,p)}, and \cd{u} will be an \cd{m-by-p} matrix.  If \cd{vectors = "none"}, the \cd{u} and \cd{v} elements of the returned \cd{nimbleList} will not be populated. 
+  
+
+\cd{nimbleList}s created by either \cd{eigen} or \cd{svd} can be returned from a \cd{nimbleFunction}, using \cd{returnType(eigenNimbleList())} or \cd{returnType(svdNimbleList())} respectively.  \cd{nimbleList}s created by \cd{eigen} and \cd{svd} can also be used as nested lists within other \cd{nimbleList}s by specifyng the \cd{nimbleList} element types as \cd{eigenNimbleList()} and \cd{svdNimbleList()}.  The below example demonstrates the use of \cd{eigen} and \cd{svd} within a \cd{nimbleFunction}.
 
 <<exampleEigenListFunction>>=
 eigenListFunctionGenerator <- nimbleFunction(
@@ -348,5 +349,7 @@ outputList <-  eigenListFunction$run()
 outputList$demoEigenList$values
 outputList$demoSvdList$d
 @
+
 The eigenvalues and singular values returned from the above function are the same since the matrix being decomposed was symmetric.  However, note that both eigendecompositions and singular value decompositions are numerical procedures, and computed solutions may have slight differences even for a symmetric input matrix.
+
 

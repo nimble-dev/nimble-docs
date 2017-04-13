@@ -73,7 +73,7 @@ CpumpMCMC$run(niter)
 
 samples <- as.matrix(CpumpMCMC$mvSamples)
 
-par(mfrow = c(1, 4), mai = c(.6, .5, .1, .2))
+par(mfrow = c(1, 4), mai = c(.6, .4, .1, .2))
 plot(samples[ , 'alpha'], type = 'l', xlab = 'iteration',
      ylab = expression(alpha))
 plot(samples[ , 'beta'], type = 'l', xlab = 'iteration',
@@ -96,11 +96,11 @@ pumpMCMC2 <- buildMCMC(pumpConf)
 CpumpNewMCMC <- compileNimble(pumpMCMC2, project  = pump,
                               resetFunctions = TRUE)
 
-set.seed(0);
+set.seed(0)
 CpumpNewMCMC$run(niter)
 samplesNew <- as.matrix(CpumpNewMCMC$mvSamples)
 
-par(mfrow = c(1, 4), mai = c(.6, .5, .1, .2))
+par(mfrow = c(1, 4), mai = c(.6, .4, .1, .2))
 plot(samplesNew[ , 'alpha'], type = 'l', xlab = 'iteration',
      ylab = expression(alpha))
 plot(samplesNew[ , 'beta'], type = 'l', xlab = 'iteration',
@@ -121,10 +121,10 @@ box = list( list(c('alpha','beta'), c(0, Inf)))
 pumpMCEM <- buildMCEM(model = pump2, latentNodes = 'theta[1:10]',
                       boxConstraints = box)
 
-pumpMLE <- pumpMCEM()
 # Note: buildMCEM returns an R function that contains a
 # nimbleFunction rather than a nimble function. That is why
-# pumpMCEM() is used instead of pumpMCEM$run().
+# pumpMCEM() is used here instead of pumpMCEM$run().
+pumpMLE <- pumpMCEM()
 
 pumpMLE
 

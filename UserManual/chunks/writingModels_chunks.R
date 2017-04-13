@@ -14,7 +14,9 @@ model <- nimbleModel(mc, data = list(y = rnorm(4)))
 
 library(igraph)
 
-layout <- matrix(ncol = 2, byrow = TRUE, ## These seem to be rescaled to fit in the plot area, so I'll just use 0-100 as the scale
+layout <- matrix(ncol = 2, byrow = TRUE,
+   ## These seem to be rescaled to fit in the plot area,
+   ## so I'll just use 0-100 as the scale
                  data = c(33, 100,
                           66, 100,
                           50, 0, ## first three are parameters

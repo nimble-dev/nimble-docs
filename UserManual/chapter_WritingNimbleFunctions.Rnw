@@ -6,7 +6,7 @@
 require(nimble)
 @ 
 
-\chapter{Writing \nm{nimbleFunctions}  that interact with models}
+\chapter{Writing nimbleFunctions that interact with models}
 \label{cha:progr-with-models}
 
 <<echo=FALSE>>=
@@ -126,7 +126,7 @@ Some of the useful tools and objects to create in \cd{setup} functions include
 \begin{description}
 \item[vectors of node names] Often these are obtained from the
   \cd{getNodeNames} and \cd{getDependencies} methods of a model,
-  described in Section \ref{sec:cdgetn-cdgetv}.
+  described in Section \ref{sec:accessing-variables}.
 \item[modelValues objects] These are discussed more below.
 \item[specializations of other nimbleFunctions] A useful NIMBLE
   programming technique is to have one nimbleFunction contain other
@@ -193,7 +193,7 @@ anywhere in the \cd{setup} code.
 \section{Writing run code}
 \label{sec:nimble-lang-comp}
 
-In Section \ref{sec:nimble-lang-comp-simple} we described the functionality of the NIMBLE language that could be used in run code in which models were not used. When writing nimbleFunctions that use models, one can use that functionality already described as well as the functionality discussed in this section. 
+In Chapter \ref{cha:RCfunctions} we described the functionality of the NIMBLE language that could be used in run code in which models were not used. When writing nimbleFunctions that use models, one can use that functionality already described as well as the functionality discussed in this section. 
 
 \subsection{Driving models: \cd{calculate}, \cd{calculateDiff},
   \cd{simulate}, \cd{getLogProb}}

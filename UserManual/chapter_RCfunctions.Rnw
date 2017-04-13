@@ -26,7 +26,7 @@ can also be compiled.  Simple nimbleFunctions are useful for doing math or the o
 kinds of processing available in NIMBLE when no model or modelValues
 is needed. These can be used for any purpose in R programming.  They
 can also be used as new functions and distributions in NIMBLE's
-extension of BUGS.
+extension of BUGS (Chapter \ref{cha:user-defined).
 
 
   Here's a basic example implementing the textbook calculation of
@@ -125,7 +125,7 @@ returns an $n \times n$ identity matrix.  NIMBLE also provides a deprecated
 nimbleFunction \cd{identityMatrix} that does the same thing.
 
 Examples of these functions, and the related function $\cd{setSize}$
-for changing the size of a numeric object, are given in section (\ref{xyz}).
+for changing the size of a numeric object, are given in Section \ref{sec:chang-sizes-exist}.
 
 \subsubsection{\cd{length} and \cd{dim}}
 \label{sec:query-chang-sizes}
@@ -277,7 +277,7 @@ in R.  Decreasing index sequences are not allowed.  Unlike in R,
 We plan to include more flexible \cd{for}-loops in the future, but for
 now we've included just one additional useful feature:  \cd{for(i in
   seq\_along(NFL))} will work as in R, where \cd{NFL} is a
-\cd{nimbleFunctionList}.  This is described in section (\ref{XYZ}).
+\cd{nimbleFunctionList}.  This is described in section (\ref{sec:virt-nimbl-nimbl}).
 
 \cd{stop}, or equivalently \cd{nimStop}, throws
 control to R's error-handling system and can take a character
@@ -596,7 +596,7 @@ product of v1 and v2.  If you want the inner product as a scalar, use
   \cd{Y[5:10, 20:30] <- x} will not work -- and could crash
   your R session with a segmentation fault --  if Y is not
   already at least 10x30 in size.  This can be done by \cd{setSize(Y,
-    c(10, 30))}.  See Section \ref{sec:decl-local-vars} for more
+    c(10, 30))}.  See Section \ref{sec:chang-sizes-exist} for more
   details.  Note that non-indexed assignment to \cd{Y}, such as \cd{Y
     <-x}, will automatically set \cd{Y} to the necessary size. 
   
@@ -653,7 +653,7 @@ syntax for a type declaration is:
 \end{itemize}
 
 (In more general nimbleFunction programming, a type can also be a
-nimbleList type.  Section \ref{nimbleLists} covers nimbleLists.)
+nimbleList type.  Section \ref{sec:nimbleLists} covers nimbleLists.)
 
 For \cd{type(nDim, sizes)}, \cd{nDim} is the number of dimensions, with 0 indicating scalar.
 \cd{sizes} is an optional vector of fixed, known sizes.  

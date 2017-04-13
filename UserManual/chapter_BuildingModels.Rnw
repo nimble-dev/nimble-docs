@@ -23,8 +23,9 @@ NIMBLE provides two functions for creating model objects:
 \cd{nimbleModel} and \cd{readBUGSmodel}. The first, \cd{nimbleModel},
 is more general and was illustrated in Chapter \ref{cha:intro}. The
 second, \cd{readBUGSmodel} provides compatibility with BUGS file
-formats for models, variables, data, and initial values for MCMC.  In
-addition one can create new model objects from existing model objects.
+formats for models, variables, data, and initial values for MCMC.  
+
+In addition one can create new model objects from existing model objects.
 
 \subsection{Using \cd{nimbleModel} to create a model}
 
@@ -53,7 +54,7 @@ NIMBLE makes a distinction between data and constants:
 \item \nm{Data} is a label for the role a node plays in the model.
   Nodes marked as data will by default be protected from any functions
   that would simulate over their values (see \cd{simulate} in Chapter
-  \ref{cha:progr-with-models}), but it is possible to over-ride
+  \ref{cha:using-bugs-models}), but it is possible to over-ride
   that default or to change their values by direct assignment.  This
   allows an algorithm to be applied to many data sets in the same
   model without re-creating the model each time.  It also allows
@@ -80,7 +81,7 @@ constants.
 
 \subsubsection{Providing data and initial values to an existing model}
 
-Whereas constants must be provided during the call the
+Whereas constants must be provided during the call to
 \cd{nimbleModel}, data and initial values can be provided later via
 the model member functions \cd{setData} and \cd{setInits}. For
 example, if \cd{pumpData} is a named list of data values (as above),
@@ -88,7 +89,7 @@ then \cd{pump\$setData(pumpData)} sets the named variables to the
 values in the list.
 
 \cd{setData} does two things: it sets the values of the data nodes,
-and it flags those nodes as containing data.  \cd{nimbleFunction}
+and it flags those nodes as containing data.  nimbleFunction
 programmers can then use that information to control whether an
 algorithm should over-write data or not.  For example, NIMBLE's
 \cd{simulate} functions by default do not overwrite data values but
@@ -131,18 +132,17 @@ samples[1:5, 13:17]
 
 @ 
 
-% TODO: IS THIS REDUNDANT 
-% I THINK IT IS NICE TO HAVE - CJP: 
-% I edited this. -PdV
-Missing values may also occur in explanatory variables.  Values for
+Missing values may also occur in explanatory/predictor variables.  Values for
 such variables should be passed in via the \cd{data} argument to
 \cd{nimbleModel}, with \cd{NA} for the missing values.  In some
 contexts, one would want to specify distributions for such explanatory
 variables, for example so that an MCMC would impute the missing values.
 
+{\color{red} I think it's fine to pass as inits; same question arises earlier and in chapter 5}
+
 \subsubsection{Defining alternative models with the same code}
 \label{sec:defin-altern-models}
-% THIS STAYS HERE BECAUSE IT USES nimbleModel
+
 Avoiding code duplication is a basic principle of good programming. In
 NIMBLE, one can use definition-time if-then-else statements to create
 different models from the same code.  As a simple example, say we have
@@ -218,6 +218,8 @@ model <- nimbleModel(codeAlt, constants = list(n = 3, K = K,
 
 @
 
+In that example, since \cd{alpha0} and \cd{R} are provided as constants, we don't need to specify their dimensions.
+
 \subsection{Creating a model from standard BUGS and JAGS input files}
 \label{sec:readBUGSmodel}
 
@@ -259,7 +261,7 @@ original BUGS examples in which data was indicated with syntax such as
 \label{sub:multiple-instances}
   
 Sometimes it is useful to have more than one copy of the same model.
-For example, an algorithm (i.e., \cd{nimbleFunction}) such as an MCMC will be
+For example, an algorithm (i.e., nimbleFunction) such as an MCMC will be
 bound to a particular model before it is run.  A user could build multiple algorithms
 to use the same model instance, or they may want each algorithm to
 have its own instance of the model.
@@ -279,8 +281,8 @@ simpleModelCopy1 <- simpleModelDefinition$newModel(check = FALSE)
 ## Make another instance from the same definition
 simpleModelCopy2 <- simpleModelDefinition$newModel(check = FALSE)
 ## Ask simpleModelCopy2 for another copy of itself
-## small bug in version 0.6-1 means we need to set 'data' to an
-## empty list for this to work; this will be fixed in 0.6-2
+## small bug in version 0.6-4 means we need to set 'data' to an
+## empty list for this to work
 simpleModelCopy3 <- simpleModelCopy2$newModel(check = FALSE, data =
    list())
 @ 
@@ -321,8 +323,8 @@ In NIMBLE terminology:
 \begin{itemize}
 \item The \textit{variables} of this model are \cd{a}, \cd{y}, \cd{z},
   and \cd{y.squared}.
-\item The \textit{nodes} of this model are \cd{a}, \cd{y[1]} $\ldots$
-  \cd{y[5]}, \cd{z[1,1]} $\ldots$ \cd{z[5, 3]}, and
+\item The \textit{nodes} of this model are \cd{a}, \cd{y[1]} $,\ldots,$
+  \cd{y[5]}, \cd{z[1,1]} $,\ldots,$ \cd{z[5, 3]}, and
   \cd{y.squared[1:5]}.  In graph terminology, nodes are vertices in
   the model graph.
 \item the \textit{node functions} of this model are
@@ -333,7 +335,7 @@ In NIMBLE terminology:
   nodes and node functions is important, but when it is not important
   we may refer to both simply as \textit{nodes}.  
 \item  The \textit{scalar elements} of this model include all the scalar
-  nodes as well as the scalar elements \cd{y.squared[1]} $\ldots$
+  nodes as well as the scalar elements \cd{y.squared[1]} $,\ldots,$
   \cd{y.squared[5]} of the multivariate node \cd{y.squared[1:5]}.
 \end{itemize}
 
@@ -352,9 +354,6 @@ NIMBLE (Section \ref{sec:introduced-nodes}). In this case \cd{lifted\_d1\_over\_
 
 To determine the dependencies of one or more nodes in the model, you can use \cd{getDependencies} as discussed in Section \ref{sec:cdgetdependencies}.
 
-{\color{red} moved expandNodeNames stuff to chapter 11}
-
-{\color{red} moved getDependencies stuff to chapter 11}
 
 \subsection{Accessing nodes}
 \label{sec:accessing-nodes}
@@ -391,15 +390,7 @@ example, a multivariate node for \cd{X[6:10, 3]} has the name ``X[6:10, 3]''.
 
 
 The definitive source for node names in a model is
-\cd{getNodeNames}, described below.  For example
-
-<<multivariateDecExample, message=FALSE>>=
-@ 
-
-You can see one lifted node for the Cholesky decomposition of
-\cd{cov}, and the two multivariate normal nodes.
-
-% PdV thinks this is still potentially relevant.
+\cd{getNodeNames}, described previously.  
 
 In the event you need to ensure that a name is formatted correctly,
 you can use the \cd{expandNodeNames} method. For

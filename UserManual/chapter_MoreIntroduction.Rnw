@@ -79,7 +79,7 @@ Chapters \ref{cha:building-models} and \ref{cha:using-bugs-models}.
 \label{sec:nimble-lang-writ}
 
 NIMBLE provides \nm{nimbleFunction}s for writing functions that can
-(but don't have to) use BUGS models.  The main ways they can use
+(but don't have to) use BUGS models.  The main ways that nimbleFunctions can use
 BUGS models are:
 
 \begin{enumerate}
@@ -106,42 +106,41 @@ between two stages of processing:
   that need to happen only once for each new situation (e.g., for each
   new model).  Typically such steps include inspecting the model's
   variables and their relationships, such as determining which parts
-  of a model will need to be calculated for a MCMC sampler. \nm{setup}
+  of a model will need to be calculated for a MCMC sampler. Setup
   functions are executed in R and never compiled.
 
 \item One or more \nm{run} functions within a nimbleFunction give
   steps that need to happen multiple times using the results of the
-  \nm{setup} function, such as the iterations of a MCMC sampler.
-  Formally, \nm{run} code is written in the NIMBLE language, which you
+  setup function, such as the iterations of a MCMC sampler.
+  Formally, run code is written in the NIMBLE language, which you
   can think of as a small subset of R along with features for
   operating models and related data structures.  The NIMBLE language
   is what the NIMBLE compiler can automatically turn into C++ as part
   of a compiled nimbleFunction.
 \end{enumerate}
 
-What NIMBLE does with a \cd{nimbleFunction} is similar to what it does
+What NIMBLE does with a nimbleFunction is similar to what it does
 with a BUGS model:
 \begin{enumerate}
-\item NIMBLE creates a working R version of the \cd{nimbleFunction}.
-  This is most useful for debugging.
+\item NIMBLE creates a working R version of the nimbleFunction.
+  This is most useful for debugging (Section \ref{sec:debugging}).
 \item When you are ready, NIMBLE can generate C++ code, compile it,
   load it back into R and give you new objects that use the compiled
-  C++ internally.  Again, we refer to these steps all together as ``compilation.''  The behavior of compiled \cd{nimbleFunction}s is
+  C++ internally.  Again, we refer to these steps all together as ``compilation.''  The behavior of compiled nimbleFunctions is
   usually very similar, but not identical, to their uncompiled
   counterparts.
 \end{enumerate}
 
-  More about writing algorithms is in Chapter \ref{cha:progr-with-models}.
-  
-  If you are familiar with object-oriented programming, you can think of
-a nimbleFunction as a class definition. The \nm{setup} function
-initializes a new object and \nm{run} functions are class methods.
+If you are familiar with object-oriented programming, you can think of
+a nimbleFunction as a class definition. The setup function
+initializes a new object and run functions are class methods.
 Member data are determined automatically as the objects from a
-\nm{setup} function needed in \nm{run} functions.  If no \cd{setup}
+setup function needed in run functions.  If no setup
 function is provided, the nimbleFunction corresponds to a simple
 (compilable) function rather than a class.
 
-  
+More about writing algorithms is in Chapter \ref{cha:progr-with-models}.
+
 \section{The NIMBLE algorithm library}
 \label{sec:nimble-algor-libr}
 
@@ -150,7 +149,7 @@ In Version \ver, the NIMBLE algorithm library includes:
 \begin{enumerate}
 \item MCMC with samplers including conjugate (Gibbs), slice, adaptive
   random walk (with options for reflection or sampling on a log
-  scale), adaptive block random walk, and elliptical slice. You can
+  scale), adaptive block random walk, and elliptical slice, among others. You can
   modify sampler choices and configurations from R before compiling
   the MCMC.  You can also write new samplers as nimbleFunctions.
 \item A set of particle filter (sequential Monte Carlo) methods
@@ -158,7 +157,7 @@ In Version \ver, the NIMBLE algorithm library includes:
   Liu-West filter.
 \item An ascent-based Monte Carlo Expectation Maximization (MCEM)
   algorithm.
-\item A variety of basic algorithms that can be used as programming
+\item A variety of basic functions that can be used as programming
   tools for larger algorithms.  These include:
   \begin{enumerate}
   \item A likelihood function for arbitrary parts of any model.
@@ -167,21 +166,10 @@ In Version \ver, the NIMBLE algorithm library includes:
   \item Functions to calculate the summed log probability (density)
     for one or many sets of values for arbitrary parts of any model
     along with stochastic dependencies in the model structure.
-  \item Other functions described in Chapter \ref{cha:algos-provided}.
   \end{enumerate}
 
 \end{enumerate}
 
-{\color{red} Add references where appropriate.}.
+% Someone (Perry?) added this comment: Add references where appropriate. Chris suggests we probably don't need refs here as we are referring to very widely-known algorithms.
  
-{\color{red} CJP - so is the only difference between calculate and
-  calcNodes (and similarly for simNodes, getLogProbNodes) that
-  calcNodes etc. include operations on dependencies? If so, I propose
-  we extend calculate, simulate, getLogProb to have an argument
-  includeDependencies with default FALSE.} {\color{blue} PdV - There
-  were a couple of things conflated here, but the question is still
-  valid.  The suggestion seems like a slippery slope towards trying to
-  make calculate (etc.) smarter, which could get away from the core
-  design ideas.}
-  
 More about the NIMBLE algorithm library is in Chapter \ref{cha:algos-provided}.

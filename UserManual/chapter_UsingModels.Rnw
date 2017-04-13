@@ -281,10 +281,10 @@ except that they return a value (described above) and they have no \cd{includeDa
 
 
 
-\subsection{\cd{simNodes}, \cd{calcNodes}, and \cd{getLogProbNodes}}
+\subsection{Pre-defined nimbleFunctions for operating on model nodes: \cd{simNodes}, \cd{calcNodes}, and \cd{getLogProbNodes}}
 \label{sec:cdsimn-cdcalcn-cdget}
 
-{\color{red} under discussion: how to clarify the point of these and where to put this text}
+% Chris would still like to revisit this -- clarify when a user might use these and where to put this text
 
   \cd{simNodes}, \cd{calcNodes} and \cd{getLogProbNodes} are basic nimbleFunctions that simulate, calculate, or get the log probabilities
   (densities), respectively, of the same set of nodes each time they

@@ -65,7 +65,7 @@ they exist, but you shouldn't need to worry about them.
 
 Thanks to the plotting capabilities of the \cd{igraph} package that
 NIMBLE uses to represent the directed acyclic graph, we can plot the
-model  (figure 2.1).
+model  (Figure 2.1).
 
 <<plotPump, fig.cap="Directed Acyclic Graph plot of the pump model, thanks to the igraph package">>=
 @ 
@@ -114,8 +114,9 @@ subsequent changes in one will not be reflected in the other.
 Note that the compiled model is used when running any NIMBLE algorithms via C++, so the model needs to be compiled before (or at the same time as) any compilation of algorithms, such as the compilation of the MCMC done in the next section.
 
 \section{Creating, compiling and running a basic MCMC configuration}
-
-At this point we have initial values for all of the nodes in the model
+\label{sec:creating-mcmc}
+  
+At this point we have initial values for all of the nodes in the model,
 and we have both the original and compiled versions of the model. As a first algorithm
 to try on our model, let's use NIMBLE's default MCMC. Note that conjugate relationships are detected for all nodes except for
 \cd{alpha}, on which the default sampler is a random walk Metropolis sampler.
@@ -176,15 +177,15 @@ the model. We'll do something simple: simulating multiple values for a
 designated set of nodes and calculating every part of the model that
 depends on them. More details on programming in NIMBLE are in Part \ref{part:programming}.
 
-Here is our \cd{nimbleFunction}:
+Here is our \nm{nimbleFunction}:
 <<nfPump>>=
 @ 
 
-Here are a few things to notice about the \cd{nimbleFunction}
+Here are a few things to notice about the nimbleFunction.
 \begin{enumerate}
 \item The \cd{setup} function is written in R.  It creates relevant
   information specific to our model for use in the run-time code.  
-\item The \cd{setup} code creates a \cd{modelValues} object to hold multiple sets of
+\item The \cd{setup} code creates a \nm{modelValues} object to hold multiple sets of
   values for variables  in the model provided.
 \item The \cd{run} function is written in NIMBLE.  It carries out the
   calculations using the information determined once for each set of
@@ -197,7 +198,7 @@ Here are a few things to notice about the \cd{nimbleFunction}
 \item The functions \cd{calculate} and \cd{simulate}, which were
   introduced above in R, can be used in NIMBLE.
 \item The special function \cd{copy} is used here to record values
-  from the model into the \cd{modelValues} object.  
+  from the model into the modelValues object.  
 \item Multiple instances, or ``specializations'', can be made by
   calling \cd{simNodesMany} with different arguments.  Above, \cd{simNodesTheta1to5} has
   been made by calling \cd{simNodesMany} with the \cd{pump} model and
@@ -214,7 +215,7 @@ Here are a few things to notice about the \cd{nimbleFunction}
 By the way, \cd{simNodesMany} is very similar to a standard
 \cd{nimbleFunction} provided with nimble, \cd{simNodesMV}.
 
-Now let's execute this \cd{nimbleFunction} in R, before compiling it.
+Now let's execute this nimbleFunction in R, before compiling it.
 
 <<runPumpSimsR>>=
 @ 

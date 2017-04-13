@@ -2,6 +2,7 @@
 
 <<echo=FALSE>>=
 require(nimble)
+library(methods)
 @ 
 
 \chapter{Creating user-defined BUGS distributions and functions}
@@ -18,6 +19,7 @@ For example, one could implement the \nm{dnormmix} distribution
 provided in JAGS as a user-defined distribution in NIMBLE.
 
 \section{User-defined functions}
+\label{sec:user-functions}
 
 To provide a new function for use in BUGS code, simply create a nimbleFunction that has no \nm{setup} code as discussed in Chapter \ref{cha:RCfunctions}. Then use it in your BUGS code. That's it.
 
@@ -66,6 +68,7 @@ At present you cannot provide a scalar argument where a nimbleFunction expects a
 {\color{red} this comment could be confusing - one can pass an R 'scalar' into a double(1). And the example here relates to passing scalars vs vector nodes which involves notions of node dimensionality. Thoughts on how to reword?}
 
 \section{User-defined distributions}
+\label{sec:user-distributions}
 
 To provide a user-defined distribution, you need to define density
 (``d'') and simulation (``r'') \cd{nimbleFunctions}, without setup
@@ -152,6 +155,7 @@ code <- nimbleCode({
          alpha[i] ~ dmyexp(1/3)
       }
      })
+print(a)
 
 model <- nimbleModel(code, constants = list(K = 5, n = 10))
 @ 

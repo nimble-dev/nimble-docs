@@ -60,16 +60,21 @@
  %       {\textstyle \Gamma(r)}$
  %     } & $0$ & \\
  %     gamma       & $\lambda >0$, $b > 0$, $r > 0$ \\
-      Logistic    & \cd{dlogis(location = $\mu$, rate = $\tau$)} &
+      Inverse      & \cd{dinvgamma(shape = r,} & 
+      \multirow{2}{*}{
+        $\frac{\textstyle \lambda^r x^{-(r + 1)} \exp(-\lambda / x)}
+        {\textstyle \Gamma(r)}$} & 0 & \\
+      Gamma & \cd{scale = $\lambda$)}, $\lambda > 0$, $r > 0$ \\
+      Logistic    & \cd{dlogis(location = $\mu$,}  &
       \multirow{2}{*}{
         $\frac{\textstyle \tau \exp\{(x - \mu) \tau\}}
         {\textstyle  \left[1 + \exp\{(x - \mu) \tau\}\right]^2}$
       } &  & \\
-       & $\tau > 0$ \\
-      Log-normal  & \cd{dlnorm(meanlog = $\mu$, taulog = $\tau$)} & 
+       & \cd{rate = $\tau$)}, $\tau > 0$ \\
+      Log-normal  & \cd{dlnorm(meanlog = $\mu$,} & 
       \multirow{2}{*}{
         $\left(\frac{\tau}{2\pi}\right)^{\frac{1}{2}} x^{-1} \exp \left\{-\tau (\log(x) - \mu)^2 / 2 \right\}$} & 0 \\
-       & $\tau > 0$ \\
+       & \cd{taulog = $\tau$)}, $\tau > 0$ \\
  %     Noncentral & \verb+dnchisqr(k, delta)+ & 
  %     \multirow{2}{*}{
  %       $\sum_{r=0}^{\infty} 
@@ -87,11 +92,11 @@
       \multirow{2}{*}{
         $(2\pi)^{-\frac{d}{2}}|\Lambda|^{\frac{1}{2}} \exp\{-\frac{(x-\mu)^T \Lambda (x-\mu)}{2}\}$} \\
       normal & $\Lambda$ positive definite \\
-      Multivariate & \cd{dmvt(mu = $\mu$, prec = $\Lambda$, df = $\nu$)} &
+      Multivariate & \cd{dmvt(mu = $\mu$, prec = $\Lambda$,} &
       \multirow{2}{*}{
         $\frac{\Gamma(\frac{\nu+d}{2})}{\Gamma(\frac{\nu}{2})(\nu\pi)^{d/2}} |\Lambda|^{1/2} 
                 (1+\frac{(x-\mu)^T\Lambda(x-\mu)}{\nu})^{-\frac{\nu+d}{2}}$}  \\
-      Student t & $\Lambda$ positive definite \\
+      Student t & \cd{df = $\nu$)}, $\Lambda$ positive definite \\
        Negative & \verb+dnegbin(prob = p, size = r)+ &
       \multirow{2}{*}{${x + r -1 \choose x} p^r (1-p)^x$} & 0 & \\
       binomial & $0 < p \leq 1$, $r \geq 0$ \\
