@@ -137,7 +137,8 @@ such variables should be passed in via the \cd{data} argument to
 contexts, one would want to specify distributions for such explanatory
 variables, for example so that an MCMC would impute the missing values.
 
-{\color{red} I think it's fine to pass as inits; same question arises earlier and in chapter 5}
+{\color{red} I think it's fine to pass as inits; same question arises
+  earlier and in chapter 5.  Sounds ok to me -PdV}
 
 \subsubsection{Defining alternative models with the same code}
 \label{sec:defin-altern-models}
@@ -280,13 +281,8 @@ simpleModelCopy1 <- simpleModelDefinition$newModel(check = FALSE)
 ## Make another instance from the same definition
 simpleModelCopy2 <- simpleModelDefinition$newModel(check = FALSE)
 ## Ask simpleModelCopy2 for another copy of itself
-## small bug in version 0.6-4 means we need to set 'data' to an
-## empty list for this to work
-simpleModelCopy3 <- simpleModelCopy2$newModel(check = FALSE, data =
-   list())
+simpleModelCopy3 <- simpleModelCopy2$newModel(check = FALSE)
 @ 
-
-{\color{red} LET'S CHECK THE STATUS OF THE BUG DESCRIBED IN THE COMMENTS.}
 
 Each copy of the model can have different nodes flagged as data and
 different values in any nodes.  They cannot have different values of

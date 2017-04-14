@@ -331,8 +331,7 @@ CuseThem1$run(1:5)
 dataNF <- nimbleFunction(
     setup = function() {
         X <- 1
-        Y <- as.numeric(c(1, 2)) ## will be a scalar if all sizes are 1
-        ## will be a scalar if all sizes are 1:
+        Y <- as.numeric(c(1, 2))
         Z <- matrix(as.numeric(1:4), nrow = 2) 
         setupOutputs(X, Y, Z)
     })
@@ -354,7 +353,7 @@ myDataNF$Y
 myDataNF$Z
 myUseDataNF$myDataNF$X
 
-nimbleOptions(useMultiInterfaceForNestedNimbleFunctions = FALSE)
+nimbleOptions(buildInterfacesForCompiledNestedNimbleFunctions = TRUE)
 CmyUseDataNF <- compileNimble(myUseDataNF)
 CmyUseDataNF$run(-100, -(100:110), matrix(-(101:120), nrow = 2))
 CmyDataNF <- CmyUseDataNF$myDataNF

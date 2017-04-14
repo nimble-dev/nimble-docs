@@ -100,8 +100,11 @@ Compiled modelValues objects can be accessed and altered in all the
 same ways as uncompiled ones.  However, only uncompiled modelValues
 can be used as arguments to setup code in nimbleFunctions.
 
-In the example above a modelValues object is passed to setup code, but a modelValues configuration can also be passed, with creation of the modelValues object done in setup code. 
-{\color{red} CJP added the line above - how does that sound?}
+In the example above a modelValues object is passed to setup code, but
+a modelValues configuration can also be passed, with creation of
+modelValues object(s) from the configuration done in setup code. 
+{\color{red} CJP added the line above - how does that sound?.
+  Slightly edited -PdV}
 
 \subsection{Accessing contents of modelValues}
 \label{sec:access-cont-modelv}

@@ -543,7 +543,9 @@ More information about such handling is provided in the next section.
 \subsubsection{Understanding dimensions and sizes from linear algebra}
 \label{sec:manag-dimens-sizes}
 
-{\color{red} do we want to say anything else here about indexing? Vague memory that Perry had a vision for something more here (or perhaps somewhere else where we talk about indexing!)}
+{\color{red} do we want to say anything else here about indexing? Vague memory that Perry had a vision for something more here (or perhaps somewhere else where we talk about indexing!)  
+  
+  It's basically what I added in above two subsections. -PdV}
 
 As much as possible, NIMBLE behaves like R when determining types and
 sizes returned from linear algebra expressions, but in some cases this

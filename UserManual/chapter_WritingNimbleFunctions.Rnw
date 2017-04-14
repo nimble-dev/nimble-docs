@@ -35,7 +35,8 @@ are two kinds of code and two steps of execution:
   a modelValues object or a modelValues configuration, or another nimbleFunction.  The setup code,
   as its name implies, sets up information for run-time code.  It is
   executed in R, so it can use any aspect of R.
-\item \nm{Run} code is provided in the NIMBLE language.  This is
+\item \nm{Run} code is provided in the NIMBLE language, which was
+  introduced in Chapter \ref{cha:RCfunctions}.  This is
   similar to a narrow subset of R, but it is important to remember
   that it is different -- defined by what can be compiled -- and much more limited.  \nm{Run} code can
   use the objects created by the \nm{setup} code.  In addition,
@@ -76,7 +77,7 @@ the given node in the model, and returns the sum of the log
 probabilities of that node and its stochastic
 dependencies\footnote{Note the use of the global assignment operator
   to assign into the model.  This is necessary for assigning into
-  variables from the \cd{setup} function, at least if you want to void
+  variables from the \cd{setup} function, at least if you want to avoid
   warnings from R.  These warnings come from R's reference class
   system.}.  We say  \cd{logProbCalcPlusA} is an ``instance'' of
 \cd{logProbCalcPlus} that is
@@ -93,7 +94,6 @@ to think in terms of class definitions and objects.  \cd{nimbleFunction}
 creates a class definition.  Each specialized nimbleFunction is one object
 in the class.  The setup arguments are used to define member data in
 the object. 
-
 
 \section{Using and compiling nimbleFunctions}
 \label{sec:using-comp-nimbl}
@@ -124,11 +124,16 @@ persist across calls.
 Some of the useful tools and objects to create in setup functions include:
 
 \begin{description}
-\item[vectors of node names] Often these are obtained from the
-  \cd{getNodeNames} and\\\cd{getDependencies} methods of a model,
-  described in Section \ref{sec:accessing-variables}.
+\item[vectors of node names, often from a model] Often these are obtained from the
+  \cd{getNodeNames}, \\\cd{getDependencies}, and other methods of a model,
+  described in Sections \ref{sec:accessing-variables}-\ref{sec:nodeInfo}.
 \item[modelValues objects] These are discussed in Sections \ref{sec:modelValues-struct} and \ref{sec:access-model-modelv}.
-\item[nimbleList definitions]  It can be useful to create \cd{nimbleList} definitions in setup code.  New instances of \cd{nimbleList}s can then be created from this definition in either setup or run code. See Section \ref{sec:nimbleLists} for more information.
+\item[nimbleList objects]  New instances of \cd{nimbleList}s can then
+  be created from a nimbleList definition in either setup or run code. See Section \ref{sec:nimbleLists} for more information.
+  % Comment: It is actually sketchy that we allow a nimbleList
+  % definition to be created in setup code, because it would  have to
+  % be the same definition always used by all specializations.  So
+  % I've put the emphasis here on creating nimbleList objects. -PdV
 \item[specializations of other nimbleFunctions] A useful NIMBLE
   programming technique is to have one nimbleFunction contain other
   nimbleFunctions, which it can use in its run-time code (Section \ref{sec:using-other-nimbl}).
@@ -137,10 +142,10 @@ Some of the useful tools and objects to create in setup functions include:
   nimbleFunctions (Section \ref{sec:virt-nimbl-nimbl}).
 \end{description}
 
-Functionality for getting information about a model and the nodes in a model (see Sections \ref{sec:accessing-variables}-\ref{sec:nodeInfo}) are also often used in setup code.
 
 If one wants a nimbleFunction that does get specialized but has
-empty setup code, use \cd{setup = function() \{\}} or \cd{setup = TRUE}.
+empty setup code, use \cd{setup = function() \{\}} or \cd{setup =
+  TRUE}.  
 
 \subsection{Accessing and modifying numeric values from setup}
 \label{sec:access-modify-numer}
@@ -177,7 +182,7 @@ Sometimes setup code may create variables that are not used in
 run code.  By default, NIMBLE inspects run code and omits
 variables from setup that do not appear in run code from
 compilation.  However, sometimes a programmer may want to force a
-numeric or character variable to be created in compilation, even if it
+numeric or character variable to be included in compilation, even if it
 is not used directly in run code.  As shown below, such variables
 can be directly accessed in one nimbleFunction from another, which
 provides a way of using nimbleFunctions as general data structures.
@@ -193,7 +198,7 @@ anywhere in the setup code.
 \section{Writing run code}
 \label{sec:nimble-lang-comp}
 
-In Chapter \ref{cha:RCfunctions} we described the functionality of the NIMBLE language that could be used in run code in which models were not used. When writing nimbleFunctions that use models, one can use that functionality already described as well as the functionality discussed in this section. 
+In Chapter \ref{cha:RCfunctions} we described the functionality of the NIMBLE language that could be used in run code without setup code (typically in cases where no models, modelValues, or nimbleLists are needed).   Next we explain the additional features that allow use of models, modelValues, and nimbleLists in the run code. 
 
 \subsection{Driving models: \cd{calculate}, \cd{calculateDiff},
   \cd{simulate}, \cd{getLogProb}}
@@ -202,13 +207,13 @@ In Chapter \ref{cha:RCfunctions} we described the functionality of the NIMBLE la
 These four functions are the primary ways to operate a model.  Their
 syntax was explained in Section \ref{sec:cdcalc-cdsim-cdgetl}. Except
 for \cd{getLogProb}, it is usually important for the \cd{nodes}
-object to be created in \cd{setup} code such that they are sorted in
-topological order, and functions such as \cd{getDependencies} and
+vector to be sorted in
+topological order.  Model member functions such as \cd{getDependencies} and
 \cd{expandNodeNames} will
-always do so.
+always return topoligically sorted node names.
 
 It is possible to use an entire vector of node names, 
-single elements indexed by a variable, or ranges denoted with \cd{:}, as well as expressions that evaluate to logical vectors of length equal to the number of nodes.  For example, all of the follwing are allowed.
+single elements indexed by a variable, or ranges denoted with \cd{:}, as well as expressions that evaluate to logical vectors of length equal to the number of nodes.  For example, all of the follwing are allowed:
 
 <<eval=FALSE>>=
 myModel$calculate(nodes)
@@ -218,29 +223,45 @@ myModel$calculate(nodes[2:i])
 myModel$calculate(nodes[ values(model, nodes) + 0.1 < x ])
 @ 
 
-Use of \cd{values} is explained in the next section.
+{\color{red} Perry, please check this section.
 
-{\color{red} Perry, please check this section}
+Even non-sequential index vectors should work.  Could we simple say:
+
+``Most R-like indexing of a node vector is allowed within the
+argument to calculate, calculateDiff, simulate, or getLogProb.  For
+ example, all of the following are allowed:... [as you have above]
+
+Note that one cannot create new vectors of nodes in run code.  They
+can only be indexed within a call to calculate, calculateDiff,
+simulate or getLogProb.''}
 
 
 \subsection{Getting and setting variable and node values}
 
 \subsubsection{Using indexing with nodes}
   
-{\color{red} This deserves a careful pass from Perry or Daniel to check that I've gotten right what we allow and that I'm not omitting any important syntax that we do allow.}
+{\color{red} This deserves a careful pass from Perry or Daniel to check that I've gotten right what we allow and that I'm not omitting any important syntax that we do allow.
 
-Model variables and nodes can be accessed and set using \cd{[[ ]]} in run code, but there are some limitations on what can be compiled relative to the syntax  discussed in Section \ref{sec:accessing-nodes}. 
+OK, I have revised this below. -PdV.  I think the model-generic issue
+is distracting here.  I will try to make a simple statement about the
+vector/scalar issues.}
+
+% Model variables and nodes can be accessed and set using \cd{[[ ]]} in run code, but there are some limitations on what can be compiled relative to the syntax  discussed in Section \ref{sec:accessing-nodes}.  % not sure what you were talking about here. -PdV
 
 Here is an example that illustrates getting and setting of nodes and subsets of nodes.  Note the following:
 
 \begin{itemize}
-  \item use of \cd{[[ ]]} is currently restricted to use with a single node (potentially a vector node)\footnote{We plan to generalize this in an upcoming version.}, and
+  \item In \cd{model[[node]]}, \cd{node} can only be a single node name, not a vector of multiple nodes nor an element of such a vector (\cd{model[[ nodes[i] ]]} does not work).  The node itself may be a vector, matrix or array node.
+  \item In fact, \code{node} can be a node-name-like character string, even if it is not actually a node in the model.  See example 4 in the code below.
+  \item One can also use \cd{model\$nodeName}, with the caveat that \cd{nodeName} can't be a variable and so would only make sense for a nimbleFunction written for models known to have a specific node.
  \item one should use the \cd{<<-} global assignment operator to assign into model nodes. 
 \end{itemize}
 
-In this example, we illustrate assignment based on double bracket indexing. Note that the dimensions of variables created in run code will be determined at run time based on the dimensions of \cd{node1} and \cd{node2}. In some cases (e.g., assignment of the \cd{runif(1)} scalar value), this means the programmer needs to plan in advance for the dimensionality of objects provided in setup code. This run code assumes that \cd{node2} will always be a vector node.
+Note that NIMBLE does not allow variables to change dimensions.  Model nodes are the same, and indeed are more restricted because they can't change sizes.  In addition, NIMBLE distinguishes between scalars and vectors of length 1.  These rules, and ways to handle them correctly, are illustrated in the following code as well as in section \ref{sec:how-nimble-handles}.
 
-{\color{red} Uggh, is there a better way to say that? Stated in that way, it does highlight there are tricky issues here...}
+{\color{red} Uggh, is there a better way to say that? Stated in that way, it does highlight there are tricky issues here...
+
+I tried. -PdV}
 
 <<getSetInRunCode, message=FALSE>>=
 
@@ -255,36 +276,44 @@ m <- nimbleModel(code, constants = list(n = n, zeroes = rep(0, n),
 cm <- compileNimble(m)
 
 nfGen <- nimbleFunction(
-    setup = function(model, node1, node2) {
+    setup = function(model) {
+        ## node1 and node2 would typically be setup arguments, so they could
+        ## have different values for different models.  We are assigning values
+        ## here so the example is clearer.
+        node1 <- 'sigma'            ## a scalar node 
+        node2 <- 'y[1:5]'           ## a vector node
+        notReallyANode <- 'y[2:4]'  ## y[2:4] is allowed even though it is not a node!
     },
     run = function(vals = double(1)) {
-        tmp0 <- model[[node1]]    # tmp0 will be a scalar
-        tmp1 <- model[['sigma']]  # allowed but not model-generic
-        tmp2 <- model[[node2]]    # tmp2 will be a vector
-        tmp3 <- model[[node2]][1]  # tmp3 will be a scalar
-        model[[node1]] <<- runif(1) # node1 is scalar so can be assigned a scalar
-        model[['sigma']] <<- runif(1) # allowed but not model-generic
+        tmp0 <- model[[node1]]           # 1. tmp0 will be a scalar
+        tmp1 <- model[[node2]]           # 2. tmp1 will be a vector
+        tmp2 <- model[[node2]][1]        # 3. tmp2 will be a scalar
+        tmp3 <- model[[notReallyANode]]  # 4. tmp3 will be a vector
+        tmp4 <- model$y[3:4]             # 5. hard-coded access to a model variable
+        model[[node1]] <<- runif(1) # 5. node1 is scalar so can be assigned a scalar
         model[[node2]][1] <<- runif(1) 
-         # only an element of node2 can be assigned a scalar 
+                 # 6. an element of node2 can be assigned a scalar 
+        model[[node2]] <<- runif(length(model[[node2]]))
+                 # 7. a vector can be assigned to the vector node2
         model[[node2]][1:3] <<- vals[1:3] 
-         # allowed but may not be model-generic, and could cause run-time error
+             ## elements of node2 can be indexed as needed
         returnType(double(1))
-        out <- model[[node2]]
+        out <- model[[node2]] ## we can return a vector   
         return(out)
     }
     )
     
-Rnf <- nfGen(m, 'sigma', 'y[1:5]')
+Rnf <- nfGen(m)
 Cnf <- compileNimble(Rnf)
 Cnf$run(rnorm(10))
 @
 
 
+Use of \cd{[[ ]]} allows one to programmatically access a node based on a character variable containing the node name; this character variable would generally be set in setup code. In contrast, use of \cd{\$} hard codes the variable name and would not generally be suitable for nimbleFunctions intended for use with arbitrary models.
 
-Use of \cd{[[ ]]} allows one to programmatically access a node based on a character variable containing the node name; this character variable would generally be set in setup code. In contrast, use of \cd{\$} hard codes the variable name and would not generally be suitable for nimbleFunctions intended for use with arbitrary models. Furthermore one can only use \cd{\$} in very limited ways.
+{\color{red} do we want to show any use of \$?.
 
-
-{\color{red} do we want to show any use of \$?}
+Added -PdV.}
 
 
 \subsubsection{Getting and setting more than one model node or variable
@@ -306,34 +335,38 @@ values(model, nodes) <- P
 @ 
 
 where the first line would assign the collection of values from \cd{nodes}
-into \cd{P}, and the second would to the inverse.  In both cases, values
+into \cd{P}, and the second would do the inverse.  In both cases, values
 from nodes with two or more dimensions are flattened into a vector in
 column-wise order.
 
 \cd{values(model, nodes)} may be used as a
 vector in other expressions, e.g.,
 <<eval=FALSE>>=
-Y <- A \%*\% values(model, nodes) + b
+Y <- A %*% values(model, nodes) + b
 @ 
 
+One can also index elements of nodes in the argument to values, in the same manner as discussed for \cd{calculate} and related functions in Section \ref{sec:driv-models:-calc}.
 
-Note that \cd{values} returns a 1-d vector and expects a 1-d vector when used on the left-hand side of an assignment. This means that one needs to do some extra work to use scalars with \cd{values}. For example:
+Note again the potential for confusion between scalars and vectors of
+length 1. \cd{values} returns a vector and expects a vector when used
+on the left-hand side of an assignment.  If only a single value is
+being assigned, it must be a vector of length 1, not a scalar.  This
+can be achieved by wrapping a scalar in \code{c()} when necessary.
+For example:
 
 <<eval=FALSE>>=
-tmp <- numeric(1)
-tmp[1] <- rnorm(1)
-values(model, nodes[1]) <- tmp
-# values(model, nodes[1]) <- rnorm(1)  # won't compile
+values(model, nodes[1]) <- c(rnorm(1)) # c(rnorm(1)) creates vector of length one
+# values(model, nodes[1]) <- rnorm(1)  # won't compile because rnorm(1) is a scalar
 
-out <- values(model, nodes[1])
-returnType(double(0))
-return(out[1])
-# return(out)  # won't compile unless one has returnType(double(1))
+out <- values(model, nodes[1]) ## out is a vector
+out2 <- values(model, nodes[1])[1] ## out2 is a scalar
 @ 
 
-One can also use indexing in the same manner as discussed for \cd{calculate} and related functions in Section \ref{sec:driv-models:-calc}.
 
-{\color{red} PdV - check this last statement}
+
+{\color{red} PdV - check this last statement. 
+
+I think I simplified the above bit. -PdV}
 
 \subsection{Getting parameter values and node bounds}
 
@@ -358,6 +391,13 @@ for their log
 probabilities (densities).  \cd{savedWeights} will contain the
 difference in log probability (density) between the model and the
 \cd{propLL} value provided for each set of values.   
+
+{\color{red} TWO COMMENTS: 1. We shouldn't encourage the style of
+  creating modelValuesConf in setup code, because that might imply it
+  could be different in different specializations, but it can't.  It's better to
+  pass the conf as a setup argument. 2. It seems confusing to give
+  examples called ``setupFunction'' and ``runFunction''.  Can we use
+  ``setup'' and ``run'' even if they are not shown in a full call to ``nimbleFunction''?}
 
 <<mv-setup-code>>=
 @
@@ -482,8 +522,8 @@ Here is how it works:
 
 
 One can also use \cd{seq\_along} with nimbleFunctionLists (and only with nimbleFunctionLists). As in R, \cd{seq\_along(myFunList)}  is equivalent to
-\cd{1:length(myFunList)} if the length of \cd{myFunList} is greater than zero
-it is an empty sequence if the length is zero.
+\cd{1:length(myFunList)} if the length of \cd{myFunList} is greater
+than zero.  It is an empty sequence if the length is zero.
 
 Virtual nimbleFunctions cannot define setup values to be inherited.
 
@@ -508,7 +548,10 @@ a C++ string and therefore is needed in C++.
 \subsection{User-defined data structures}
 \label{sec:user-defined-data}
 
-{\color{red} Should we keep this in light of nimbleLists? I tried to intro this section such that it's clear one can use nimLists, but we may want to make clear when one would use this instead of a nimbleList}
+{\color{red} Should we keep this in light of nimbleLists? I tried to intro this section such that it's clear one can use nimLists, but we may want to make clear when one would use this instead of a nimbleList.
+
+I like your introduction.  Let's keep the section but I'm ok if we
+reduce it.  I fixed the problems below. -PdV}
 
 
 Before the introduction of nimbleLists in Version 0.6-4, NIMBLE did not explicitly have user-defined data structures. An alternative way to create a data structure in NIMBLE is to use nimbleFunctions to achieve a similar effect.  To do so, one can define setup code with whatever variables are wanted and ensure
@@ -538,14 +581,19 @@ interfaces by setting the
 \cd{nimbleOptions} to TRUE.  If we had left that option FALSE (its
 default value), we could still get to the values of interest using
 
-
 <<eval=FALSE>>=
 valueInCompiledNimbleFunction(CmyDataNF, 'X')
 @ 
 
 {\color{red} valueInCompiledNimbleFunction is giving an error: Error in eval(call(".Call", nimbleUserNamespace$sessionSpecificDll$getModelObjectPtr, )) : 
   object 'basePtr' not found
-when the useMultiInterface is set to TRUE}
+when the useMultiInterface is set to TRUE.
+
+There were a couple of problems: There was a bug.  And the option name
+has changed from what was in the chunk code (but not the text above)
+(and default may have changed since we last checked this section.)
+I'd be ok if we just want to reduce or omit some of this detail, but I
+like the idea of including this way to use a nimbleFunction. -PdV}
 
 \item We need to take care that at the time of compilation, the
   \cd{X}, \cd{Y} and \cd{Z} values contain doubles via
