@@ -313,7 +313,7 @@ column-wise order.
 \cd{values(model, nodes)} may be used as a
 vector in other expressions, e.g.,
 <<eval=FALSE>>=
-\cd{Y <- A \%*\% values(model, nodes) + b}
+Y <- A \%*\% values(model, nodes) + b
 @ 
 
 
@@ -516,6 +516,8 @@ they are compiled using \cd{setupOutputs}.  Here is an example:
 
 {\color{red} I don't understand the comments about 'will be a scalar if all sizes are 1' in the next code chunk}
 
+{\color{red} compiled usage is NOT working in next code chunk - returning NULL; this was true in v0.6-3 manual as well...}
+
 <<dataStructures>>=
 @ 
 
@@ -536,7 +538,6 @@ interfaces by setting the
 \cd{nimbleOptions} to TRUE.  If we had left that option FALSE (its
 default value), we could still get to the values of interest using
 
-{\color{red} compiled usage is NOT working here - returning NULL; this was true in v0.6-3 manual as well...}
 
 <<eval=FALSE>>=
 valueInCompiledNimbleFunction(CmyDataNF, 'X')

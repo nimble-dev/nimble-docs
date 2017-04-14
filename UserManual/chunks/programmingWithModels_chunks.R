@@ -332,7 +332,8 @@ dataNF <- nimbleFunction(
     setup = function() {
         X <- 1
         Y <- as.numeric(c(1, 2)) ## will be a scalar if all sizes are 1
-        Z <- matrix(as.numeric(1:4), nrow = 2) ## will be a scalar is all sizes are 1
+        ## will be a scalar if all sizes are 1:
+        Z <- matrix(as.numeric(1:4), nrow = 2) 
         setupOutputs(X, Y, Z)
     })
 
