@@ -20,7 +20,7 @@ read_chunk(file.path('chunks', 'programmingWithModels_chunks.R'))
 
 When you write an R function, you say what the input arguments are,
 you provide the code for execution, and in that code you give the
-returned value\footnote{Normally this is the value of the last
+value to be returned\footnote{Normally this is the value of the last
   evaluated code, or the argument to \cd{return}.}.  Using the
 \cd{function} keyword in R triggers the operation of
 creating an object that is the function.
@@ -32,7 +32,7 @@ are two kinds of code and two steps of execution:
 \item \nm{Setup} code is provided as a regular R function, but the
   programmer does not control what it returns.  Typically the inputs to
   \nm{setup} code are objects like a model, a vector of nodes,
-  a modelValues object or a modelValues configuration, or another nimbleFunction.  The \cd{setup} code,
+  a modelValues object or a modelValues configuration, or another nimbleFunction.  The setup code,
   as its name implies, sets up information for run-time code.  It is
   executed in R, so it can use any aspect of R.
 \item \nm{Run} code is provided in the NIMBLE language.  This is
@@ -40,12 +40,12 @@ are two kinds of code and two steps of execution:
   that it is different -- defined by what can be compiled -- and much more limited.  \nm{Run} code can
   use the objects created by the \nm{setup} code.  In addition,
   some information on variable types must be provided for input
-  arguments, the return object, and in some circumstances for local
+  arguments, the return value, and in some circumstances for local
   variables. There are two
   kinds of \nm{run} code:
   \begin{enumerate}
-  \item There is always a primary function, given as an argument
-    called \nm{run}\footnote{This can be omitted if you don't need it.}.
+  \item There is always a primary function, given as the argument \cd{run}
+    \footnote{This can be omitted if you don't need it.}.
   \item There can optionally be other functions, or ``methods'' in the
     language of object-oriented programming, that share the same
     objects created by the \nm{setup} function.
@@ -111,30 +111,30 @@ versions and can be used in the same way:
 
 \section{Writing setup code}
 
-\subsection{Useful tools for \cd{setup} functions}
+\subsection{Useful tools for setup functions}
 
 The setup function is typically used to determine information on nodes
-in a model, set up modelValues objects, set up (nested) nimbleFunctions 
+in a model, set up modelValues or nimbleList objects, set up (nested) nimbleFunctions 
 or nimbleFunctionLists, and set up any persistent numeric objects.
-For example, the \cd{setup} code of an MCMC nimbleFunction creates the
+For example, the setup code of an MCMC nimbleFunction creates the
 nimbleFunctionList of sampler nimbleFunctions.  The values of numeric
-objects created in \cd{setup} can be modified by run code and will
+objects created in setup code can be modified by run code and will
 persist across calls.
 
-Some of the useful tools and objects to create in \cd{setup} functions include
+Some of the useful tools and objects to create in setup functions include:
 
 \begin{description}
 \item[vectors of node names] Often these are obtained from the
-  \cd{getNodeNames} and \cd{getDependencies} methods of a model,
+  \cd{getNodeNames} and\\\cd{getDependencies} methods of a model,
   described in Section \ref{sec:accessing-variables}.
-\item[modelValues objects] These are discussed more below.
+\item[modelValues objects] These are discussed in Sections \ref{sec:modelValues-struct} and \ref{sec:access-model-modelv}.
+\item[nimbleList definitions]  It can be useful to create \cd{nimbleList} definitions in setup code.  New instances of \cd{nimbleList}s can then be created from this definition in either setup or run code. See Section \ref{sec:nimbleLists} for more information.
 \item[specializations of other nimbleFunctions] A useful NIMBLE
   programming technique is to have one nimbleFunction contain other
-  nimbleFunctions, which it can use in its run-time code.
+  nimbleFunctions, which it can use in its run-time code (Section \ref{sec:using-other-nimbl}).
 \item[lists of other nimbleFunctions] In addition to containing single
   other nimbleFunctions, a nimbleFunction can contain a list of other
-  nimbleFunctions.  These are discussed more below.
-\item[nimbleList definitions]  It can be useful to create \cd{nimbleList} definitions in setup code.  New instances of \cd{nimbleList}s can then be created from this definition in either setup or run code. See Section \ref{sec:nimbleLists} for more information.
+  nimbleFunctions (Section \ref{sec:virt-nimbl-nimbl}).
 \end{description}
 
 Functionality for getting information about a model and the nodes in a model (see Sections \ref{sec:accessing-variables}-\ref{sec:nodeInfo}) are also often used in setup code.
@@ -145,9 +145,9 @@ empty setup code, use \cd{setup = function() \{\}} or \cd{setup = TRUE}.
 \subsection{Accessing and modifying numeric values from setup}
 \label{sec:access-modify-numer}
 
-While models and nodes created during \cd{setup} cannot be
-modified\footnote{Actually, they can be, but only for uncompiled nimbleFunctions},
-numeric values and modelValues can be. For example:
+While models and nodes created during setup cannot be
+modified\footnote{Actually, they can be, but only for uncompiled nimbleFunctions.},
+numeric values and modelValues can be, as illustrated by extending the example from above.
 
 <<nf-modifyValueToAdd>>=
 @ 
@@ -156,39 +156,39 @@ numeric values and modelValues can be. For example:
   
 For numeric variables from the \cd{setup} function that
   appear in the \cd{run} function or other member functions (or
-  are declared in \cd{setupOutputs}): the
-  type is determined from the values created by the \cd{setup}
-  code. The types created by \cd{setup} code must be
+  are declared in \cd{setupOutputs}), the
+  type is determined from the values created by the setup
+  code. The types created by setup code must be
   consistent across all specializations of the nimbleFunction.  For
-  example if X is created as a matrix (2-dimensional double) in one
-  specialization but as a vector (1-dimensional double) in another, there
+  example if \cd{X} is created as a matrix (two-dimensional double) in one
+  specialization but as a vector (one-dimensional double) in another, there
   will be a problem during compilation.  The sizes may differ in each specialization.
   
-   Treatment of vectors of length 1 presents special challenges because
+   Treatment of vectors of length one presents special challenges because
   they could be treated as scalars or vectors.  Currently they are
   treated as scalars.  If you want a vector, ensure that the length is
-  greater than 1 in the setup code and then use \cd{setSize} in the
+  greater than one in the setup code and then use \cd{setSize} in the
   run-time code.
 
-\subsection{Control of \cd{setup} outputs }
+\subsection{Control of setup outputs }
 \label{sec:determ-pers-texttts}
 
-Sometimes \cd{setup} code may create variables that are not used in
-run-time code.  By default, NIMBLE inspects run-time code and omits
-variables from \cd{setup} that do not appear in run-time code from
+Sometimes setup code may create variables that are not used in
+run code.  By default, NIMBLE inspects run code and omits
+variables from setup that do not appear in run code from
 compilation.  However, sometimes a programmer may want to force a
 numeric or character variable to be created in compilation, even if it
-is not used directly in run-time code.  As shown below, such variables
+is not used directly in run code.  As shown below, such variables
 can be directly accessed in one nimbleFunction from another, which
 provides a way of using nimbleFunctions as general data structures.
-To force NIMBLE to include variables around during compilation, for
+To force NIMBLE to include variables during compilation, for
 example \cd{X} and \cd{Y}, simply include
 
 <<eval = FALSE>>=
 setupOutputs(X, Y)
 @ 
 
-anywhere in the \cd{setup} code. 
+anywhere in the setup code. 
 
 \section{Writing run code}
 \label{sec:nimble-lang-comp}
@@ -208,45 +208,39 @@ topological order, and functions such as \cd{getDependencies} and
 always do so.
 
 It is possible to use an entire vector of node names, 
-single elements indexed by a variable, or fixed ranges (indexed by constants)
-, but not ranges indexed by a variable.  For
-example
+single elements indexed by a variable, or ranges denoted with \cd{:}, as well as expressions that evaluate to logical vectors of length equal to the number of nodes.  For example, all of the follwing are allowed.
 
 <<eval=FALSE>>=
 myModel$calculate(nodes)
-@ 
-and
-<<eval=FALSE>>=
 myModel$calculate(nodes[i])
-@ 
-and
-<<eval=FALSE>>=
 myModel$calculate(nodes[1:3])
+myModel$calculate(nodes[2:i])
+myModel$calculate(nodes[ values(model, nodes) + 0.1 < x ])
 @ 
 
-{\color{red} check on outcome of discussion on fixed ranges}
+Use of \cd{values} is explained in the next section.
 
-will all compile correctly, but
-<<eval=FALSE>>=
-myModel$calculate(nodes[1:i])
-@ 
-is not allowed.
+{\color{red} Perry, please check this section}
+
 
 \subsection{Getting and setting variable and node values}
 
 \subsubsection{Using indexing with nodes}
   
+{\color{red} This deserves a careful pass from Perry or Daniel to check that I've gotten right what we allow and that I'm not omitting any important syntax that we do allow.}
+
 Model variables and nodes can be accessed and set using \cd{[[ ]]} in run code, but there are some limitations on what can be compiled relative to the syntax  discussed in Section \ref{sec:accessing-nodes}. 
 
 Here is an example that illustrates getting and setting of nodes and subsets of nodes.  Note the following:
 
 \begin{itemize}
-  \item use of \cd{[[ ]]} is restricted to use with a single node (potentially a non-scalar node), and
+  \item use of \cd{[[ ]]} is currently restricted to use with a single node (potentially a vector node)\footnote{We plan to generalize this in an upcoming version.}, and
  \item one should use the \cd{<<-} global assignment operator to assign into model nodes. 
 \end{itemize}
 
-{\color{red} This deserves a careful pass from Perry or Daniel to check that I've gotten right what we allow and that I'm not omitting any important syntax that we do allow.}
+In this example, we illustrate assignment based on double bracket indexing. Note that the dimensions of variables created in run code will be determined at run time based on the dimensions of \cd{node1} and \cd{node2}. In some cases (e.g., assignment of the \cd{runif(1)} scalar value), this means the programmer needs to plan in advance for the dimensionality of objects provided in setup code. This run code assumes that \cd{node2} will always be a vector node.
 
+{\color{red} Uggh, is there a better way to say that? Stated in that way, it does highlight there are tricky issues here...}
 
 <<getSetInRunCode, message=FALSE>>=
 
@@ -271,8 +265,9 @@ nfGen <- nimbleFunction(
         model[[node1]] <<- runif(1) # node1 is scalar so can be assigned a scalar
         model[['sigma']] <<- runif(1) # allowed but not model-generic
         model[[node2]][1] <<- runif(1) 
-                           # only an element of node2 can be assigned a scalar
+         # only an element of node2 can be assigned a scalar 
         model[[node2]][1:3] <<- vals[1:3] 
+         # allowed but may not be model-generic, and could cause run-time error
         returnType(double(1))
         out <- model[[node2]]
         return(out)
@@ -286,7 +281,7 @@ Cnf$run(rnorm(10))
 
 
 
-Use of \cd{[[ ]]} allows one to programmatically access a node based on a character variable that stores the name of the node; this character variable would generally be set in setup code. In contrast, use of \cd{\$} hard codes the variable name and would not generally be suitable for nimbleFunctions intended for use with arbitrary models. Furthermore one can only use \cd{\$} in very limited ways.
+Use of \cd{[[ ]]} allows one to programmatically access a node based on a character variable containing the node name; this character variable would generally be set in setup code. In contrast, use of \cd{\$} hard codes the variable name and would not generally be suitable for nimbleFunctions intended for use with arbitrary models. Furthermore one can only use \cd{\$} in very limited ways.
 
 
 {\color{red} do we want to show any use of \$?}
@@ -301,7 +296,7 @@ one time.  For example, one might want a nimbleFunction that will
 serve as the objective function for an optimizer.  The input to the
 nimbleFunction would be a vector, which should be used to fill a
 collection of nodes in the model before calculating their log
-probabilities.  This can be done using \cd{values()}:
+probabilities.  This can be done using \cd{values}:
 
 <<eval=FALSE>>=
 ## get values from a set of model nodes into a vector
@@ -310,27 +305,19 @@ P <- values(model, nodes)
 values(model, nodes) <- P
 @ 
 
-where the first line would assign the collection of values from nodes
-into P, and the second would to the inverse.  In both cases, values
-from nodes with 2 or more dimensions are flattened into a vector in
+where the first line would assign the collection of values from \cd{nodes}
+into \cd{P}, and the second would to the inverse.  In both cases, values
+from nodes with two or more dimensions are flattened into a vector in
 column-wise order.
 
 \cd{values(model, nodes)} may be used as a
-vector in other expressions, e.g. \cd{Y <- A \%*\% values(model,
-  nodes) + b}. 
-
-One can also use indexing, but one can only have a single index, and not a range of indices:
-
+vector in other expressions, e.g.,
 <<eval=FALSE>>=
-## get values from a set of model nodes into a vector
-i <- 2
-P <- values(model, nodes[i])
-## or put values from a vector into a set of model nodes
-values(model, nodes[i]) <- P
-# P <- values(model, nodes[1:2] # won't compile
+\cd{Y <- A \%*\% values(model, nodes) + b}
 @ 
 
-Note that \cd{values()} returns a 1-d vector and expects a 1-d vector when used on the left-hand side of an assignment. This means that one needs to do some extra work to use scalars with \cd{values()}. For example:
+
+Note that \cd{values} returns a 1-d vector and expects a 1-d vector when used on the left-hand side of an assignment. This means that one needs to do some extra work to use scalars with \cd{values}. For example:
 
 <<eval=FALSE>>=
 tmp <- numeric(1)
@@ -344,6 +331,10 @@ return(out[1])
 # return(out)  # won't compile unless one has returnType(double(1))
 @ 
 
+One can also use indexing in the same manner as discussed for \cd{calculate} and related functions in Section \ref{sec:driv-models:-calc}.
+
+{\color{red} PdV - check this last statement}
+
 \subsection{Getting parameter values and node bounds}
 
 Sections \ref{sec:getParam}-\ref{sec:getBound} describe how to get the parameter values for a node and the range (bounds) of possible values for the node using  \cd{getParam} and \cd{getBound}. Both of these can be used in run code. 
@@ -355,7 +346,7 @@ Sections \ref{sec:getParam}-\ref{sec:getBound} describe how to get the parameter
 The \cd{modelValues} structure was introduced in Section
 \ref{sec:modelValues-struct}.  Inside nimbleFunctions, modelValues are
 designed to easily save values from a model object during the running
-of a nimbleFunction. A \cd{modelValues} object used in \cd{run} code
+of a nimbleFunction. A modelValues object used in run code
 must always exist in the setup code, either by passing it in as a
 setup argument or creating it in the setup code.
   
@@ -392,10 +383,10 @@ difference in log probability (density) between the model and the
   rows, using the notation \cd{mv[var, i]}, where \cd{mv} is a
   modelValues object, \cd{var} is a variable name (not a node name),
   and \cd{i} is a row number. Likewise, the \cd{getsize} and
-  \cd{resize} functions can be used as discussed previously. However the function
-  \cd{as.matrix} does not work in \cd{run} code.
+  \cd{resize} functions can be used as discussed in Section \ref{sec:modelValues-struct}. However the function
+  \cd{as.matrix} does not work in run code.
   
-  Here is a \cd{run} function to use these modelValues:
+  Here is a run function to use these modelValues:
   
 <<mv-run-time>>=
 @
@@ -416,13 +407,13 @@ with model variables.
 \subsection{Using model variables and modelValues in expressions}
 \label{sec:using-model-variable}
 
-Each way of accessing a variable, node, or modelValues can be used amid mathematical
+Each way of accessing a variable, node, or modelValues can be used amidst mathematical
 expressions, including with indexing, or passed to another
 nimbleFunction as an argument.  For example, the following two
 statements would be valid:
 
 <<eval = FALSE>>=
-model[['x[2:8, ]']][2:4, 1:3] %*% Z
+model[["x[2:8, ]"]][2:4, 1:3] %*% Z
 @ 
 if Z is a vector or matrix, and
 
@@ -435,10 +426,10 @@ The NIMBLE language allows scalars, but models defined from BUGS code
 are never created as purely
 scalar nodes.  Instead, a single node such as defined by \cd{z $\sim$
   dnorm(0, 1)} is implemented as a vector of length 1, similar to R.
-When using \cd{z} via \cd{model\$z} or \cd{model[[`z']]}, NIMBLE
+When using \cd{z} via \cd{model\$z} or \cd{model[["z"]]}, NIMBLE
 will try to do the right thing by treating this as a scalar.  In the
-event of problems\footnote{please tell us!}, a more explicit way to
-access z is \cd{model\$z[1]} or \cd{model[[`z']][1]}.
+event of problems\footnote{Please tell us!}, a more explicit way to
+access \cd{z} is \cd{model\$z[1]} or \cd{model[["z"]][1]}.
 
 
 
@@ -447,8 +438,8 @@ access z is \cd{model\$z[1]} or \cd{model[[`z']][1]}.
 
 Other methods can be included with the \cd{methods} argument to
 \cd{nimbleFunction}.  These methods can use the objects created in
-\cd{setup} code in just the same ways as the \cd{run} function.  In
-fact, the \cd{run} function is just a default main method name. Any method can then call another method.
+setup code in just the same ways as the run function.  In
+fact, the run function is just a default main method name. Any method can then call another method.
 
 <<usingMemberFunctions>>=
 @ 
@@ -466,18 +457,14 @@ access a setup variable or method of another nimbleFunction, use
 @ 
 
 
-Note that the output from the \cd{print} calls in the compiled
-function match those from the uncompiled function when run in an R
-session.  It may not be shown here because this document is created with
-\cd{knitr} and for some reason output printed from C++ does not make it into
-\cd{knitr} output.
+% CJP: doesn't seem to be an issue at the moment: Note that the output from the \cd{print} calls in the compiled function match those from the uncompiled function when run in an R session.  It may not be shown here because this document is created with \cd{knitr} and for some reason output printed from C++ does not make it into \cd{knitr} output.
 
 \subsection{Virtual nimbleFunctions and nimbleFunctionLists}
 \label{sec:virt-nimbl-nimbl}
 
 Often it is useful for one nimbleFunction to have a list of other
-nimbleFunctions that have methods with the same arguments and return
-types.  For example, NIMBLE's MCMC contains a list of samplers that
+nimbleFunctions, all of whose methods have the same arguments and return
+types.  For example, NIMBLE's MCMC engine contains a list of samplers that
 are each nimbleFunctions.
 
 To make such a list, NIMBLE provides a way to declare the arguments
@@ -494,27 +481,24 @@ Here is how it works:
 @ 
 
 
-As in R, the
-\cd{seq\_along} function is equivalent to
-\cd{1:length(nimFunList)} if \cd{length(nimFunList)} $>$ 0, and
-it is an empty sequence if \cd{length(nimFunList)} == 0.
+One can also use \cd{seq\_along} with nimbleFunctionLists (and only with nimbleFunctionLists). As in R, \cd{seq\_along(myFunList)}  is equivalent to
+\cd{1:length(myFunList)} if the length of \cd{myFunList} is greater than zero
+it is an empty sequence if the length is zero.
 
-Currently \cd{seq\_along} works only for nimbleFunctionLists.
-
-Virtual nimbleFunctions cannot define \cd{setup} values to be inherited.
+Virtual nimbleFunctions cannot define setup values to be inherited.
 
 
 \subsection{Character objects}
 
-NIMBLE provides limited uses of character objects in \cd{run} code.
-Character vectors created in \cd{setup} code will be available in
-\cd{run} code, but the only thing you can really do with them is
+NIMBLE provides limited uses of character objects in run code.
+Character vectors created in setup code will be available in
+run code, but the only thing you can really do with them is
 include them in a \cd{print} or \cd{stop} statement.  
 
 Note that character vectors of model node and variable names are
 processed during compilation.  For example, in \cd{model[[node]]}, \cd{node}
 may be a character object, and the NIMBLE compiler processes this
-differently than \cd{print(``The node name was '', node)}.  In the
+differently than \cd{print("The node name was ", node)}.  In the
 former, the NIMBLE compiler sets up a C++ pointer directly to the
 \cd{node} in the \cd{model}, so that the character content of
 \cd{node} is never needed in C++.  In the latter, \cd{node} is used as
@@ -524,12 +508,13 @@ a C++ string and therefore is needed in C++.
 \subsection{User-defined data structures}
 \label{sec:user-defined-data}
 
-{\color{red} need to determine if/how obsolete this is given nimbleLists; if text is kept, make clear when one would use this instead of a nimbleList}
+{\color{red} Should we keep this in light of nimbleLists? I tried to intro this section such that it's clear one can use nimLists, but we may want to make clear when one would use this instead of a nimbleList}
 
-NIMBLE does not explicitly have user-defined data structures, but one
-can use nimbleFunctions to achieve a similar effect.  To do so, one
-can define setup code with whatever variables are wanted and ensure
+
+Before the introduction of nimbleLists in Version 0.6-4, NIMBLE did not explicitly have user-defined data structures. An alternative way to create a data structure in NIMBLE is to use nimbleFunctions to achieve a similar effect.  To do so, one can define setup code with whatever variables are wanted and ensure
 they are compiled using \cd{setupOutputs}.  Here is an example:
+
+{\color{red} I don't understand the comments about 'will be a scalar if all sizes are 1' in the next code chunk}
 
 <<dataStructures>>=
 @ 
@@ -551,9 +536,15 @@ interfaces by setting the
 \cd{nimbleOptions} to TRUE.  If we had left that option FALSE (its
 default value), we could still get to the values of interest using
 
+{\color{red} compiled usage is NOT working here - returning NULL; this was true in v0.6-3 manual as well...}
+
 <<eval=FALSE>>=
 valueInCompiledNimbleFunction(CmyDataNF, 'X')
 @ 
+
+{\color{red} valueInCompiledNimbleFunction is giving an error: Error in eval(call(".Call", nimbleUserNamespace$sessionSpecificDll$getModelObjectPtr, )) : 
+  object 'basePtr' not found
+when the useMultiInterface is set to TRUE}
 
 \item We need to take care that at the time of compilation, the
   \cd{X}, \cd{Y} and \cd{Z} values contain doubles via
@@ -581,10 +572,14 @@ my_RW <- nimbleFunction(
     },
     
     run = function() {
-        model_lp_initial <- getLogProb(model, calcNodes) ## initial model logProb
-        proposal <- rnorm(1, model[[target]], scale)     ## generate proposal
-        model[[target]] <<- proposal                     ## store proposal into model
-        model_lp_proposed <- calculate(model, calcNodes) ## proposal model logProb
+        ## initial model logProb
+        model_lp_initial <- getLogProb(model, calcNodes) 
+        ## generate proposal
+        proposal <- rnorm(1, model[[target]], scale)     
+        ## store proposal into model
+        model[[target]] <<- proposal                    
+        ## proposal model logProb
+        model_lp_proposed <- calculate(model, calcNodes)
         
         ## log-Metropolis-Hastings ratio
         log_MH_ratio <- model_lp_proposed - model_lp_initial
@@ -619,14 +614,14 @@ To be used within the MCMC engine, sampler functions definitions must
 adhere exactly to the following:
 
 \begin{itemize}
-  \item Include the contains statement \cd{contains = sampler\_BASE}.
+  \item The nimbleFunction must include the contains statement \cd{contains = sampler\_BASE}.
     \item The \cd{setup} function must have the exact four arguments
       \cd{model, mvSaved, target, control}, in that order.
       \item The \cd{run} function must accept no arguments, and have
         no return value.  Further, after execution it must leave the \cd{mvSaved}
         modelValues object as an up-to-date copy of the values and
         logProb values in the model object.
-        \item Have a member method called \cd{reset}, which takes no arguments 
+        \item The nimbleFunction must have a member method called \cd{reset}, which takes no arguments 
           and has no return value.
 \end{itemize}
 
@@ -655,7 +650,7 @@ generates a new, customized reference class definition for each.  As a
 result, objects of these types are passed by reference and hence
 modified in place by most NIMBLE operations. This is necessary to
 avoid a great deal of copying and returning and having to reassign
-large objects, both in processing model and nimbleFunctions  and in
+large objects, both in processing models and nimbleFunctions  and in
 running algorithms.
 
 One cannot generally copy NIMBLE models or nimbleFunctions
@@ -688,7 +683,7 @@ for \cd{model2}.
 
 One of the main reasons that NIMBLE provides an R (uncompiled) version
 of each nimbleFunction is for debugging. One can call \cd{debug} on
-nimbleFunction methods (in particular the main \nm{run} method) and
+nimbleFunction methods (in particular the main \nm{run} method, e.g., \cd{debug(mynf\$run}) and
 then step through the code in R using R's debugger. One can also
 insert \cd{browser} calls into run code and then run the
 nimbleFunction from R. 
@@ -698,14 +693,12 @@ difficult, although those familiar with running R through a debugger
 and accessing the underlying C code may be able to operate similarly
 with NIMBLE code. 
 
-{\color{red} TODO: basic info on inserting browser in nf run code and running in R as well as using debug(nf\$run)}
 
 \section{Some options for reducing memory usage}
 
-{\color{red} TODO: needs to be revised so only memory use is covered here and other material is moved as appropriate}
 
 NIMBLE can make a lot of objects in its processing, and some of them
-use R features like reference classes that are not light in memory
+use R features such as reference classes that are not light in memory
 usage.  We have noticed that building large models can use lots of
 memory.  To help alleviate this, we provide two options, which can be
 controlled via \cd{nimbleOptions}.

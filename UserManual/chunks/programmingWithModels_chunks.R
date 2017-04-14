@@ -51,7 +51,7 @@ logProbCalcPlusA <- logProbCalcPlus(testModel, 'a')
 testModel$b <- 1.5
 logProbCalcPlusA$run(0.25) 
 dnorm(1.25,0,1,TRUE)+dnorm(1.5,1.25,1,TRUE) ## direct validation
-testModel$a  ## a was set to 0.5 + valueToAdd
+testModel$a  ## 'a' was set to 0.5 + valueToAdd
 
 
 ## @knitr nf-compiling
@@ -132,21 +132,21 @@ runFunction = function(){
 }
 
 ## @knitr mv-compilation-example
-##   Simple model and modelValue for example
+## simple model and modelValues for example use with code above
 targetModelCode <- nimbleCode({
     x ~ dnorm(0,1)
     for(i in 1:4)
         y[i] ~ dnorm(0,1)
 })
 
-##	Code for proposal model
+## code for proposal model
 propModelCode <- nimbleCode({
 	x ~ dnorm(0,2)
 	for(i in 1:4)
 		y[i] ~ dnorm(0,2)
 })
 
-##	Building R models
+## creating the models
 targetModel = nimbleModel(targetModelCode, check = FALSE)
 propModel = nimbleModel(propModelCode, check = FALSE)
 cTargetModel = compileNimble(targetModel)
@@ -175,28 +175,28 @@ PropSamp_Gen <- nimbleFunction(
     )
 
 ## nimbleFunction for calculating importance weights
-## Recylcing setupFunction and runFunction as defined in earlier example
+## uses setupFunction and runFunction as defined in previous code chunk
 impWeights_Gen <- nimbleFunction(setup = setupFunction,
                                  run = runFunction)
       
 
-## Making instances of nimbleFunctions
-## Note that both functions share the same modelValues object
+## making instances of nimbleFunctions
+## note that both functions share the same modelValues object
 RPropSamp <- PropSamp_Gen(sampleMV, propModel)
 RImpWeights <- impWeights_Gen(sampleMV, targetModel)
 
-# Compiling 
+## compiling 
 CPropSamp <- compileNimble(RPropSamp, project = propModel)
 CImpWeights <- compileNimble(RImpWeights, project = targetModel)
 
-#Generating and saving proposal sample of size 10
+## generating and saving proposal sample of size 10
 CPropSamp$run(10)
 
-## Calculating the importance weights and saving to mv
+## calculating the importance weights and saving to mv
 CImpWeights$run()
 
-## Retrieving the modelValues objects
-## Extracted objects are C-based modelValues objects
+## retrieving the modelValues objects
+## extracted objects are C-based modelValues objects
 
 savedPropSamp_1 = CImpWeights$propModelValues
 savedPropSamp_2 = CPropSamp$mv
@@ -212,13 +212,12 @@ savedPropSamp_2['x',1]
 savedPropSamp_1['x',1] <- 0 ## example of directly setting a value
 savedPropSamp_2['x',1]
 
-## Viewing the saved importance weights
+## viewing the saved importance weights
 savedWeights <- CImpWeights$savedWeights
 unlist(savedWeights[['w']])
 
-#Viewing first 3 rows. Note that savedPropSsamp_1['x', 1] was altered 
+## viewing first 3 rows -- note that savedPropSsamp_1['x', 1] was altered 
 as.matrix(savedPropSamp_1)[1:3, ]
-
 
 ## @knitr usingMemberFunctions
 
@@ -321,10 +320,10 @@ useThem <- nimbleFunction(
     )
 
 useThem1 <- useThem()
-set.seed(0)
+set.seed(1)
 useThem1$run(1:5)    
 CuseThem1 <- compileNimble(useThem1)
-set.seed(0)
+set.seed(1)
 CuseThem1$run(1:5)
 
 ## @knitr dataStructures
