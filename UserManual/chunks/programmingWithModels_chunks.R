@@ -98,11 +98,11 @@ CsolveLeastSquares(X, y)
 
 ## @knitr mv-setup-code
 ## Accepting modelValues as a setup argument
-setupFunction = function(propModelValues, model){
+swConf <- modelValuesConf(vars = 'w',
+                                    types = 'double',
+                                    sizes = 1)
+setup = function(propModelValues, model, savedWeightsConf){
     ## Building a modelValues in the setup function 
-    savedWeightsConf <- modelValuesConf(vars = 'w',
-                                        types = 'double',
-                                        sizes = 1)
     savedWeights <- modelValues(conf = savedWeightsConf)
     ## List of nodes to be used in run function
     modelNodes <- model$getNodeNames(stochOnly = TRUE,
@@ -110,7 +110,7 @@ setupFunction = function(propModelValues, model){
 }
 
 ## @knitr mv-run-time
-runFunction = function(){
+run = function(){
     ## gets the number of rows of propSamples
     m <- getsize(propModelValues)
 
@@ -175,15 +175,15 @@ PropSamp_Gen <- nimbleFunction(
     )
 
 ## nimbleFunction for calculating importance weights
-## uses setupFunction and runFunction as defined in previous code chunk
-impWeights_Gen <- nimbleFunction(setup = setupFunction,
-                                 run = runFunction)
+## uses setup and run functions as defined in previous code chunk
+impWeights_Gen <- nimbleFunction(setup = setup,
+                                 run = run)
       
 
 ## making instances of nimbleFunctions
 ## note that both functions share the same modelValues object
 RPropSamp <- PropSamp_Gen(sampleMV, propModel)
-RImpWeights <- impWeights_Gen(sampleMV, targetModel)
+RImpWeights <- impWeights_Gen(sampleMV, targetModel, swConf)
 
 ## compiling 
 CPropSamp <- compileNimble(RPropSamp, project = propModel)

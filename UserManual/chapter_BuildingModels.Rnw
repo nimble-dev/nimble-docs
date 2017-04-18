@@ -137,9 +137,6 @@ such variables should be passed in via the \cd{data} argument to
 contexts, one would want to specify distributions for such explanatory
 variables, for example so that an MCMC would impute the missing values.
 
-{\color{red} I think it's fine to pass as inits; same question arises
-  earlier and in chapter 5.  Sounds ok to me -PdV}
-
 \subsubsection{Defining alternative models with the same code}
 \label{sec:defin-altern-models}
 
