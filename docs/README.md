@@ -6,3 +6,4 @@ GitHub pages feature requires that the content start at index.html in the /docs 
 The Makefile will render an Rmd into html using rmarkdown.
 
 When you add a page, simply add a link to it in index.Rmd and rebuild index.html.
+

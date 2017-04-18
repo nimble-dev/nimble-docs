@@ -1,0 +1,272 @@
+# Navigating nimble objects to find internal information
+
+NIMBLE compilation works by creating a series of information-rich objects.  These are mostly implemented using R reference classes, so each object can have access to other ones without high copying overhead.  This means finding what you need from the internals of these objects can take some exploration.  This page outlines the objects created in compilation of a nimbleFunction, what their conceptual role is and what objects they contain.
+
+```{r}
+library(nimble)
+```
+
+First here is an overview of the objects and concepts they represent
+
+1. nimbleFunction generator: This is returned from `nimbleFunction`.  When called, it runs the setup function and returns a specialized nimbleFunction.  
+2. specialized nimbleFunction, also called nimbleFunction object: This is the uncompiled working version of the nimbleFunction.
+3. `nfProcessing` object (often called nfProc, or nimCompProc [the latter name is used when it could alternatively be of class nlProcessing for nimbleLists]): This manages the compilation process up to where we are ready to generate C++.  Two essential fields include:
+    a. `RCfunProcs`: A list of RCfunProcessing objects: Each of these objects manages compilation process for one method up to the point before generating C++.
+    b. Hierarchy of symbolTable objects: Each RCfunProcessing object has a local symbolTable, which all have the same parent symbolTable (`symTab`) that includes class variables. 
+
+4. cppDef object: This manages the generation of C++ for the nfProcessing object along with SEXP functions for generation, finalization (R's name for destruction) and interface functions.
+    a. By a "SEXP" function, we mean a function that takes and returns C++ SEXP objects. SEXP is the C++ class for an R object.
+
+5. Interface object: This represents the compiled nimbleFunction to the user.  We make two kinds:
+
+    a. full interface: This presents the same interface as the uncompiled specialized nimbleFunction but uses the instantiated compiled object internally.
+    b. multi-interface: This manages many C++ objects of the same class in a single object.  Access to member data and methods is possible but more cumbersome.
+
+The process of running through these steps, including the actual instantiation of a C++ object and population of its member data, is managed by a `nimbleProjectClass` object.  The role of the nimbleProject is to keep track of everything compiled as part of one project. (They need not be compiled at the same time, but they need to interact such as calling each other and hence need access to compilation information.)  They could be compiled in different steps, in which case the nimbleProject makes sure headers are found as needed and already compiled objects are found and used by newly compiled objects.  The nimbleProject also serves as a hub to find information about any relevant object from any other object.
+
+## nimbleFunction generator
+
+A nimbleFunction generator is created by a call to nimbleFunction that has setup code.  (If there is no setup code, the nimbleFunction is compiled more simply as an RCfunction. If you don't want it to be an RCfunction but don't need any meaningful setup processing, use `setup = TRUE` or `setup = function(){}`.
+
+```{r}
+nfGen <- nimbleFunction(
+      setup = function(){
+        message('hello world from setup code')
+        x <- rnorm(3)
+      },
+      run = function(y = double(1)){
+        print('hello world from run')
+        z <- x + y[1:3]
+        return(z)
+        returnType(double(1))
+      }
+      )
+```
+
+Let us look at the object returned.  It is a function that contains the setup code and some other code for copying setup outputs into its `nfObject`.  The best way see the information is:
+```{r}
+ls(environment(nfGen))
+```
+
+A utility for accessing objects in a function's closure is:
+```{r}
+nimble:::getFunctionEnvVar(nfGen, 'className')
+## className is the unique name for this nfGen
+## It is generated uniquely or can be provided to nimbleFunction
+
+## Can check is something is a nimbleFunction generator:
+nimble:::is.nfGenerator(nfGen)
+```
+
+And of course we can look at the code-generated function itself:
+```{r}
+nfGen
+```
+This shows that first any setup code is executed.  Then an object of nfRefClass (a class definition in nfGen's closure) is created.  Then member data are populated.
+
+## Specialized nimbleFunction, also called a nimbleFunction object
+
+A specialized nimbleFunction is created by running the generator, which takes arguments to the setup function.
+
+```{r}
+nf1 <- nfGen()
+```
+
+This is an object of the reference class className, whose generator is called nfRefClass in the closure of the nimbleFunction generator.
+
+```{r}
+class(nf1)
+ls(nf1, all = TRUE) ## includes "." names, normally hidden
+nf1$run
+inherits(nf1, 'nimbleFunctionBase')
+## Can check if something is a specialized nimbleFunction
+nimble:::is.nf(nf1)
+```
+Notice that `x` is a "setupOutput", a variable created or passed to setup that is used in run (or any method).  It has become a field in nfRefClass.  The utility `nf_getSetupOutputNames` finds setupOutput names.
+
+The (dynamically generated) class of nf1 inherits from `nimbleFunctionBase`.  It allows access to its generator, which is useful for looking up setupOutputs etc:
+
+```{r, eval = FALSE}
+nf1$.generatorFunction ## not shown
+## Or
+nimble:::nf_getGeneratorFunction(nf1) ## not shown
+```
+```{r}
+nimble:::getFunctionEnvVar(nimble:::nf_getGeneratorFunction(nf1), 'className')
+```
+
+And of course we can use it
+```{r}
+nf1$x
+z <- 1:3
+nf1$run(z)
+```
+
+### Compile the nimbleFunction so we can look at contents from various steps along the way
+
+```{r}
+cnf1 <- compileNimble(nf1) ## add dirName = '.' if you want to look at generated C++ locally.  Otherwise it is in tempdir()
+cnf1$run(z)
+```
+
+## nfProcessing object
+
+The nfProcessing object is initialized from a list of nimbleFunction objects from the same generator.  Some of its member data include:
+
+1. instances: A list of the nfRefClass objects of nimbleFunctions objects used for initialization.  These are used to inspect the type of setupOutputs. setupOutputs are objects in the evaluation environment of each nimbleFunction object that will become member data of the C++ class.
+2. setupSymTab: A symbolTable object with setupOutput symbols.
+3. neededTypes: A list of symbolTable entries of other types needed to successfully compiled this nimbleFunction.  E.g. this might contain other nimbleFunctions, or modelValues of nimbleLists.
+4. neededObjectNames: A list of names of setupOutput objects that will need to be instantiated separately.  This would include nimbleFunctions, modelValues or nimbleList objects.  E.g. nfA creates nfB in nfA's setup function.  Eventually, when we have an instantiated C++ object for nfA, its member data will include a pointer to an nfB object.  To make the compiled nfA object complete, we need to instantiate a compiled nfB object and point nfA's pointer to it.
+5. newSetupOutputNames: These are additional setupOutputs created by keyword processing (aka partial evaluation).
+6. newSetupCode: This is code to be evaluated in the environment of the setup code for each nimbleFunction object.  This code is generated from keyword processing to create the objects named in newSetupOutputNames.
+7. nfGenerator: The nfGenerator used for the nimbleFunction objects.
+8. RCfunProcs: A list of RCfunProcessing objects, one for each method.
+9. compileInfos: This is a list of the RCfunctionCompileClass objects, one from each RCfunProcessing object.  They are collected into a list for use by the nfProcessing object only for convenience (they could be accessed through the RCfunProcs).
+
+### Accessing the nfProcessing object
+
+There are several ways to get hold of the nfProcessing object (after something has been compiled).
+
+#### Via the nimbleProject
+
+```{r}
+nf1Project <- getNimbleProject(cnf1)
+nf1Project
+## getNimbleProject(nf1) ## also works
+nf1NFproc <- nf1Project$getNimbleFunctionNFproc(nf1)
+nf1NFproc
+```
+
+#### Via the internals of the compiled nimbleFunction interface
+
+```{r}
+nf1NFproc <- cnf1$compiledNodeFun$nimCompProc
+nf1NFproc ## same object as obtained above
+```
+
+#### Via the uncompiled nimbleFunction
+```{r}
+nf1$.CobjectInterface ## this is the same as cnf1
+identical(nf1$.CobjectInterface, cnf1)
+## hence it can be used as above
+nf1$.CobjectInterface$compiledNodeFun$nimCompProc
+```
+
+Here is a brief tour of some of the contents of the "nfProc" as it is often called in the code.
+```{r}
+ls(nf1NFproc)
+nf1NFproc$name ## unique name, can be provided or generated
+nf1NFproc$setupSymTab$getSymbolNames()
+nf1NFproc$setupSymTab$getSymbolObject('x')
+nf1NFproc$setupSymTab$getSymbolObject('run')
+nf1NFproc$neededTypes ## nothing in this case
+nf1NFproc$origMethods[['run']] ## This nfMethodRC object has information on the RCfunction for run
+##nf1NFproc$nfGenerator ## has access to the nfGenerator
+class(nf1NFproc$RCfunProcs[['run']]) ## An RCfunProcessing object for run. See below
+class(nf1NFproc$compileInfos[['run']]) ## This RCfunctionCompileClass object is copied from a compileInfo of the RCfunProcessing objects for convenience:
+identical(nf1NFproc$RCfunProcs[['run']]$compileInfo, nf1NFproc$compileInfos[['run']])
+nf1NFproc$newSetupCode ## code for partial evaluation or other steps created by keyword processing (empty here)
+```
+
+### RCfunProcessing objects
+
+Each RCfunProcessing object (in RCfunProcs of nfProcessing) is initialized from a single method of an nfProcessing object. RCfunProcessing objects are also used for simple RCfunctions (no setup code, hence a standalone function rather than a method of a nimbleFunction class).
+
+These objects manage the heart of the compilation process: annotating and transforming the abstract syntax tree of each method and building up a symbolTable.  Some of these steps are described [here](https://github.com/nimble-dev/nimble/wiki/NIMBLE-function-compilation-flow).
+
+Here is a brief tour of the some of the contents of an RCfunProcessing object
+
+```{r}
+runRCfunProc <- nf1NFproc$RCfunProcs[['run']]
+ls(runRCfunProc)
+runRCfunProc$neededRCfuns ## list of any RCfunProcs needed for compilation of this one to succeed
+class(runRCfunProc$RCfun) ## see below
+class(runRCfunProc$compileInfo) ## see below
+```
+
+#### nfMethodRC
+
+The nfMethodRC class has the extracted/expanded contents of an RCfunction (stand-alone, or class method)
+```{r}
+runNFmethodRC <- runRCfunProc$RCfun
+ls(runNFmethodRC)
+runNFmethodRC$arguments
+runNFmethodRC$argInfo
+runNFmethodRC$code
+runNFmethodRC$returnType
+```
+
+#### RCfunctionCompileClass objects
+
+The RCfunctionCompileClass contains the guts of the results of compilation: the annotated AST and related information.
+
+```{r}
+runCompileInfo <- runRCfunProc$compileInfo
+ls(runCompileInfo)
+runCompileInfo$nimExpr ## This is the final code.  It is not actually ready for C++ code generation because we need a C++ version of the symbol table first.  This is managed by a cppDef (in this case a cppDef_nimbleFunction and the RCfunctionDef(s) it contains) object.
+## more readable: (note that extraneous {}s are inserted during various processing steps and will be omitted from final generated code)
+nimble:::writeCode(nimble:::nimDeparse(runCompileInfo$nimExpr))
+## example of annotations
+ls(runCompileInfo$typeEnv, all = TRUE)
+runCompileInfo$origRcode
+runCompileInfo$newRcode
+runCompileInfo$origLocalSymTab$getSymbolNames()
+runCompileInfo$newLocalSymTab$getSymbolNames()
+runCompileInfo$newLocalSymTab$getParentST() ## parent symbol table
+```
+
+## cppDef object
+
+NIMBLE has a hierarchy of classes to represent C++ code such as namespaces, class definitions, function definitions, and derived classes for NIMBLE-specific versions of these, such as NamedObject classes.  (NamedObject classes all inherit from a common base class that provides a single way to access member data pointers from string keys from R.)  These class names mostly begin with "cppDef" (RCfunctionDef is an exception -- perhaps should be renamed) so we refer to a "cppDef" object as a generic term.
+
+Here is a brief tour of the cppDef_nimbleFunction objects for this example:
+
+```{r}
+nf1CppDef <- nf1NFproc$cppDef
+nimble:::writeCode(nf1CppDef$generate()) ## Here is the C++ declaration
+nimble:::writeCode(nf1CppDef$generate(declaration = FALSE)) ## And the definition
+nf1CppDef$nfProc ## can get back to the nfProcessing object
+nf1CppDef$objectDefs$getSymbolNames() ## a symbol table of C++ symbols
+nf1CppDef$objectDefs$getSymbolObject('x')$generate()
+class(nf1CppDef$Rgenerator) ## a function to instantiate objects and return a "full" R interface object
+class(nf1CppDef$CmultiInterface) ## a class to instantiate objects and manage all via a single "multiInterface" object
+names(nf1CppDef$functionDefs) ## all member functions, 
+names(nf1CppDef$RCfunDefs) ## member RCfunctions
+```
+
+Here is a brief tour of the cppDef_RCfunction object for the run method for this example:
+```{r}
+runCppDef <- nf1CppDef$RCfunDefs[['run']]
+class(runCppDef)
+ls(runCppDef)
+nimble:::writeCode(runCppDef$generate()) ## definition just for this method
+nimble:::writeCode(runCppDef$generate(declaration = TRUE)) ## declaration just for this method
+nimble:::writeCode(runCppDef$SEXPinterfaceFun$generate()) ## contains an cppFunctionDef for the SEXP interface
+runCppDef$args$getSymbolNames() ## local C++ symbol table for arguments
+class(runCppDef$code) ## actual body of the function
+ls(runCppDef$code)
+runCppDef$code$objectDefs$getSymbolNames() ## local variables
+runCppDef$code$code ## The processed AST, same as we saw from the RCfunProcessing object's compileInfo's nimExpr above
+## runCppDef$buildRwrapperFunCode ## function to build R code to call C++ methods, but not trivial to demo here
+```
+
+## cppInterface object
+
+The cppInterface object, in this case `cnf1`, lets a user call the compiled code.
+
+```{r}
+cnf1
+cnf1$run
+cnf1$x
+```
+
+The process of building this is fairly involved.  In particular it uses active bindings for member data such as `x`.
+
+### full interfaces
+
+The `cnf1` is an example of a full interface.  
+
+### multi-interfaces
+
+The alternative is a mutli-interface.  A single multi-interface object keeps track of arbitrarily many C++ instances of a compiled nimbleFunction.  This saves time and memory relative to creating many full interfaces.  These do not have active bindings for member data and hence cannot be used as easily as full interfaces.  By default NIMBLE builds multi-interfaces for any nimbleFunction contained in another nimbleFunction and full interfaces otherwise.  Hence an MCMC gets a full interface but its samplers get multi-interfaces.
+

@@ -11,3 +11,7 @@ We put some initial notes [here](https://github.com/nimble-dev/nimble/wiki/NIMBL
 2. [First bit of introduction of the NIMBLE compiler](https://github.com/nimble-dev/nimble/wiki/NIMBLE-compiler).  (This is very cursory.)
 
 3. [Summary of processing flow of compiling a nimbleFunction](https://github.com/nimble-dev/nimble/wiki/NIMBLE-function-compilation-flow)
+
+## Here are some newer pages:
+
+4. [Navigating nimble objects to find internal information](navigating_nimble_objects.html), especially about compilation.

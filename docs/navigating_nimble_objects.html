@@ -61,23 +61,733 @@ img {
 
 
 
-<div id="nimble-developer-notes" class="section level1">
-<h1>NIMBLE developer notes</h1>
-<p>These pages are intended as quick guides for how to make some kinds of changes in NIMBLE’s source code, how to follow various processing flows, and how find what you need from the internals of NIMBLE objects.</p>
-<div id="some-original-developer-notes-on-the-github-wiki." class="section level2">
-<h2>Some original developer notes on the GitHub Wiki.</h2>
-<p>We put some initial notes <a href="https://github.com/nimble-dev/nimble/wiki/NIMBLE-Developer-Guide">here</a>. These include</p>
+<div id="navigating-nimble-objects-to-find-internal-information" class="section level1">
+<h1>Navigating nimble objects to find internal information</h1>
+<p>NIMBLE compilation works by creating a series of information-rich objects. These are mostly implemented using R reference classes, so each object can have access to other ones without high copying overhead. This means finding what you need from the internals of these objects can take some exploration. This page outlines the objects created in compilation of a nimbleFunction, what their conceptual role is and what objects they contain.</p>
+<pre class="r"><code>library(nimble)</code></pre>
+<p>First here is an overview of the objects and concepts they represent</p>
 <ol style="list-style-type: decimal">
-<li><p><a href="https://github.com/nimble-dev/nimble/wiki/Defining-a-new-distribution-in-NIMBLE">Guide to defining a new distribution in NIMBLE</a>.</p></li>
-<li><p><a href="https://github.com/nimble-dev/nimble/wiki/NIMBLE-compiler">First bit of introduction of the NIMBLE compiler</a>. (This is very cursory.)</p></li>
-<li><p><a href="https://github.com/nimble-dev/nimble/wiki/NIMBLE-function-compilation-flow">Summary of processing flow of compiling a nimbleFunction</a></p></li>
+<li>nimbleFunction generator: This is returned from <code>nimbleFunction</code>. When called, it runs the setup function and returns a specialized nimbleFunction.<br /></li>
+<li>specialized nimbleFunction, also called nimbleFunction object: This is the uncompiled working version of the nimbleFunction.</li>
+<li><code>nfProcessing</code> object (often called nfProc, or nimCompProc [the latter name is used when it could alternatively be of class nlProcessing for nimbleLists]): This manages the compilation process up to where we are ready to generate C++. Two essential fields include:
+<ol style="list-style-type: lower-alpha">
+<li><code>RCfunProcs</code>: A list of RCfunProcessing objects: Each of these objects manages compilation process for one method up to the point before generating C++.</li>
+<li>Hierarchy of symbolTable objects: Each RCfunProcessing object has a local symbolTable, which all have the same parent symbolTable (<code>symTab</code>) that includes class variables.</li>
+</ol></li>
+<li>cppDef object: This manages the generation of C++ for the nfProcessing object along with SEXP functions for generation, finalization (R’s name for destruction) and interface functions.
+<ol style="list-style-type: lower-alpha">
+<li>By a “SEXP” function, we mean a function that takes and returns C++ SEXP objects. SEXP is the C++ class for an R object.</li>
+</ol></li>
+<li><p>Interface object: This represents the compiled nimbleFunction to the user. We make two kinds:</p>
+<ol style="list-style-type: lower-alpha">
+<li>full interface: This presents the same interface as the uncompiled specialized nimbleFunction but uses the instantiated compiled object internally.</li>
+<li>multi-interface: This manages many C++ objects of the same class in a single object. Access to member data and methods is possible but more cumbersome.</li>
+</ol></li>
 </ol>
+<p>The process of running through these steps, including the actual instantiation of a C++ object and population of its member data, is managed by a <code>nimbleProjectClass</code> object. The role of the nimbleProject is to keep track of everything compiled as part of one project. (They need not be compiled at the same time, but they need to interact such as calling each other and hence need access to compilation information.) They could be compiled in different steps, in which case the nimbleProject makes sure headers are found as needed and already compiled objects are found and used by newly compiled objects. The nimbleProject also serves as a hub to find information about any relevant object from any other object.</p>
+<div id="nimblefunction-generator" class="section level2">
+<h2>nimbleFunction generator</h2>
+<p>A nimbleFunction generator is created by a call to nimbleFunction that has setup code. (If there is no setup code, the nimbleFunction is compiled more simply as an RCfunction. If you don’t want it to be an RCfunction but don’t need any meaningful setup processing, use <code>setup = TRUE</code> or <code>setup = function(){}</code>.</p>
+<pre class="r"><code>nfGen &lt;- nimbleFunction(
+      setup = function(){
+        message('hello world from setup code')
+        x &lt;- rnorm(3)
+      },
+      run = function(y = double(1)){
+        print('hello world from run')
+        z &lt;- x + y[1:3]
+        return(z)
+        returnType(double(1))
+      }
+      )</code></pre>
+<p>Let us look at the object returned. It is a function that contains the setup code and some other code for copying setup outputs into its <code>nfObject</code>. The best way see the information is:</p>
+<pre class="r"><code>ls(environment(nfGen))</code></pre>
+<pre><code>##  [1] &quot;check&quot;                    &quot;className&quot;               
+##  [3] &quot;contains&quot;                 &quot;declaredSetupOutputNames&quot;
+##  [5] &quot;generatorFunction&quot;        &quot;globalSetup&quot;             
+##  [7] &quot;methodList&quot;               &quot;methods&quot;                 
+##  [9] &quot;name&quot;                     &quot;nfRefClass&quot;              
+## [11] &quot;nfRefClassDef&quot;            &quot;run&quot;                     
+## [13] &quot;setup&quot;                    &quot;virtual&quot;                 
+## [15] &quot;where&quot;</code></pre>
+<p>A utility for accessing objects in a function’s closure is:</p>
+<pre class="r"><code>nimble:::getFunctionEnvVar(nfGen, 'className')</code></pre>
+<pre><code>## [1] &quot;nfRefClass_R_GlobalEnv84&quot;</code></pre>
+<pre class="r"><code>## className is the unique name for this nfGen
+## It is generated uniquely or can be provided to nimbleFunction
+
+## Can check is something is a nimbleFunction generator:
+nimble:::is.nfGenerator(nfGen)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>And of course we can look at the code-generated function itself:</p>
+<pre class="r"><code>nfGen</code></pre>
+<pre><code>## function () 
+## {
+##     {
+##         message(&quot;hello world from setup code&quot;)
+##         x &lt;- rnorm(3)
+##     }
+##     nfRefClassObject &lt;- nfRefClass()
+##     nfRefClassObject$.generatorFunction &lt;- generatorFunction
+##     if (!nimbleOptions()$compileOnly) 
+##         for (.var_unique_name_1415927 in .namesToCopyFromGlobalSetup) {
+##             nfRefClassObject[[.var_unique_name_1415927]] &lt;- nf_preProcessMemberDataObject(get(.var_unique_name_1415927, 
+##                 envir = .globalSetupEnv))
+##         }
+##     for (.var_unique_name_1415927 in .namesToCopyFromSetup) {
+##         nfRefClassObject[[.var_unique_name_1415927]] &lt;- nf_preProcessMemberDataObject(get(.var_unique_name_1415927))
+##     }
+##     return(nfRefClassObject)
+## }
+## &lt;environment: 0x7fd0f2699108&gt;</code></pre>
+<p>This shows that first any setup code is executed. Then an object of nfRefClass (a class definition in nfGen’s closure) is created. Then member data are populated.</p>
 </div>
-<div id="here-are-some-newer-pages" class="section level2">
-<h2>Here are some newer pages:</h2>
-<ol start="4" style="list-style-type: decimal">
-<li><a href="navigating_nimble_objects.html">Navigating nimble objects to find internal information</a>, especially about compilation.</li>
+<div id="specialized-nimblefunction-also-called-a-nimblefunction-object" class="section level2">
+<h2>Specialized nimbleFunction, also called a nimbleFunction object</h2>
+<p>A specialized nimbleFunction is created by running the generator, which takes arguments to the setup function.</p>
+<pre class="r"><code>nf1 &lt;- nfGen()</code></pre>
+<pre><code>## hello world from setup code</code></pre>
+<p>This is an object of the reference class className, whose generator is called nfRefClass in the closure of the nimbleFunction generator.</p>
+<pre class="r"><code>class(nf1)</code></pre>
+<pre><code>## [1] &quot;nfRefClass_R_GlobalEnv84&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;.GlobalEnv&quot;</code></pre>
+<pre class="r"><code>ls(nf1, all = TRUE) ## includes &quot;.&quot; names, normally hidden</code></pre>
+<pre><code>## [1] &quot;.CobjectInterface&quot;       &quot;.generatorFunction&quot;     
+## [3] &quot;.newSetupLinesProcessed&quot; &quot;.refClassDef&quot;           
+## [5] &quot;.self&quot;                   &quot;initFields&quot;             
+## [7] &quot;initialize&quot;              &quot;x&quot;</code></pre>
+<pre class="r"><code>nf1$run</code></pre>
+<pre><code>## Class method definition for method run()
+## function (y) 
+## {
+##     nimPrint(&quot;hello world from run&quot;)
+##     z &lt;- x + y[1:3]
+##     return(z)
+## }
+## &lt;environment: 0x7fd0f8191108&gt;</code></pre>
+<pre class="r"><code>inherits(nf1, 'nimbleFunctionBase')</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>## Can check if something is a specialized nimbleFunction
+nimble:::is.nf(nf1)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>Notice that <code>x</code> is a “setupOutput”, a variable created or passed to setup that is used in run (or any method). It has become a field in nfRefClass. The utility <code>nf_getSetupOutputNames</code> finds setupOutput names.</p>
+<p>The (dynamically generated) class of nf1 inherits from <code>nimbleFunctionBase</code>. It allows access to its generator, which is useful for looking up setupOutputs etc:</p>
+<pre class="r"><code>nf1$.generatorFunction ## not shown
+## Or
+nimble:::nf_getGeneratorFunction(nf1) ## not shown</code></pre>
+<pre class="r"><code>nimble:::getFunctionEnvVar(nimble:::nf_getGeneratorFunction(nf1), 'className')</code></pre>
+<pre><code>## [1] &quot;nfRefClass_R_GlobalEnv84&quot;</code></pre>
+<p>And of course we can use it</p>
+<pre class="r"><code>nf1$x</code></pre>
+<pre><code>## [1]  1.165037 -1.048133  1.694443</code></pre>
+<pre class="r"><code>z &lt;- 1:3
+nf1$run(z)</code></pre>
+<pre><code>## hello world from run</code></pre>
+<pre><code>## [1] 2.1650367 0.9518669 4.6944434</code></pre>
+<div id="compile-the-nimblefunction-so-we-can-look-at-contents-from-various-steps-along-the-way" class="section level3">
+<h3>Compile the nimbleFunction so we can look at contents from various steps along the way</h3>
+<pre class="r"><code>cnf1 &lt;- compileNimble(nf1) ## add dirName = '.' if you want to look at generated C++ locally.  Otherwise it is in tempdir()</code></pre>
+<pre><code>## compiling... this may take a minute. Use 'showCompilerOutput = TRUE' to see C++ compiler details.</code></pre>
+<pre><code>## compilation finished.</code></pre>
+<pre class="r"><code>cnf1$run(z)</code></pre>
+<pre><code>## hello world from run</code></pre>
+<pre><code>## [1] 2.1650367 0.9518669 4.6944434</code></pre>
+</div>
+</div>
+<div id="nfprocessing-object" class="section level2">
+<h2>nfProcessing object</h2>
+<p>The nfProcessing object is initialized from a list of nimbleFunction objects from the same generator. Some of its member data include:</p>
+<ol style="list-style-type: decimal">
+<li>instances: A list of the nfRefClass objects of nimbleFunctions objects used for initialization. These are used to inspect the type of setupOutputs. setupOutputs are objects in the evaluation environment of each nimbleFunction object that will become member data of the C++ class.</li>
+<li>setupSymTab: A symbolTable object with setupOutput symbols.</li>
+<li>neededTypes: A list of symbolTable entries of other types needed to successfully compiled this nimbleFunction. E.g. this might contain other nimbleFunctions, or modelValues of nimbleLists.</li>
+<li>neededObjectNames: A list of names of setupOutput objects that will need to be instantiated separately. This would include nimbleFunctions, modelValues or nimbleList objects. E.g. nfA creates nfB in nfA’s setup function. Eventually, when we have an instantiated C++ object for nfA, its member data will include a pointer to an nfB object. To make the compiled nfA object complete, we need to instantiate a compiled nfB object and point nfA’s pointer to it.</li>
+<li>newSetupOutputNames: These are additional setupOutputs created by keyword processing (aka partial evaluation).</li>
+<li>newSetupCode: This is code to be evaluated in the environment of the setup code for each nimbleFunction object. This code is generated from keyword processing to create the objects named in newSetupOutputNames.</li>
+<li>nfGenerator: The nfGenerator used for the nimbleFunction objects.</li>
+<li>RCfunProcs: A list of RCfunProcessing objects, one for each method.</li>
+<li>compileInfos: This is a list of the RCfunctionCompileClass objects, one from each RCfunProcessing object. They are collected into a list for use by the nfProcessing object only for convenience (they could be accessed through the RCfunProcs).</li>
 </ol>
+<div id="accessing-the-nfprocessing-object" class="section level3">
+<h3>Accessing the nfProcessing object</h3>
+<p>There are several ways to get hold of the nfProcessing object (after something has been compiled).</p>
+<div id="via-the-nimbleproject" class="section level4">
+<h4>Via the nimbleProject</h4>
+<pre class="r"><code>nf1Project &lt;- getNimbleProject(cnf1)
+nf1Project</code></pre>
+<pre><code>## nimbleProject object</code></pre>
+<pre class="r"><code>## getNimbleProject(nf1) ## also works
+nf1NFproc &lt;- nf1Project$getNimbleFunctionNFproc(nf1)
+nf1NFproc</code></pre>
+<pre><code>## nfProcessing object nfRefClass_R_GlobalEnv84</code></pre>
+</div>
+<div id="via-the-internals-of-the-compiled-nimblefunction-interface" class="section level4">
+<h4>Via the internals of the compiled nimbleFunction interface</h4>
+<pre class="r"><code>nf1NFproc &lt;- cnf1$compiledNodeFun$nimCompProc
+nf1NFproc ## same object as obtained above</code></pre>
+<pre><code>## nfProcessing object nfRefClass_R_GlobalEnv84</code></pre>
+</div>
+<div id="via-the-uncompiled-nimblefunction" class="section level4">
+<h4>Via the uncompiled nimbleFunction</h4>
+<pre class="r"><code>nf1$.CobjectInterface ## this is the same as cnf1</code></pre>
+<pre><code>## Derived CnimbleFunctionBase object (compiled nimbleFunction) for nimbleFunction with class nfRefClass_R_GlobalEnv84</code></pre>
+<pre class="r"><code>identical(nf1$.CobjectInterface, cnf1)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>## hence it can be used as above
+nf1$.CobjectInterface$compiledNodeFun$nimCompProc</code></pre>
+<pre><code>## nfProcessing object nfRefClass_R_GlobalEnv84</code></pre>
+<p>Here is a brief tour of some of the contents of the “nfProc” as it is often called in the code.</p>
+<pre class="r"><code>ls(nf1NFproc)</code></pre>
+<pre><code>##  [1] &quot;addBaseClassTypes&quot;               &quot;addMemberFunctionsToSymbolTable&quot;
+##  [3] &quot;blockFromCppNames&quot;               &quot;collectRCfunNeededTypes&quot;        
+##  [5] &quot;compileInfos&quot;                    &quot;cppDef&quot;                         
+##  [7] &quot;doRCfunProcess&quot;                  &quot;doSetupTypeInference&quot;           
+##  [9] &quot;doSetupTypeInference_processNF&quot;  &quot;evalNewSetupLines&quot;              
+## [11] &quot;evalNewSetupLinesOneInstance&quot;    &quot;getSymbolTable&quot;                 
+## [13] &quot;initialize&quot;                      &quot;initialize#virtualNFprocessing&quot; 
+## [15] &quot;inModel&quot;                         &quot;instances&quot;                      
+## [17] &quot;makeNewSetupLinesOneExpr&quot;        &quot;makeTypeObject&quot;                 
+## [19] &quot;matchKeywords_all&quot;               &quot;name&quot;                           
+## [21] &quot;neededObjectNames&quot;               &quot;neededTypes&quot;                    
+## [23] &quot;newSetupCode&quot;                    &quot;newSetupCodeOneExpr&quot;            
+## [25] &quot;newSetupOutputNames&quot;             &quot;nfGenerator&quot;                    
+## [27] &quot;nimbleProject&quot;                   &quot;origMethods&quot;                    
+## [29] &quot;process&quot;                         &quot;processKeywords_all&quot;            
+## [31] &quot;RCfunProcs&quot;                      &quot;setupLocalSymbolTables&quot;         
+## [33] &quot;setupSymTab&quot;                     &quot;setupTypesForUsingFunction&quot;     
+## [35] &quot;show&quot;</code></pre>
+<pre class="r"><code>nf1NFproc$name ## unique name, can be provided or generated</code></pre>
+<pre><code>## [1] &quot;nfRefClass_R_GlobalEnv84&quot;</code></pre>
+<pre class="r"><code>nf1NFproc$setupSymTab$getSymbolNames()</code></pre>
+<pre><code>## [1] &quot;x&quot;   &quot;run&quot;</code></pre>
+<pre class="r"><code>nf1NFproc$setupSymTab$getSymbolObject('x')</code></pre>
+<pre><code>## x: double sizes = (NA), nDim = 1</code></pre>
+<pre class="r"><code>nf1NFproc$setupSymTab$getSymbolObject('run')</code></pre>
+<pre><code>## symbolMemberFunction run</code></pre>
+<pre class="r"><code>nf1NFproc$neededTypes ## nothing in this case</code></pre>
+<pre><code>## list()</code></pre>
+<pre class="r"><code>nf1NFproc$origMethods[['run']] ## This nfMethodRC object has information on the RCfunction for run</code></pre>
+<pre><code>## Reference class object of class &quot;nfMethodRC&quot;
+## Field &quot;argInfo&quot;:
+## $y
+## double(1)
+## 
+## Field &quot;arguments&quot;:
+## $y
+## 
+## 
+## Field &quot;returnType&quot;:
+## double(1)
+## Field &quot;uniqueName&quot;:
+## character(0)
+## Field &quot;template&quot;:
+## function (y) 
+## {
+## }
+## &lt;environment: 0x7fd0f27ee6a0&gt;
+## Field &quot;code&quot;:
+## {
+##     nimPrint(&quot;hello world from run&quot;)
+##     z &lt;- x + y[1:3]
+##     return(z)
+## }
+## Field &quot;neededRCfuns&quot;:
+## list()</code></pre>
+<pre class="r"><code>##nf1NFproc$nfGenerator ## has access to the nfGenerator
+class(nf1NFproc$RCfunProcs[['run']]) ## An RCfunProcessing object for run. See below</code></pre>
+<pre><code>## [1] &quot;RCfunProcessing&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;nimble&quot;</code></pre>
+<pre class="r"><code>class(nf1NFproc$compileInfos[['run']]) ## This RCfunctionCompileClass object is copied from a compileInfo of the RCfunProcessing objects for convenience:</code></pre>
+<pre><code>## [1] &quot;RCfunctionCompileClass&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;nimble&quot;</code></pre>
+<pre class="r"><code>identical(nf1NFproc$RCfunProcs[['run']]$compileInfo, nf1NFproc$compileInfos[['run']])</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>nf1NFproc$newSetupCode ## code for partial evaluation or other steps created by keyword processing (empty here)</code></pre>
+<pre><code>## list()</code></pre>
+</div>
+</div>
+<div id="rcfunprocessing-objects" class="section level3">
+<h3>RCfunProcessing objects</h3>
+<p>Each RCfunProcessing object (in RCfunProcs of nfProcessing) is initialized from a single method of an nfProcessing object. RCfunProcessing objects are also used for simple RCfunctions (no setup code, hence a standalone function rather than a method of a nimbleFunction class).</p>
+<p>These objects manage the heart of the compilation process: annotating and transforming the abstract syntax tree of each method and building up a symbolTable. Some of these steps are described <a href="https://github.com/nimble-dev/nimble/wiki/NIMBLE-function-compilation-flow">here</a>.</p>
+<p>Here is a brief tour of the some of the contents of an RCfunProcessing object</p>
+<pre class="r"><code>runRCfunProc &lt;- nf1NFproc$RCfunProcs[['run']]
+ls(runRCfunProc)</code></pre>
+<pre><code>##  [1] &quot;compileInfo&quot;       &quot;const&quot;             &quot;initialize&quot;       
+##  [4] &quot;matchKeywords&quot;     &quot;name&quot;              &quot;nameSubList&quot;      
+##  [7] &quot;neededRCfuns&quot;      &quot;process&quot;           &quot;processKeywords&quot;  
+## [10] &quot;RCfun&quot;             &quot;setupSymbolTables&quot;</code></pre>
+<pre class="r"><code>runRCfunProc$neededRCfuns ## list of any RCfunProcs needed for compilation of this one to succeed</code></pre>
+<pre><code>## list()</code></pre>
+<pre class="r"><code>class(runRCfunProc$RCfun) ## see below</code></pre>
+<pre><code>## [1] &quot;nfMethodRC&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;nimble&quot;</code></pre>
+<pre class="r"><code>class(runRCfunProc$compileInfo) ## see below</code></pre>
+<pre><code>## [1] &quot;RCfunctionCompileClass&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;nimble&quot;</code></pre>
+<div id="nfmethodrc" class="section level4">
+<h4>nfMethodRC</h4>
+<p>The nfMethodRC class has the extracted/expanded contents of an RCfunction (stand-alone, or class method)</p>
+<pre class="r"><code>runNFmethodRC &lt;- runRCfunProc$RCfun
+ls(runNFmethodRC)</code></pre>
+<pre><code>##  [1] &quot;argInfo&quot;                &quot;arguments&quot;             
+##  [3] &quot;code&quot;                   &quot;field&quot;                 
+##  [5] &quot;generateArgs&quot;           &quot;generateFunctionObject&quot;
+##  [7] &quot;generateTemplate&quot;       &quot;initialize&quot;            
+##  [9] &quot;neededRCfuns&quot;           &quot;removeAndSetReturnType&quot;
+## [11] &quot;returnType&quot;             &quot;show&quot;                  
+## [13] &quot;template&quot;               &quot;uniqueName&quot;</code></pre>
+<pre class="r"><code>runNFmethodRC$arguments</code></pre>
+<pre><code>## $y</code></pre>
+<pre class="r"><code>runNFmethodRC$argInfo</code></pre>
+<pre><code>## $y
+## double(1)</code></pre>
+<pre class="r"><code>runNFmethodRC$code</code></pre>
+<pre><code>## {
+##     nimPrint(&quot;hello world from run&quot;)
+##     z &lt;- x + y[1:3]
+##     return(z)
+## }</code></pre>
+<pre class="r"><code>runNFmethodRC$returnType</code></pre>
+<pre><code>## double(1)</code></pre>
+</div>
+<div id="rcfunctioncompileclass-objects" class="section level4">
+<h4>RCfunctionCompileClass objects</h4>
+<p>The RCfunctionCompileClass contains the guts of the results of compilation: the annotated AST and related information.</p>
+<pre class="r"><code>runCompileInfo &lt;- runRCfunProc$compileInfo
+ls(runCompileInfo)</code></pre>
+<pre><code>## [1] &quot;initFields&quot;      &quot;initialize&quot;      &quot;newLocalSymTab&quot;  &quot;newRcode&quot;       
+## [5] &quot;nimExpr&quot;         &quot;origLocalSymTab&quot; &quot;origRcode&quot;       &quot;returnSymbol&quot;   
+## [9] &quot;typeEnv&quot;</code></pre>
+<pre class="r"><code>runCompileInfo$nimExpr ## This is the final code.  It is not actually ready for C++ code generation because we need a C++ version of the symbol table first.  This is managed by a cppDef (in this case a cppDef_nimbleFunction and the RCfunctionDef(s) it contains) object.</code></pre>
+<pre><code>## {
+##   {
+##     nimPrint
+##       hello world from run
+##   }
+##   {
+##     {
+##       {
+##         if
+##           !=
+##             [
+##               dim
+##                 x
+##               1
+##             3
+##           {
+##             {
+##               nimPrint
+##                 Run-time size error: expected dim(x)[1L] == 3
+##             }
+##           }
+##       }
+##       {
+##         setSize
+##           z
+##           3
+##           0
+##           0
+##       }
+##       {
+##         {
+##           {
+##             AssignEigenMap
+##               Eig_z
+##               getPtr
+##                 z
+##               MatrixXd
+##               3
+##               1
+##           }
+##           {
+##             AssignEigenMap
+##               Eig_x
+##               getPtr
+##                 x
+##               MatrixXd
+##               [
+##                 dim
+##                   x
+##                 1
+##               1
+##           }
+##           {
+##             AssignEigenMap
+##               Eig_ARG1_y_Interm_1
+##               +
+##                 getPtr
+##                   ARG1_y_
+##                 chainedCall
+##                   template
+##                     static_cast
+##                     int
+##                   +
+##                     getOffset
+##                       ARG1_y_
+##                     chainedCall
+##                       template
+##                         static_cast
+##                         int
+##                       0
+##               MatrixXd
+##               [
+##                 dim
+##                   ARG1_y_
+##                 1
+##               1
+##               0
+##               [
+##                 strides
+##                   ARG1_y_
+##                 1
+##           }
+##           {
+##             &lt;-
+##               Eig_z
+##               +
+##                 Eig_x
+##                 eigenBlock
+##                   Eig_ARG1_y_Interm_1
+##                   0
+##                   0
+##                   3
+##                   1
+##           }
+##         }
+##       }
+##     }
+##   }
+##   {
+##     return
+##       z
+##   }
+## }</code></pre>
+<pre class="r"><code>## more readable: (note that extraneous {}s are inserted during various processing steps and will be omitted from final generated code)
+nimble:::writeCode(nimble:::nimDeparse(runCompileInfo$nimExpr))</code></pre>
+<pre><code>## {
+##     {
+##       nimPrint(&quot;hello world from run&quot;)
+##     }
+##     {
+##           {
+##                   {
+##                             if(dim(x)[1] != 3) {
+##                                 {
+##                                   nimPrint(&quot;Run-time size error: expected dim(x)[1L] == 3&quot;)
+##                                 }
+##                             }
+##                   }
+##                   {
+##                     setSize(z,3,0,0)
+##                   }
+##                   {
+##                             {
+##                                         {
+##                                           AssignEigenMap(Eig_z,getPtr(z),MatrixXd,3,1)
+##                                         }
+##                                         {
+##                                           AssignEigenMap(Eig_x,getPtr(x),MatrixXd,dim(x)[1],1)
+##                                         }
+##                                         {
+##                                           AssignEigenMap(Eig_ARG1_y_Interm_1,getPtr(ARG1_y_) + template(static_cast,int)(getOffset(ARG1_y_) + template(static_cast,int)(0)),MatrixXd,dim(ARG1_y_)[1],1,0,strides(ARG1_y_)[1])
+##                                         }
+##                                         {
+##                                           Eig_z &lt;- Eig_x + eigenBlock(Eig_ARG1_y_Interm_1,0,0,3,1)
+##                                         }
+##                             }
+##                   }
+##           }
+##     }
+##     {
+##       return(z)
+##     }
+## }</code></pre>
+<pre class="r"><code>## example of annotations
+ls(runCompileInfo$typeEnv, all = TRUE)</code></pre>
+<pre><code>## [1] &quot;.AllowUnknowns&quot;      &quot;.ensureNimbleBlocks&quot; &quot;ARG1_y_&quot;            
+## [4] &quot;neededRCfuns&quot;        &quot;passedArgumentNames&quot; &quot;return&quot;             
+## [7] &quot;x&quot;                   &quot;z&quot;</code></pre>
+<pre class="r"><code>runCompileInfo$origRcode</code></pre>
+<pre><code>## {
+##     nimPrint(&quot;hello world from run&quot;)
+##     z &lt;- x + y[1:3]
+##     return(z)
+## }</code></pre>
+<pre class="r"><code>runCompileInfo$newRcode</code></pre>
+<pre><code>## {
+##     nimPrint(&quot;hello world from run&quot;)
+##     z &lt;- x + ARG1_y_[1:3]
+##     return(z)
+## }</code></pre>
+<pre class="r"><code>runCompileInfo$origLocalSymTab$getSymbolNames()</code></pre>
+<pre><code>## [1] &quot;ARG1_y_&quot;</code></pre>
+<pre class="r"><code>runCompileInfo$newLocalSymTab$getSymbolNames()</code></pre>
+<pre><code>## [1] &quot;ARG1_y_&quot;             &quot;z&quot;                   &quot;Eig_z&quot;              
+## [4] &quot;Eig_x&quot;               &quot;Eig_ARG1_y_Interm_1&quot;</code></pre>
+<pre class="r"><code>runCompileInfo$newLocalSymTab$getParentST() ## parent symbol table</code></pre>
+<pre><code>## symbol table:
+## x: double sizes = (NA), nDim = 1
+## symbolMemberFunction run</code></pre>
+</div>
+</div>
+</div>
+<div id="cppdef-object" class="section level2">
+<h2>cppDef object</h2>
+<p>NIMBLE has a hierarchy of classes to represent C++ code such as namespaces, class definitions, function definitions, and derived classes for NIMBLE-specific versions of these, such as NamedObject classes. (NamedObject classes all inherit from a common base class that provides a single way to access member data pointers from string keys from R.) These class names mostly begin with “cppDef” (RCfunctionDef is an exception – perhaps should be renamed) so we refer to a “cppDef” object as a generic term.</p>
+<p>Here is a brief tour of the cppDef_nimbleFunction objects for this example:</p>
+<pre class="r"><code>nf1CppDef &lt;- nf1NFproc$cppDef
+nimble:::writeCode(nf1CppDef$generate()) ## Here is the C++ declaration</code></pre>
+<pre><code>## class nfRefClass_R_GlobalEnv84 : public NamedObjects {
+## public:
+##   NimArr&lt;1, double&gt; x;
+## NimArr&lt;1, double&gt;  run ( NimArr&lt;1, double&gt; &amp; ARG1_y_ );
+##  nfRefClass_R_GlobalEnv84 (  );
+## };</code></pre>
+<pre class="r"><code>nimble:::writeCode(nf1CppDef$generate(declaration = FALSE)) ## And the definition</code></pre>
+<pre><code>## NimArr&lt;1, double&gt;  nfRefClass_R_GlobalEnv84::run ( NimArr&lt;1, double&gt; &amp; ARG1_y_ )  {
+## NimArr&lt;1, double&gt; z;
+## Map&lt;MatrixXd&gt; Eig_z(0,0,0);
+## Map&lt;MatrixXd&gt; Eig_x(0,0,0);
+## EigenMapStrd Eig_ARG1_y_Interm_1(0,0,0, EigStrDyn(0, 0));
+## _nimble_global_output &lt;&lt;&quot;hello world from run&quot;&lt;&lt;&quot;\n&quot;; nimble_print_to_R(_nimble_global_output);
+## if(x.dim()[0] != 3) {
+##  _nimble_global_output &lt;&lt;&quot;Run-time size error: expected dim(x)[1L] == 3&quot;&lt;&lt;&quot;\n&quot;; nimble_print_to_R(_nimble_global_output);
+## }
+## z.setSize(3, 0, 0);
+## new (&amp;Eig_z) Map&lt; MatrixXd &gt;(z.getPtr(),3,1);
+## new (&amp;Eig_x) Map&lt; MatrixXd &gt;(x.getPtr(),x.dim()[0],1);
+## new (&amp;Eig_ARG1_y_Interm_1) EigenMapStrd(ARG1_y_.getPtr() + static_cast&lt;int&gt;(ARG1_y_.getOffset() + static_cast&lt;int&gt;(0)),ARG1_y_.dim()[0],1,EigStrDyn(0, ARG1_y_.strides()[0]));
+## Eig_z = Eig_x + (Eig_ARG1_y_Interm_1).block(0, 0, 3, 1);
+## return(z);
+## }
+##  nfRefClass_R_GlobalEnv84::nfRefClass_R_GlobalEnv84 (  )  {
+## namedObjects[&quot;x&quot;]=&amp;x;
+## }</code></pre>
+<pre class="r"><code>nf1CppDef$nfProc ## can get back to the nfProcessing object</code></pre>
+<pre><code>## nfProcessing object nfRefClass_R_GlobalEnv84</code></pre>
+<pre class="r"><code>nf1CppDef$objectDefs$getSymbolNames() ## a symbol table of C++ symbols</code></pre>
+<pre><code>## [1] &quot;x&quot;</code></pre>
+<pre class="r"><code>nf1CppDef$objectDefs$getSymbolObject('x')$generate()</code></pre>
+<pre><code>## [1] &quot;NimArr&lt;1, double&gt; x&quot;</code></pre>
+<pre class="r"><code>class(nf1CppDef$Rgenerator) ## a function to instantiate objects and return a &quot;full&quot; R interface object</code></pre>
+<pre><code>## [1] &quot;function&quot;</code></pre>
+<pre class="r"><code>class(nf1CppDef$CmultiInterface) ## a class to instantiate objects and manage all via a single &quot;multiInterface&quot; object</code></pre>
+<pre><code>## [1] &quot;CmultiNimbleFunctionClass&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;nimble&quot;</code></pre>
+<pre class="r"><code>names(nf1CppDef$functionDefs) ## all member functions, </code></pre>
+<pre><code>## [1] &quot;run&quot;         &quot;constructor&quot;</code></pre>
+<pre class="r"><code>names(nf1CppDef$RCfunDefs) ## member RCfunctions</code></pre>
+<pre><code>## [1] &quot;run&quot;</code></pre>
+<p>Here is a brief tour of the cppDef_RCfunction object for the run method for this example:</p>
+<pre class="r"><code>runCppDef &lt;- nf1CppDef$RCfunDefs[['run']]
+class(runCppDef)</code></pre>
+<pre><code>## [1] &quot;RCfunctionDef&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;nimble&quot;</code></pre>
+<pre class="r"><code>ls(runCppDef)</code></pre>
+<pre><code>##  [1] &quot;abstract&quot;                  &quot;args&quot;                     
+##  [3] &quot;buildFunction&quot;             &quot;buildRwrapperFunCode&quot;     
+##  [5] &quot;buildSEXPinterfaceFun&quot;     &quot;code&quot;                     
+##  [7] &quot;const&quot;                     &quot;CPPincludes&quot;              
+##  [9] &quot;CPPusings&quot;                 &quot;externC&quot;                  
+## [11] &quot;filename&quot;                  &quot;generate&quot;                 
+## [13] &quot;getCPPincludes&quot;            &quot;getCPPusings&quot;             
+## [15] &quot;getHincludes&quot;              &quot;Hincludes&quot;                
+## [17] &quot;initFields&quot;                &quot;initialize&quot;               
+## [19] &quot;initialize#cppDefinition&quot;  &quot;initialize#cppFunctionDef&quot;
+## [21] &quot;name&quot;                      &quot;neededTypeDefs&quot;           
+## [23] &quot;nimbleProject&quot;             &quot;RCfunProc&quot;                
+## [25] &quot;returnType&quot;                &quot;SEXPinterfaceCname&quot;       
+## [27] &quot;SEXPinterfaceFun&quot;          &quot;virtual&quot;</code></pre>
+<pre class="r"><code>nimble:::writeCode(runCppDef$generate()) ## definition just for this method</code></pre>
+<pre><code>## NimArr&lt;1, double&gt;  run ( NimArr&lt;1, double&gt; &amp; ARG1_y_ )  {
+## NimArr&lt;1, double&gt; z;
+## Map&lt;MatrixXd&gt; Eig_z(0,0,0);
+## Map&lt;MatrixXd&gt; Eig_x(0,0,0);
+## EigenMapStrd Eig_ARG1_y_Interm_1(0,0,0, EigStrDyn(0, 0));
+## _nimble_global_output &lt;&lt;&quot;hello world from run&quot;&lt;&lt;&quot;\n&quot;; nimble_print_to_R(_nimble_global_output);
+## if(x.dim()[0] != 3) {
+##  _nimble_global_output &lt;&lt;&quot;Run-time size error: expected dim(x)[1L] == 3&quot;&lt;&lt;&quot;\n&quot;; nimble_print_to_R(_nimble_global_output);
+## }
+## z.setSize(3, 0, 0);
+## new (&amp;Eig_z) Map&lt; MatrixXd &gt;(z.getPtr(),3,1);
+## new (&amp;Eig_x) Map&lt; MatrixXd &gt;(x.getPtr(),x.dim()[0],1);
+## new (&amp;Eig_ARG1_y_Interm_1) EigenMapStrd(ARG1_y_.getPtr() + static_cast&lt;int&gt;(ARG1_y_.getOffset() + static_cast&lt;int&gt;(0)),ARG1_y_.dim()[0],1,EigStrDyn(0, ARG1_y_.strides()[0]));
+## Eig_z = Eig_x + (Eig_ARG1_y_Interm_1).block(0, 0, 3, 1);
+## return(z);
+## }</code></pre>
+<pre class="r"><code>nimble:::writeCode(runCppDef$generate(declaration = TRUE)) ## declaration just for this method</code></pre>
+<pre><code>## NimArr&lt;1, double&gt;  run ( NimArr&lt;1, double&gt; &amp; ARG1_y_ );</code></pre>
+<pre class="r"><code>nimble:::writeCode(runCppDef$SEXPinterfaceFun$generate()) ## contains an cppFunctionDef for the SEXP interface</code></pre>
+<pre><code>## SEXP  CALL_nfRefClass_R_GlobalEnv84_run ( SEXP S_ARG1_y_, SEXP SextPtrToObject )  {
+## NimArr&lt;1, double&gt; ARG1_y_;
+## SEXP S_returnValue_1234;
+## NimArr&lt;1, double&gt; LHSvar_1234;
+## SEXP S_returnValue_LIST_1234;
+## SEXP_2_NimArr&lt;1&gt;(S_ARG1_y_, ARG1_y_);
+## GetRNGstate();
+## LHSvar_1234 = static_cast&lt;nfRefClass_R_GlobalEnv84*&gt;(R_ExternalPtrAddr(SextPtrToObject))-&gt;run(ARG1_y_);
+## PutRNGstate();
+## PROTECT(S_returnValue_LIST_1234 = allocVector(VECSXP, 2));
+## PROTECT(S_returnValue_1234 = NimArr_2_SEXP&lt;1&gt;(LHSvar_1234));
+## PROTECT(S_ARG1_y_ = NimArr_2_SEXP&lt;1&gt;(ARG1_y_));
+## SET_VECTOR_ELT(S_returnValue_LIST_1234, 0, S_ARG1_y_);
+## SET_VECTOR_ELT(S_returnValue_LIST_1234, 1, S_returnValue_1234);
+## UNPROTECT(3);
+## return(S_returnValue_LIST_1234);
+## }</code></pre>
+<pre class="r"><code>runCppDef$args$getSymbolNames() ## local C++ symbol table for arguments</code></pre>
+<pre><code>## [1] &quot;ARG1_y_&quot;</code></pre>
+<pre class="r"><code>class(runCppDef$code) ## actual body of the function</code></pre>
+<pre><code>## [1] &quot;cppCodeBlock&quot;
+## attr(,&quot;package&quot;)
+## [1] &quot;nimble&quot;</code></pre>
+<pre class="r"><code>ls(runCppDef$code)</code></pre>
+<pre><code>## [1] &quot;code&quot;         &quot;generate&quot;     &quot;objectDefs&quot;   &quot;skipBrackets&quot;</code></pre>
+<pre class="r"><code>runCppDef$code$objectDefs$getSymbolNames() ## local variables</code></pre>
+<pre><code>## [1] &quot;z&quot;                   &quot;Eig_z&quot;               &quot;Eig_x&quot;              
+## [4] &quot;Eig_ARG1_y_Interm_1&quot;</code></pre>
+<pre class="r"><code>runCppDef$code$code ## The processed AST, same as we saw from the RCfunProcessing object's compileInfo's nimExpr above</code></pre>
+<pre><code>## {
+##   {
+##     nimPrint
+##       hello world from run
+##   }
+##   {
+##     {
+##       {
+##         if
+##           !=
+##             [
+##               dim
+##                 x
+##               1
+##             3
+##           {
+##             {
+##               nimPrint
+##                 Run-time size error: expected dim(x)[1L] == 3
+##             }
+##           }
+##       }
+##       {
+##         setSize
+##           z
+##           3
+##           0
+##           0
+##       }
+##       {
+##         {
+##           {
+##             AssignEigenMap
+##               Eig_z
+##               getPtr
+##                 z
+##               MatrixXd
+##               3
+##               1
+##           }
+##           {
+##             AssignEigenMap
+##               Eig_x
+##               getPtr
+##                 x
+##               MatrixXd
+##               [
+##                 dim
+##                   x
+##                 1
+##               1
+##           }
+##           {
+##             AssignEigenMap
+##               Eig_ARG1_y_Interm_1
+##               +
+##                 getPtr
+##                   ARG1_y_
+##                 chainedCall
+##                   template
+##                     static_cast
+##                     int
+##                   +
+##                     getOffset
+##                       ARG1_y_
+##                     chainedCall
+##                       template
+##                         static_cast
+##                         int
+##                       0
+##               MatrixXd
+##               [
+##                 dim
+##                   ARG1_y_
+##                 1
+##               1
+##               0
+##               [
+##                 strides
+##                   ARG1_y_
+##                 1
+##           }
+##           {
+##             &lt;-
+##               Eig_z
+##               +
+##                 Eig_x
+##                 eigenBlock
+##                   Eig_ARG1_y_Interm_1
+##                   0
+##                   0
+##                   3
+##                   1
+##           }
+##         }
+##       }
+##     }
+##   }
+##   {
+##     return
+##       z
+##   }
+## }</code></pre>
+<pre class="r"><code>## runCppDef$buildRwrapperFunCode ## function to build R code to call C++ methods, but not trivial to demo here</code></pre>
+</div>
+<div id="cppinterface-object" class="section level2">
+<h2>cppInterface object</h2>
+<p>The cppInterface object, in this case <code>cnf1</code>, lets a user call the compiled code.</p>
+<pre class="r"><code>cnf1</code></pre>
+<pre><code>## Derived CnimbleFunctionBase object (compiled nimbleFunction) for nimbleFunction with class nfRefClass_R_GlobalEnv84</code></pre>
+<pre class="r"><code>cnf1$run</code></pre>
+<pre><code>## Class method definition for method run()
+## function (y) 
+## {
+##     if (is.null(&quot;.basePtr&quot;)) 
+##         stop(&quot;Object for calling this function is NULL (may have been cleared)&quot;)
+##     NULL
+##     ans &lt;- .Call(&quot;CALL_nfRefClass_R_GlobalEnv84_run&quot;, y, .basePtr)
+##     ans &lt;- ans[[2]]
+##     ans
+## }
+## &lt;environment: 0x7fd0f8490e78&gt;</code></pre>
+<pre class="r"><code>cnf1$x</code></pre>
+<pre><code>## [1]  1.165037 -1.048133  1.694443</code></pre>
+<p>The process of building this is fairly involved. In particular it uses active bindings for member data such as <code>x</code>.</p>
+<div id="full-interfaces" class="section level3">
+<h3>full interfaces</h3>
+<p>The <code>cnf1</code> is an example of a full interface.</p>
+</div>
+<div id="multi-interfaces" class="section level3">
+<h3>multi-interfaces</h3>
+<p>The alternative is a mutli-interface. A single multi-interface object keeps track of arbitrarily many C++ instances of a compiled nimbleFunction. This saves time and memory relative to creating many full interfaces. These do not have active bindings for member data and hence cannot be used as easily as full interfaces. By default NIMBLE builds multi-interfaces for any nimbleFunction contained in another nimbleFunction and full interfaces otherwise. Hence an MCMC gets a full interface but its samplers get multi-interfaces.</p>
+</div>
 </div>
 </div>
 
