@@ -6,653 +6,44 @@
 require(nimble)
 @ 
 
-\chapter{Building models}
+<<echo=FALSE>>=
+read_chunk(file.path('chunks', 'usingBugsModels_chunks.R'))  # one can put code chunks here if one wants
+@ 
+
+\chapter{Building and using models}
 \label{cha:building-models}
 
-%% This was the old first model example.  It may be superceded by the
-%% new "brief example" chapter 2.
-
-%% \subsection{Writing your first NIMBLE model}
-%% \label{sec:first-model}
-
-%% Here we give a toy example of specifying and manipulating a BUGS model. 
-
-%% Let's jump in by looking at a simple example: a function that sets a
-%% node to an input value, calculates the log probability components\footnote{Of course for continuous distributions these are density values not probabilities, but we'll use ``log probability'' loosely.} 
-%% related to that value, and returns their sum.  The NIMBLE code and
-%% usage looks like this.
+This chapter explains how to build and manipulate model objects
+starting from BUGS code.
 
 
-%% <<cache=TRUE>>=
-%% model1 <- nimbleCode({
-%%     a ~ dnorm(mean = 0, tau = 0.01)
-%%     y ~ dnorm(mean = a, sd = 2)
-%% })
+\section{Creating model objects}
 
-%% Rmodel1 <- nimbleModel(model1, returnModel = TRUE)
-%% @ 
+NIMBLE provides two functions for creating model objects:
+\cd{nimbleModel} and \cd{readBUGSmodel}. The first, \cd{nimbleModel},
+is more general and was illustrated in Chapter \ref{cha:intro}. The
+second, \cd{readBUGSmodel} provides compatibility with BUGS file
+formats for models, variables, data, and initial values for MCMC.  
 
-%% \cd{Rmodel1} is the R-version of the model, and it can be used right away,
-%% like this:
-%% <<>>=
-%% Rmodel1$a <- 3
-%% simulate(Rmodel1, 'y')
-%% Rmodel1$y
-%% calculate(Rmodel1, c('a', 'y'))
-%% dnorm(3, 0, 1/sqrt(0.01), log = TRUE) + dnorm(Rmodel1$y, 3, 2, log = TRUE)
-%% @ 
+In addition one can create new model objects from existing model objects.
 
-%% In the above example, first we set the value of $a$ to 3.  Then we
-%% simulate a value for $y$.  Then we calculate the log probabilities of
-%% $a$ and $y$.  Then we show that they are correct.  Note that one of
-%% the dnorms uses a precision parameter ("tau") while the other uses a
-%% standard deviation. \footnote{The NIMBLE dialect of BUGS allows for a variety of common parameterizations.}
+\subsection{Using \cd{nimbleModel} to create a model}
 
-%% Rmodel1 also contains an \nm{igraph} object of the graph, which can be
-%% plotted using the functionality of the \nm{igraph} package:
-%% <<fig.width=5, fig.height=5>>=
-%% plot(Rmodel1$graph)
-%% @ 
+\cd{nimbleModel} processes BUGS code to determine all the nodes,
+variables, and their relationships in a model.  Any constants must be
+provided at this step.  Data and initial values can optionally be
+provided.  BUGS code passed to \cd{nimbleModel} must go through
+\cd{nimbleCode}.
 
-NIMBLE aims to be compatible with the original BUGS language and also
-the version used by the popular JAGS package, as well as to extend the
-BUGS language.  However, at this point, there are some BUGS
-features not supported by NIMBLE, and there are some extensions that
-are planned but not implemented.
+We look again at the pump example from the introduction:
 
-For readers familiar with BUGS, we begin with an overview of supported features and extensions.
-
-\section{Overview of supported features and extensions of BUGS and JAGS}
-\label{sec:supp-feat-bugs}
-
-\subsection{Supported features of BUGS and JAGS}
-
-\begin{enumerate}
-\item Stochastic and deterministic\footnote{NIMBLE calls non-stochastic nodes ``deterministic'', whereas BUGS calls them ``logical''. NIMBLE uses ``logical'' in the way R does, to refer to boolean (TRUE/FALSE) variables.} node declarations.
-\item Most univariate and multivariate distributions.
-\item Link functions.
-\item Most mathematical functions.
-\item ``for'' loops for iterative declarations.
-\item Arrays of nodes up to 4 dimensions.
-\item Truncation and censoring as in JAGS using the \cd{T()}
-  notation and \cd{dinterval}.
-\end{enumerate}
-
-\subsection{NIMBLE's Extensions to BUGS and JAGS}
-\label{sec:extensions-bugs}
-
-NIMBLE extends the BUGS language in the following ways:
-
-\begin{enumerate}
-  \item User-defined functions and distributions -- written as \cd{nimbleFunctions} -- can be used in model code. See Section \ref{sec:user-defined}.
-\item Multiple parameterizations for distributions, similar to those  in R, can be used.
-\item Named parameters for distributions and functions, similar to R function calls, can be used.
-\item Linear algebra, including for vectorized
-  calculations of simple algebra, can be used in deterministic declarations.
-\item Distribution parameters can be expressions\footnote{e.g., \cd{y $\sim$ dnorm(5 + mu, 3 *
-      exp(tau))}}, as in JAGS but not
-  in WinBUGS.  Caveat: parameters to \emph{multivariate}
-  distributions (\emph{e.g.,} \cd{dmnorm}) cannot be expressions. % still true. -Perry
- \item Alternative models can be defined from the same model code by
-   using if-then-else statements that are evaluated when the model is defined.
-\item More flexible indexing of vector nodes within larger variables is allowed.  For example one can place a multivariate normal vector arbitrarily within a higher-dimensional object, not just in the last index.
-\item More general constraints can be declared using \cd{dconstraint}, which extends the concept of JAGS' \cd{dinterval}. See Section \ref{subsec:trunc}.
- \item Link functions can be used in stochastic, as well as
-   deterministic, declarations.\footnote{But beware of the possibility
-     of needing to set values for ``lifted'' nodes created by NIMBLE.}
- \item Data values can be reset, and which parts of a model are flagged as data can be changed, allowing one model to be used for different data sets without rebuilding the model each time.
-  \end{enumerate}
-  
-\subsection{Not-yet-supported features of BUGS and JAGS}
-\label{sec:not-yet-supported}
-
-In this release, the following are not supported.
-
-\begin{enumerate}
-\item Stochastic indices (but see Section \ref{sec:user-defined} for a
-  description of how you could handle some cases with user-defined distributions).
-\item The appearance of the same node on the left-hand side of both a
-  \cd{<-} and a \cd{$\sim$} declaration (used in WinBUGS for data
-  assignment for the value of a stochastic node).
-\item Like BUGS, NIMBLE generally determines the dimensionality and
-  sizes of variables from the BUGS code.  However, when a variable
-  appears with blank indices, such as in \cd{x.sum <- sum(x[])},
-  NIMBLE currently requires that the dimensions of x be provided.
-  \item Multivariate nodes must appear with brackets, even if they are
-    empty. E.g., \cd{x} cannot be multivariate but \cd{x[]} or
-    \cd{x[2:5]} can be.
-\end{enumerate}
-
-\section{Writing models}
-
-\subsection{Declaring stochastic and deterministic nodes}
-
-The WinBUGS, OpenBUGS and JAGS manuals are useful resources for
-writing BUGS models.  Here we will just introduce the basics of the
-BUGS language -- and some of NIMBLE's extensions --  with a block of code showing a variety of declarations:
-
-<<didacticnimbleCode, eval=FALSE>>=
-exampleCode <- nimbleCode({
-    ## 1. normal distribution with BUGS parameter order
-    x ~ dnorm(a + b * c, tau) 
-    ## 2. normal distribution with a named parameter
-    y ~ dnorm(a + b * c, sd = sigma) 
-    ## 3. For-loop and nested indexing
-    for(i in 1:N) {
-        for(j in 1:M[i]) {
-            z[i,j] ~ dexp(r[ blockID[i] ]) 
-        }
-    }
-    ## 4. multivariate distribution with arbitrary indexing
-    for(i in 1:3) 
-        mvx[8:10, i] ~ dmnorm(mvMean[3:5], cov = mvCov[1:3, 1:3, i])
-    ## 5. User-provided distribution
-    w ~ dMyDistribution(hello = x, world = y) 
-    ## 6. Simple deterministic node
-    d1 <- a + b
-    ## 7. Vector deterministic node with matrix multiplication
-    d2[] <- A[ , ] %*% mvMean[1:5] 
-    ## 8. Deterministic node with user-provided function
-    d3 <- foo(x, hooray = y) 
-})
+<<reinitPumpModel, message=FALSE>>=
 @ 
 
-This code does not show a complete model and includes some arbitrary indices (e.g. \cd{mvx[8:10, i]}) to illustrate flexibility.  When a variable appears only on the right-hand side, it must be provided in data or constants.  Notes on the comment-numbered lines are:
-
-\begin{enumerate}
-\item \cd{x} follows a normal distribution with mean \cd{a + b*c} and precision \cd{tau} (default BUGS second parameter for \cd{dnorm}).
-\item \cd{y} follows a normal distribution with the same mean as \cd{x} but a named standard deviation parameter instead of a precision parameter (sd = 1/sqrt(precision)).
-\item \cd{z[i, j]} follows an exponential distribution with parameter
-  \cd{r[blockID[i] ]}.  This shows how for-loops can be used for indexing of variables containing
-  multiple nodes.  Nested indexing can be used if the nested indices
-  (\cd{blockID}) are provided as constants when the model is defined (via \cd{nimbleModel} or \cd{readBUGSmodel}).  Variables that define for-loop indices (\cd{N} and \cd{M}) must be provided as constants.  
-\item The arbitrary block \cd{mvx[8:10, i]} follows a multivariate
-  normal distribution, with a named covariance matrix instead of BUGS'
-  default of a precision matrix.  As in R, curly braces for for-loop
-  contents are only needed if there is more than one line.
-\item \cd{w} follows a user-defined distribution. See Section \ref{sec:user-defined}.
-\item \cd{d1} is a scalar deterministic node that, when calculated, will be
-  set to \cd{a + b}.
-\item \cd{d2} is a vector deterministic node using matrix
-  multiplication in R's syntax.
-\item \cd{d3} is a deterministic node using a user-provided
-  function.  See Section \ref{sec:user-defined}.
-\end{enumerate}
-
-\subsubsection{More about indexing}
-\label{sec:indexing} 
-
-Examples of allowed indexing include:
-\begin{itemize}
-\item \verb|x[i]|
-\item \verb|x[i:j]|
-\item \verb|x[i:j,k:l]| and indexing of higher dimensional arrays
-\item \verb|x[i:j, ]| 
-\item \verb|x[3*i+7]|
-\item \verb|x[(3*i):(5*i+1)]|
-\end{itemize}
- 
-When calling functions such as \cd{mean} and \cd{sum} on a vector
-variable, the square brackets are required but can have blank indices,
-e.g. \cd{xbar <- mean(x[])} if \cd{x} is a vector and \cd{xbar <-
-  mean(x[,])} if \cd{x} is a matrix \footnote{This is a case where the
-  dimension of x must be provided when defining the model.}. 
-
-NIMBLE does not allow multivariate nodes to be indicated without
-square brackets, which is an incompatibility with JAGS.  Therefore a
-statement like \cd{xbar <- mean(x)} in JAGS must be converted to
-\cd{xbar <- mean(x[])} for NIMBLE.
-
-Generally NIMBLE attempts to follow the same rules as R about
-dimensions (although in some cases this is not possible).  For
-example, \cd{x[1:3] \%*\% y[1:3]} converts \cd{x[1:3]} into a row
-vector and thus computes the inner product, which is returned as a $1
-\times 1$ matrix (use \cd{inprod} to get it as a scalar, which it typically easier).  Like in R,
-a scalar index will result in dropping a dimension unless the argument
-\cd{drop=FALSE} is provided.  For example, \cd{mymatrix[i, 1:3]} will
-be a vector of length 3, but \cd{mymatrix[i, 1:3, drop=FALSE]} will be
-a $1 \times 3$ matrix.  More about indexing and dimensions is
-discussed in section (\ref{sec:manag-dimens-sizes}).
-
-Here's an example of indexing in the context of multivariate nodes,
-showing two ways to do the indexing.  The first provides indices, so
-no \cd{dimensions} argument is needed, while the second omits the
-indices and provides a \cd{dimensions} argument instead.
-
-<<multivar-index>>=
-code <- nimbleCode({
-  y[1:K] ~ dmulti(p[1:K], n)
-  p[1:K] ~ ddirch(alpha[1:K])
-  log(alpha[1:K]) ~ dmnorm(alpha0[1:K], R[1:K, 1:K])
-})
-
-K <- 5
-model <- nimbleModel(code, constants = list(n = 3, K = K,
-                          alpha0 = rep(0, K), R = diag(K)),
-                     check = FALSE)
-
-codeAlt <- nimbleCode({
-  y[] ~ dmulti(p[], n)
-  p[] ~ ddirch(alpha[])
-  log(alpha[]) ~ dmnorm(alpha0[], R[ , ])
-})
-
-model <- nimbleModel(codeAlt, constants = list(n = 3, K = K,
-                          alpha0 = rep(0, K), R = diag(K)),
-                  dimensions = list(y = K, p = K, alpha = K),
-                      check = FALSE)
-                  
-                                           
-@ 
-
-
-\subsection{Vectorized versus scalar declarations}
-\label{subsec:vectorized-versus-scalar-declarations}
-
-Suppose you need nodes \cd{logY[i]} that should be the log of the
-corresponding \cd{Y[i]}, say for \cd{i} from 1 to 10.  Conventionally
-this would be created with a for loop:
-<<simpleForLoop, eval=FALSE>>=
-exampleCode <- nimbleCode({
-    for(i in 1:10) {
-        logY[i] <- log(Y[i])
-    }
-})
-@ 
-
-An alternative in NIMBLE is to use a vectorized declaration like this:
-<<simpleVecDec, eval=FALSE>>=
-exampleCode <- nimbleCode({
-    logY[1:10] <- log(Y[1:10])
-})
-@ 
-
-The rules for what is allowed attempt to follow those for R, which
-includes most basic arithmetic functions.  What is allowed is
-described more in (\ref{cha:progr-with-models}) about programming with
-nimbleFunctions, since BUGS code is processed similarly.  However in
-BUGS code there are some different rules, including the requirement to
-indicate indices explicitly (or provide a dimensions argument).  (In a
-nimbleFunction explicit indices are not required if the operation
-should use all elements of a variable, similarly to R).
-
-There is an important difference between the models that are created by the
-above two methods.  The first creates 10 scalar nodes, \cd{logY[1]}
-$\ldots$ \cd{logY[10]}.  The second creates one vector node,
-\cd{logY[1:10]}.  If each \cd{logY[i]} is used separately by an algorithm, it may be
-beneficial to declare them as scalars.  If they are all used together,
-it will often make sense to declare them as a vector.
-
-\subsection{Available distributions and functions}
-\label{subsec:dists-and-functions}
-\subsubsection{Distributions}
-\label{subsec:distributions}
-
-NIMBLE supports most of the distributions allowed in BUGS and JAGS. Table \ref{table:distributions} lists the distributions that are currently supported, with their default parameterizations, which match those of BUGS. NIMBLE also allows one to use alternative parameterizations for a variety of distributions as described next.
-
-Note that the same distributions are available for writing \cd{nimbleFunction}s, but in that case the default parameterizations and function names match R's when possible. Please see Section \ref{sec:nimble-dist-funs} for how to use distributions in \cd{nimbleFunctions}.
-
-
-\input{densityTableLong.tex}
-
-\subsubsection{Alternative parameterizations for distributions}
-\label{subsec:alternative-params}
-
-NIMBLE allows one to specify distributions in model code using a variety of parameterizations, including the BUGS parameterizations. Behind the scenes, NIMBLE uses a single parameterization (NIMBLE's `canonical' parameterization) when definining nodes and relationships between nodes and when doing calculations. 
-
-The full set of parameterizations that one can used in model code is listed in Table \ref{table:distributions-alternates}.
-To understand how NIMBLE handles alternative parameterizations, it is
-useful to distinguish three cases, using the \cd{gamma} distribution
-as an example:
-\begin{enumerate}
-\item A \nm{canonical} parameterization is used directly for
-  computations.  Usually this is the parameterization in the
-  \cd{Rmath} header of R's C implementation of distributions.  For
-  \cd{gamma}, this is (shape, scale).  
-\item The BUGS parameterization is the one defined in the
-  original BUGS language.  For \cd{gamma}, this is (shape, rate).
-\item An \nm{alternative} parameterization is one that must be converted
-  into the \nm{canonical} parameterization.  For example, NIMBLE
-  provides a (mean, sd) parameterization and creates nodes to
-  calculate (shape, scale) from (mean, sd).  In the case
-of \cd{gamma}, the BUGS parameterization is also an \nm{alternative} parameterization.
-
-\end{enumerate}
-
-Since NIMBLE provides compatibility with existing BUGS and JAGS
-code, the order of parameters places the BUGS parameterization
-first.  For example, the order of parameters for \cd{dgamma} is \cd{dgamma(shape, rate, scale, mean, sd)}.  Like R, if
-parameter names are not given, they are taken in order, so that (shape,
-rate) is the default. This happens to  match R's order of parameters,
-but it need not.  If names are given, they can be given in any
-order.  NIMBLE knows that rate is an alternative to scale and that
-(mean, sd) are an alternative to (shape, scale or rate). 
-
-\input{parameterizationTableLong.tex}
-
-Note that for multivariate normal, multivariate t, and Wishart, the canonical
-parameterization uses the Cholesky decomposition of either of the
-precision/inverse scale or covariance/scale matrix.  In some cases it may be more
-efficient to use that parameterization directly. For example, for the multivariate normal, if  \cd{prec\_param=TRUE}, the \cd{cholesky} argument is treated as the Cholesky
-decomposition of a precision matrix.  Otherwise it is treated as the
-Cholesky decomposition of a covariance matrix. 
-
-In addition, we provide alternative distribution names, known as aliases, as in JAGS, as specified in Table \ref{table:distributions-aliases}. 
-
-\input{densityAliasesTable.tex}
-
-
-%TODO: WHAT IS THE STATUS OF THE NEXT STATEMENT?: CJP - I will not get to this for 0.4 but it is still on my to-do list.  
-
-We plan to, but do not currently, include the following distributions as part of core NIMBLE: double exponential (Laplace), beta-binomial, Dirichlet-multinomial, F, inverse gamma, Pareto, inverse Wishart, or forms of the multivariate t other than the standard one provided. 
-% [F is easy to add as it has R functions]
-
-
-
-\subsection{Available BUGS language functions}
-\label{subsec:BUGS-lang-fxns}
-
-Tables \ref{table:functions}-\ref{table:functions-matrix} show the
-available operators and functions. These are also available for
-\cd{nimbleFunction} programming (see Chapter
-\ref{cha:progr-with-models}).  In fact, BUGS model nodes are
-implemented as \cd{nimbleFunction}s that are custom-generated from
-BUGS declarations, so it would be more correct to say that functions
-and operators available for \cd{nimbleFunction}s are also available
-for the model declarations.
-
-For the most part NIMBLE supports the functions used in BUGS and JAGS,
-with exceptions indicated in the table.  Additional functions provided
-by NIMBLE are also listed. Note that we provide distribution functions
-for use in calculations, namely the ``p'', ``q'', and ``d'' functions.
- See Section \ref{sec:nimble-dist-funs} for details on the syntax for using distribution functions as functions in deterministic calculations, as only some parameterizations are allowed and the names of some distributions differ from those used to define stochastic nodes in a model. 
-
-% TODO: CJP moved this material to Chap 9 - that's where it is most relevant 
-% so I thought it best to go into the caveats there
-%Currently ``r'' functions only return one random
-%draw at a time, and the first argument must always be 1.  For
-%multivariate distribution functions the \cd{prec\_param} or
-%\cd{scale\_param} argument must be provided, indicating when a
-%covariance or precision matrix has been given.  In a future release we
-%will provide a variety of distribution functions, including density,
-%cumulative distribution and quantile functions, using the same syntax
-%as \cd{dnorm}, \cd{pnorm}, \cd{qnorm}.  We will also extend the
-%alternative parameterizations with named parameters to
-%\cd{nimbleFunctions}.
-
-\input{functionTableLong.tex}
-\input{functionTableMatrixLong.tex}
-
-% [NOTE: JAGS source package has the Tex files for Martyn's manual, so we can copy the table formatting - s doc/manual/jags\_user\_manual.tex]
-
-\subsection{Available link functions}
-\label{subsec:BUGS-link}
-
-NIMBLE allows the link functions listed in Table \ref{table:links}.
-
-%\begin{table}[!h]
-\begin{center}
-\begin{longtable}{llll}
-\caption{Link functions \label{table:links}} \\
- \hline
-Link function         & Description & Range & Inverse \\
-\hline \hline
-  \endhead
-\verb+cloglog(y) <- x+ & Complementary log log & $0 < y < 1$ & \verb+y <- icloglog(x)+ \\
-\verb+log(y) <- x+    & Log           & $0 < y$ &  \verb+y <- exp(x)+ \\
-\verb+logit(y) <- x+  & Logit         & $0 < y < 1$ &  \verb+y <- expit(x)+ \\
-\verb+probit(y) <- x+ & Probit        & $0 < y < 1$ &  \verb+y <- iprobit(x)+\\
-\hline
-\end{longtable}
-\end{center}
-%\end{table}
-      
-Link functions are specified as functions applied to a variable on the
-left hand side of a BUGS expression. To handle link functions, NIMBLE
-does some processing that inserts an additional node into the model.
-For example, the declaration \cd{logit(p[i]) $\sim$ dnorm(mu[i],1)}, is equivalent
-to the follow two declarations: 
-\begin{itemize}
-\item \cd{logit\_p[i] $\sim$ dnorm(mu[i], 1)},
-\item \cd{p[i] <- expit(logit\_p[i])}
-\end{itemize}
-where \cd{expit} is the inverse of \cd{logit}.  When the BUGS expression defines a deterministic node, such as \cd{logit(p) <- b0 + b1*x}, the same operations are performed except that \cd{logit\_p} is a deterministic node. 
-
-Note that we do not provide an automatic way of initializing the additional node (\cd{logit\_p} in this case), which is a parent node of the explicit node (\cd{p[i]}), without explicitly referring to the additional node by the name that NIMBLE generates. For deterministic declarations, this is of little import, but for stochastic declarations, it requires care. 
-
-\subsection{Adding user-defined distributions and functions}
-\label{sec:user-defined}
-
-As of Version 0.4, NIMBLE allows you to define your own functions and distributions as \cd{nimbleFunction}s for use in BUGS code. As a result, NIMBLE frees you from being constrained to the functions and distributions just discussed.  For example, instead of setting up a Dirichlet prior with multinomial data and needing to use MCMC, one could recognize that this results in a Dirichlet-multinomial distribution and provide that as a user-defined distribution instead.
-
-Further, while NIMBLE at the moment does not allow the use of random
-indices, such as is common in clustering contexts, you may be able to
-analytically integrate over the random indices, resulting in a mixture
-distribution that you could implement as a user-defined distribution.
-For example, one could implement the \nm{dnormmix} distribution
-provided in JAGS as a user-defined distribution in NIMBLE.
-
-\subsubsection{User-defined functions}
-
-To provide a new function for use in BUGS code, simply create a \cd{nimbleFunction} that has no \cd{setup} code. Then use it in your BUGS code. That's it.
-
-Writing \cd{nimbleFunction}s requires that you declare the dimensionality of arguments and the returned object (Section \ref{sec:decl-argum-types}).  Make sure that the dimensionality specified in your \cd{nimbleFunction} matches how you use it in BUGS code.  For example, if you define  scalar parameters in your BUGS code you will want to define \cd{nimbleFunctions} that take scalar arguments.  Here is an example that returns twice its input argument:
-
-<<user-fun, eval=FALSE>>=
-timesTwo <- nimbleFunction(    
-    run = function(x = double(0)) {
-        returnType(double(0))
-        return(2*x)
-    })
-
-code <- nimbleCode({
-    for(i in 1:3) {
-        mu[i] ~ dnorm(0, 1)
-        mu_times_two[i] <- timesTwo(mu[i])
-    }
-})
-@ 
-The \cd{x = double(0)} argument and \cd{returnType(double(0))}
-establish that the input and output will both be 0-dimensional
-(scalar) numbers.
-
-You can define \cd{nimbleFunction}s that take inputs and outputs with
-more dimensions.  Here is an example that takes a vector
-(1-dimensional) as input and returns a vector with twice the input
-values:
-<<user-fun-vec, eval=FALSE>>=
-vectorTimesTwo  <- nimbleFunction(    
-    run = function(x = double(1)) {
-        returnType(double(1))
-        return(2*x)
-    }
-    )
-code <- nimbleCode({
-    for(i in 1:3) {
-        mu[i] ~ dnorm(0, 1)
-    }
-    mu_times_two[1:3] <- vectorTimesTwo(mu[1:3])
-})
-@ 
-
-There is a subtle difference between the \cd{mu\_times\_two} variables in the two examples.  In the first example, there are individual nodes for each \cd{mu\_times\_two[i]}. In the second example, there is a single multivariate node, \cd{mu\_times\_two[1:3]}. Each implementation could be more efficient for different needs.  For example, suppose an algorithm modifies the value of \cd{mu[2]} and then updates nodes that depend on it.  In the first example, \cd{mu\_times\_two[2]} would be updated.  In the second example \cd{mu\_times\_two[1:3]} would be updated because it is a single, vector node.
-
-At present you cannot provide a scalar argument where a \cd{nimbleFunction} expects a vector; unlike in R, scalars are not simply vectors of length 1.
-
-\subsubsection{User-defined distributions}
-
-To provide a user-defined distribution, you need to define density
-(``d'') and simulation (``r'') \cd{nimbleFunctions}, without setup
-code, for your distribution. In some cases you can then
-simply use your distribution in BUGS code as you would any
-distribution already provided by NIMBLE, while in others
-you need to explicitly register your distribution as described below.  
-
-You can optionally provide distribution (``p'') and quantile (``q'')
-functions, which will allow truncation to be applied to a user-defined
-distribution.  You can also provide a list of alternative
-parameterizations, but only if you explicitly register the distribution.
-
-Here is an extended example of providing a univariate exponential
-distribution (although this is already provided by NIMBLE) and a
-multivariate Dirichlet-multinomial distribution.
-
-<<user-dist, eval=TRUE>>=
-dmyexp <- nimbleFunction(
-    run = function(x = double(0), rate = double(0, default = 1), 
-        log = integer(0, default = 0)) {
-        returnType(double(0))
-        logProb <- log(rate) - x*rate
-        if(log) return(logProb)
-        else return(exp(logProb)) 
-    })
-
-rmyexp <- nimbleFunction(
-    run = function(n = integer(0), rate = double(0, default = 1)) {
-        returnType(double(0))
-        if(n != 1) print("rmyexp only allows n = 1; using n = 1.")
-        dev <- runif(1, 0, 1)
-        return(-log(1-dev) / rate)
-    })
-
-pmyexp <- nimbleFunction(
-    run = function(q = double(0), rate = double(0, default = 1), 
-        lower.tail = integer(0, default = 1), 
-        log.p = integer(0, default = 0)) {
-        returnType(double(0))
-        if(!lower.tail) { 
-            logp <- -rate * q
-            if(log.p) return(logp)
-            else return(exp(logp))
-        } else {
-            p <- 1 - exp(-rate * q)
-            if(!log.p) return(p)
-            else return(log(p))
-        }
-    })
-
-qmyexp <- nimbleFunction(
-    run = function(p = double(0), rate = double(0, default = 1), 
-        lower.tail = integer(0, default = 1), 
-        log.p = integer(0, default = 0)) {
-        returnType(double(0))
-        if(log.p) p <- exp(p)
-        if(!lower.tail) p <- 1 - p
-        return(-log(1 - p) / rate)
-    })
-
-ddirchmulti <- nimbleFunction(
-    run = function(x = double(1), alpha = double(1), size = double(0), 
-        log = integer(0, default = 0)) {
-        returnType(double(0))
-        logProb <- lgamma(size) - sum(lgamma(x)) + lgamma(sum(alpha)) - 
-            sum(lgamma(alpha)) + sum(lgamma(alpha + x)) - lgamma(sum(alpha) + 
-                                                                 size)
-        if(log) return(logProb)
-        else return(exp(logProb))
-    })
-
-rdirchmulti <- nimbleFunction(
-    run = function(n = integer(0), alpha = double(1), size = double(0)) {
-        returnType(double(1))
-        if(n != 1) print("rdirchmulti only allows n = 1; using n = 1.")
-        p <- rdirch(1, alpha)
-        return(rmulti(1, size = size, prob = p))
-    })
-
-code <- nimbleCode({
-     y[1:K] ~ ddirchmulti(alpha[1:K], n)
-     for(i in 1:K) {
-         alpha[i] ~ dmyexp(1/3)
-      }
-     })
-
-model <- nimbleModel(code, constants = list(K = 5, n = 10))
-@ 
-
-The distribution-related functions should take as input the parameters
-for a single parameterization, which will be the canonical
-parameterization that NIMBLE will use. 
-
-Here are more details on the requirements for distribution-related \cd{nimbleFunctions}, which follow R's conventions:
-
-\begin{itemize}
-\item Your distribution-related functions must have names that begin with ``d'', ``r'', ``p'' and ``q''. The name of the distribution must not be identical to any of the NIMBLE-provided distributions.
-\item All simulation (``r'') functions must take \cd{n} as their first argument. Note that you may simply have your function only handle \cd{n=1} and return an warning for other values of \cd{n}.
-\item NIMBLE uses doubles for numerical calculations, so we suggest simply using doubles in general, even for integer-valued parameters or values of random variables.
-  \item All density functions must have as their last argument \cd{log} and implement return of the log probability density. NIMBLE algorithms typically use only \cd{log = 1}, but we recommend you implement the \cd{log = 0} case for completeness. 
-  \item All distribution and quantile functions must have their last two arguments be (in order) \cd{lower.tail} and \cd{log.p}. These functions must work for \cd{lower.tail = 1} (i.e., TRUE) and \cd{log.p = 0} (i.e., FALSE), as these are the inputs we use when working with truncated distributions. It is your choice whether you implement the necessary calculations for other combinations of these inputs, but again we recommend doing so for completeness.
-  \item Define the \cd{nimbleFunctions} in R's global environment.  Don't expect R's standard scoping to work\footnote{NIMBLE can't use R's standard scoping because it doesn't work for R reference classes, and \cd{nimbleFunction}s are implemented as custom-generated reference classes.}.
-\end{itemize}
-
-\paragraph{Using \cd{registerDistributions} for alternative
-  parameterizations and providing other information}
-
-Behind the scenes, NIMBLE uses a function called
-\cd{registerDistributions} to set up new distributions for use in BUGS
-code. In some circumstances, you will need to call
-\cd{registerDistributions} directly to provide information that NIMBLE
-can't obtain directly from the \cd{nimbleFunctions} you write. 
-
-The cases in which you'll need to explicitly call
-\cd{registerDistributions} are when you want to do any of the following:
-\begin{itemize}
-  \item provide alternative parameterizations,
-    \item indicate a distribution is discrete, and
-      \item provide the range of possible values for a distribution.
-        \end{itemize}
-        
-If you would like to allow for
-multiple parameterizations, you can do this via the \cd{Rdist} element
-of the list provided to \cd{registerDistributions} as illustrated.  If
-you provide CDF (``p'') and inverse CDF (quantile, i.e. ``q'')
-functions, be sure to specify \cd{pqAvail = TRUE} when you call
-\cd{registerDistributions}.  Here's an example of using \cd{registerDistributions}
-to provide an alternative parameterization and to provide the range
-for the user-defined exponential distribution. We can then use
-the alternative parameterization in our BUGS code.
-
-<<user-dist-register, eval=TRUE>>=
-registerDistributions(list(
-    dmyexp = list(
-        BUGSdist = "dmyexp(rate, scale)",
-        Rdist = "dmyexp(rate = 1/scale)",
-        altParams = c("scale = 1/rate", "mean = 1/rate"),
-        pqAvail = TRUE, 
-        range = c(0, Inf)
-        )
-    ))
-
-code <- nimbleCode({
-     y[1:K] ~ ddirchmulti(alpha[1:K], n)
-     for(i in 1:K) {
-         alpha[i] ~ T(dmyexp(scale = 3), 0, 100)
-      }
-     })
-
-model <- nimbleModel(code, constants = list(K = 5, n = 10), 
-                     inits = list(alpha = rep(1, 5)))
-@ 
-
-There are a few rules for how you specify the information about a
-distribution that you provide to \cd{registerDistributions}:
-
-     \begin{itemize}
-\item The function name in the \cd{BUGSdist} entry in the list provided to \cd{registerDistributions} will be the name you can use in BUGS code.
-\item The name of your \cd{nimbleFunction}s must match the function name in the \cd{Rdist} entry.  If missing, the \cd{Rdist} entry defaults to be the same as the \cd{BUGSdist} entry.
-\item Your distribution-related functions must take as arguments the
-  parameters in default order, starting as the second argument and in the order used in the parameterizations in the \cd{Rdist} argument to \cd{registerDistributions} or the \cd{BUGSdist} argument if there are no alternative parameterizations. 
-\item You must specify a \cd{types} entry in the list provided to \cd{registerDistributions} if the distribution is multivariate or if any parameter is non-scalar.
- \end{itemize}
-
-Further details on using \cd{registerDistributions} can be found via \cd{help(registerDistributions)}.  NIMBLE uses the same list format as \cd{registerDistributions} to define its distributions.  This list can be found in the \cd{R/distributions\_inputList.R} file in the package source code directory.
-
-
-\subsection{Data and constants}
+\subsubsection{Data and constants}
 \label{sec:data-constants}
 
-NIMBLE makes a distinction between data and constants that would both
-be considered ``data'' in BUGS and JAGS.  
+NIMBLE makes a distinction between data and constants:
 
 \begin{itemize}
 \item \nm{Constants} can never be changed and must be provided when a
@@ -663,7 +54,7 @@ be considered ``data'' in BUGS and JAGS.
 \item \nm{Data} is a label for the role a node plays in the model.
   Nodes marked as data will by default be protected from any functions
   that would simulate over their values (see \cd{simulate} in Chapter
-  \ref{cha:progr-with-models}), but it is possible to over-ride
+  \ref{cha:using-bugs-models}), but it is possible to over-ride
   that default or to change their values by direct assignment.  This
   allows an algorithm to be applied to many data sets in the same
   model without re-creating the model each time.  It also allows
@@ -674,27 +65,43 @@ be considered ``data'' in BUGS and JAGS.
   % they can also be provided earlier when a model is defined.
 \end{itemize}
 
-We encourage users to distinguish between data and constants
-when building a model via \cd{nimbleModel}. However, for compatibility
-with BUGS and JAGS, NIMBLE allows both to be provided in the
-the \cd{constants} argument to \cd{nimbleModel}, in which case
-NIMBLE determines which are which, based on which variables appear on the 
-left-hand side of BUGS declarations. 
+WinBUGS, OpenBUGS and JAGS do not allow data values to be changed or
+different nodes to be labeled as data without starting from the
+beginning again.  Hence they do not distinguish between constants and
+data.  
 
-It is also possible to have variables appear only on the right-hand side of BUGS declarations (e.g., covariates/predictors). If the values of these variables will never change, one can specify these via \cd{constants}. However, one might want to define a model and then change such values (e.g., use a model with different covariate values). Therefore one can provide the values of such variables via the \cd{data} argument 
-to \cd{nimbleModel} and these will
-appear as variables in the model but will not
-have any corresponding nodes. A user can change these values via direct
-assignment if desired.
-% we used to say that RHS 'data' would be flagged as data but this
-% seems not to be true so I took it out - CJP 4/30/15
+For compatibility with BUGS and JAGS, NIMBLE allows both to be
+provided in the \cd{constants} argument to \cd{nimbleModel}, in
+which case NIMBLE handles values for stochastic nodes as data and
+everything else as constants.
+
+Values for nodes that appear only on the right-hand side of BUGS
+declarations (e.g., covariates/predictors) can be provided as constants or as data or initial values. There is no real difference between providing as data or initial values and the values can be added after building a model via \cd{setInits} or \cd{setData}. 
+
+\subsubsection{Providing data and initial values to an existing model}
+
+Whereas constants must be provided during the call to
+\cd{nimbleModel}, data and initial values can be provided later via
+the model member functions \cd{setData} and \cd{setInits}. For
+example, if \cd{pumpData} is a named list of data values (as above),
+then \cd{pump\$setData(pumpData)} sets the named variables to the
+values in the list.
+
+\cd{setData} does two things: it sets the values of the data nodes,
+and it flags those nodes as containing data.  nimbleFunction
+programmers can then use that information to control whether an
+algorithm should over-write data or not.  For example, NIMBLE's
+\cd{simulate} functions by default do not overwrite data values but
+can be told to do so.  Values of data variables can be replaced, and
+the indication of which nodes should be treated as data can be reset
+by using the \cd{resetData} method, e.g. \cd{pump\$resetData()}.
 
 \subsubsection{Missing data values}
 
 Sometimes one needs a model variable to have a mix of data and
 non-data, often due to missing data values.  In NIMBLE, when data
 values are provided, any nodes with \cd{NA} values will \nm{not} be
-labeled as data. The result will be that nodes with non-\cd{NA} values will be flagged as data nodes, while nodes with \cd{NA} values will not.  A node following a multivariate distribution must be either entirely observed or entirely missing.
+labeled as data.  A node following a multivariate distribution must be either entirely observed or entirely missing.
 
 Here's an example of running an MCMC on the \nm{pump} model, with two
 of the observations taken to be missing.  Some of the steps in this
@@ -702,7 +109,7 @@ example are documented more below.  NIMBLE's default MCMC
 configuration will treat the missing values as unknowns to be sampled,
 as can be seen in the MCMC output here.
 
-<<pump-missing, eval=FALSE>>=
+<<pump-missing, message=FALSE>>=
 pumpMiss <- pump$newModel()
 pumpMiss$resetData()
 pumpDataNew <- pumpData
@@ -715,7 +122,7 @@ pumpMissConf$addMonitors('x', 'alpha', 'beta', 'theta')
 pumpMissMCMC <- buildMCMC(pumpMissConf)
 Cobj <- compileNimble(pumpMiss, pumpMissMCMC)
 
-niter <- 1000
+niter <- 10
 set.seed(0)
 Cobj$pumpMissMCMC$run(niter)
 samples <- as.matrix(Cobj$pumpMissMCMC$mvSamples)
@@ -724,28 +131,22 @@ samples[1:5, 13:17]
 
 @ 
 
-% TODO: IS THIS REDUNDANT 
-% I THINK IT IS NICE TO HAVE - CJP: 
-Missing values may also occur in variables appearing on the
-right-hand side of BUGS declarations. Values for such variables should
-be passed in via the \cd{data} argument to \cd{nimbleModel}, with \cd{NA}
-for the missing values.  In many contexts, one would want to 
-specify (prior) distributions for the elements with missing values.
+Missing values may also occur in explanatory/predictor variables.  Values for
+such variables should be passed in via the \cd{data} argument to
+\cd{nimbleModel}, with \cd{NA} for the missing values.  In some
+contexts, one would want to specify distributions for such explanatory
+variables, for example so that an MCMC would impute the missing values.
 
-\subsection{Defining alternative models with the same code}
+\subsubsection{Defining alternative models with the same code}
 \label{sec:defin-altern-models}
 
-Avoiding code duplication is a basic principle of good programming.
-In BUGS and JAGS, if one wants to consider model variants, one needs
-to create complete model
-code for each one.  This can lead to lots of code and potential errors.
-
-In NIMBLE, one can use definition-time if-then-else statements to
-create different models from the same code.  As a simple example, say we have
+Avoiding code duplication is a basic principle of good programming. In
+NIMBLE, one can use definition-time if-then-else statements to create
+different models from the same code.  As a simple example, say we have
 a linear regression model and want to consider including or omitting
 \cd{x[2]} as an explanatory variable:
 
-<<>>=
+<<message=FALSE>>=
 regressionCode <- nimbleCode({
     intercept ~ dnorm(0, sd = 1000)
     slope1 ~ dnorm(0, sd = 1000)
@@ -770,214 +171,53 @@ modelWithX2 <- nimbleModel(regressionCode, constants = list(N = 30),
 modelWithX2$getVarNames()
 @ 
 
-\subsection{Truncation, censoring, and constraints}
-\label{subsec:trunc}
+Whereas the \nm{constants} are a property of the \nm{model definition}
+-- since they may help determine the model structure itself --
+\nm{data} nodes can be different in different copies of the model
+generated from the same \nm{model definition}.   The \cd{setData} and
+\cd{setInits} described above can be used for each copy of the model.
 
-NIMBLE provides three ways to declare boundaries on the value of a variable, each for different situations.  We introduce these and comment on their relationships to related features of JAGS and BUGS.  The three methods are:
+\subsubsection{Providing dimensions via \cd{nimbleModel}}
+\label{sec:prov-dimens-via}
 
-\subsubsection{Truncation}
-Either of the following forms, 
-\begin{itemize}
-\item \cd{x $\sim$ dnorm(0, sd = 10) T(0, a)}, or
-\item \cd{x $\sim$ T(dnorm(0, sd = 10), 0, a)}, 
-  \end{itemize}
-  declares that \cd{x} follows a normal distribution between 0 and \cd{a}.  Either boundary may be omitted or may be another node, such as \cd{a} in this example.  The first form is compatible with JAGS, but in NIMBLE it can only be used when reading code from a text file.  When writing model code in R, the second version must be used.  
+\cd{nimbleModel} can usually determine the dimensions of every
+variable from the declarations in the BUGS code.  However, it is
+possible to use a multivariate object only with empty indices
+(e.g. \cd{x[,]}), in which case the dimensions must be provided as an
+argument to \cd{nimbleModel}.
 
-Truncation means the possible values of \cd{x} are limited a priori, hence the probability density of \cd{x} must be normalized.  In this example it would be the normal probability density divided by its integral from 0 to \cd{a}\footnote{If you have a model object \cd{model}, you can see exactly the calculation used by typing \cd{model\$nodes[[`x`]]\$calculate}}.  Like JAGS, NIMBLE also provides \cd{I} as a synonym for \cd{T} to accommodate older BUGS code, but \cd{T} is preferred because it disambiguates multiple usages of \cd{I} in BUGS.
+Here's an example with multivariate nodes.  The first provides indices, so
+no \cd{dimensions} argument is needed, while the second omits the
+indices and provides a \cd{dimensions} argument instead.
 
-As in JAGS, \cd{mu $\sim$ dfoo(theta) T(L, U)} restricts $X$ to lie in
-$[L,U]$ (i.e., inclusive of \cd{L} and \cd{U}).  %No longer necessary:
-                                        %This distinction makes no difference for continuous random variables.
+<<multivar-index, message=FALSE>>=
+code <- nimbleCode({
+  y[1:K] ~ dmulti(p[1:K], n)
+  p[1:K] ~ ddirch(alpha[1:K])
+  log(alpha[1:K]) ~ dmnorm(alpha0[1:K], R[1:K, 1:K])
+})
 
-\subsubsection{Censoring} Censoring refers to the situation where one datum gives the lower or upper bound on an unobserved random variable.  This is common in survival analysis, when for individuals still surviving at the end of a study, their age of death is not known and hence is ``censored'' (right-censoring).  NIMBLE adopts JAGS syntax for censoring, as follows (using right-censoring as an example):
- <<dinterval-example, eval=FALSE>>=
-censored[i] ~ dinterval(t[i], c[i])
-t[i] ~ dweib(r, mu[i])
+K <- 5
+model <- nimbleModel(code, constants = list(n = 3, K = K,
+                          alpha0 = rep(0, K), R = diag(K)),
+                     check = FALSE)
+
+codeAlt <- nimbleCode({
+  y[] ~ dmulti(p[], n)
+  p[] ~ ddirch(alpha[])
+  log(alpha[]) ~ dmnorm(alpha0[], R[ , ])
+})
+
+model <- nimbleModel(codeAlt, constants = list(n = 3, K = K,
+                          alpha0 = rep(0, K), R = diag(K)),
+                  dimensions = list(y = K, p = K, alpha = K),
+                      check = FALSE)
+
 @
-where \cd{censored[i]} should be given as \cd{data} with a value of 1 if
-\cd{t[i]} is right-censored (\cd{t[i] $>$ c[i]}) and 0 if it is observed.  The data vector for \cd{t} should have \cd{NA} (indicating missing data) for any censored \cd{t[i]} entries. (As a result, these nodes will be sampled in an MCMC.)  The data vector for \cd{c} should give the censoring times corresponding to censored entries and a value below the observed times for uncensored entries (e.g., \cd{0} (assuming \cd{t[i] $>$ 0})). Left-censoring would be specified by setting \cd{censored[i]} to 0 and \cd{t[i]} to \cd{NA}. 
-  
 
-The \cd{dinterval} is not really a distribution but rather a trick: in the above example when \cd{censored[i] = 1} it gives a ``probability'' of 1 if \cd{t[i] $>$ c[i]} and 0 otherwise.  This means that \cd{t[i] $\le$ c[i]} is treated as impossible.  More generally than simple right- or left-censoring, \cd{censored[i] $\sim$ dinterval(t[i], c[i, ])} is defined such that for a vector of increasing cutpoints, \cd{c[i, ]}, \cd{t[i]} is enforced to fall within the \cd{censored[i]}-th cutpoint interval.  This is done by setting data \cd{censored[i]} as follows:
-\begin{eqnarray}
-\mbox{\cd{censored[i] = 0}} & \mbox{if} & \mbox{\cd{t[i] $\le$ c[i, 1]}} \nonumber \\
-\mbox{\cd{censored[i] = m}} & \mbox{if} & \mbox{\cd{c[i, m] $<$ t[i] $\le$ c[i, m+1]} for } 1 <= m <= M \nonumber \\
-\mbox{\cd{censored[i] = M}} & \mbox{if} & \mbox{\cd{c[i, M] $<$ t[i]}}.\nonumber
-\end{eqnarray}
-(The \cd{i} index is provided only for consistency with the previous example.)  The most common uses of \cd{dinterval} will be for left- and right-censored data, in which case \cd{c[i,]} will be a single value (and typically given as simply \cd{c[i]}), and for interval-censored data, in which case \cd{c[i,]} will be a vector of two values.  
-% TODO: Next line removed by CJP as I thought it was confusing:
-% or \cd{x[i] $\sim$ dinterval(c[i], t[i])} with \cd{x[i]} set to 1.
-% WHY - our dinterval code treats the 2nd arg as possibly a vector - the above presumably works for scalars but I think it is clearer if we always use the first arg as the data value and the 2nd as the interval points
+In that example, since \cd{alpha0} and \cd{R} are provided as constants, we don't need to specify their dimensions.
 
-Nodes following a \cd{dinterval} distribution should normally be set
-as \cd{data} with known values. Otherwise, the node may be simulated during initialization in some algorithms (e.g., MCMC) and thereby establish a permanent, perhaps unintended, constraint.  
-
-Censoring differs from truncation because censoring an observation involves bounds on a random variable that could have taken any value, while in truncation we know a priori that a datum could not have occurred outside the truncation range.  
-
-
-\subsubsection{Constraints and ordering}
-
-NIMBLE provides a more general way to enforce constraints using \cd{dconstraint(cond)}.  For example, we could specify that the sum of \cd{mu1} and \cd{mu2} must be positive like this:
-<<dconstraint-example, eval=FALSE>>=
-mu1 ~ dnorm(0, 1) 
-mu2 ~ dnorm(0, 1) 
-constraint_data ~ dconstraint( mu1 + mu2 > 0 )
-@ 
-with \cd{constraint\_data} set (as \cd{data}) to 1.  This is equivalent to a half-normal distribution on the half-plane $\mu_1 + \mu_2 > 0$. However, note that this equivalence only holds when conditioning on \cd{constraint\_data} (e.g., in an MCMC) and not when simulating from the model using \cd{simulate}. Nodes following \cd{dconstraint} should be provided as data for the same reason of avoiding unintended initialization described above for \cd{dinterval}.
-
-%If one simulates from the model using the \cd{simulate} functions and the condition is not satisfied, then \cd{const} will be 0 and the log probability of \cd{const} (and therefore of the model as whole) will be $-\infty$.
-
-Formally, \cd{dconstraint(condition)} is a probability distribution on $\left\{ 0, 1 \right\}$ such that $P(1) = 1$ if \cd{cond} is \cd{TRUE} and $P(0) = 1$ if \cd{cond} is \cd{FALSE}. 
-
-% TODO: Chris thought this wording is confusing:
-%Like \cd{dinterval}, \cd{dconstraint} results in distributions that are not normalized (e.g. for (\cd{mu1}, \cd{mu2})), which makes most sense if the constraint is observed rather than established a priori. 
-
-Of course, in many cases, parameterizing the model so that the
-constraints are automatically respected may be a better strategy than
-using \cd{dconstraint}.  One should be cautious about constraints that
-would make it hard for an MCMC or optimization to move through the
-parameter space (such as equality constraints that involve two or more
-parameters). For such restrictive constraints, general purpose
-algorithms that are not tailored to the constraints may fail or be inefficient. If constraints are used, it will generally be wise to ensure the model is initialized with values that satisfy them.
-
-
-\paragraph{Ordering}
-
-To specify an ordering of parameters, such as $\alpha_1 <= \alpha_2 <= \alpha_3$ one can use \cd{dconstraint} as follows: 
-<<ordering-example, eval=FALSE>>=
-constraint_data ~ dconstraint( alpha1 <= alpha2 & alpha2 <= alpha3 )
-@ 
-
-Note that unlike in BUGS, one cannot specify prior ordering using syntax such as
-\begin{verbatim}
-alpha[1] ~ dnorm(0, 1) I(, alpha[2])
-alpha[2] ~ dnorm(0, 1) I(alpha[1], alpha[3])
-alpha[3] ~ dnorm(0, 1) I(alpha[2], )
-\end{verbatim}
-as this does not represent a directed acyclic graph. 
-% TODO: CHRIS, WOULDN'T THIS WORK WITH \cd{alpha[1] $\sim$ dnorm(0, 1)}?  DOES BUGS REALLY ALLOW THIS NON-DAG?
-% PERRY, JAGS manual indicates the above is allowed in BUGS. Are you asking if it would work in NIMBLE with alpha1~dnorm(0,1) -- no because alpha2 still depends on alpha3 and vice versa
-
-Also note that specifying prior ordering using \cd{T(,)} can result in possibly unexpected results.  For example:
-\begin{verbatim}
-alpha1 ~ dnorm(0, 1)
-alpha2 ~ dnorm(0, 1) T(alpha1, )
-alpha3 ~ dnorm(0, 1) T(alpha2, )
-\end{verbatim}
-will enforce \cd{alpha1 $\le$ alpha2 $\le$ alpha3}, but it does not treat the three parameters symmetrically.  Instead it puts a marginal prior on \cd{alpha1} that is standard normal and then constrains \cd{alpha2} and \cd{alpha3} to follow truncated normal distributions. This is not equivalent to a symmetric prior on the three \cd{alpha}s that assigns 0 probability density when values are not in order.
-
-
-NIMBLE does not support the JAGS \cd{sort} syntax.
-
-\subsection{Understanding lifted nodes}
-\label{sec:introduced-nodes}
-
-In some cases, NIMBLE introduces new nodes into the model that were
-not specified in the BUGS code for the model, such as the
-\cd{lifted\_d1\_over\_beta} node in the introductory example.  For
-this reason, it is important that programs written to adapt to
-different model structures use NIMBLE's systems for querying the model
-graph.  For example, a call to \cd{pump\$getDependencies("beta")} will
-correctly include \cd{lifted\_d1\_over\_beta}  in the results.  If one
-skips this step and assumes the nodes are only those that appear in
-the BUGS code, one may not get correct results.
-
-It can be helpful to know the situations in which lifted nodes are
-generated.  These include:
-
-\begin{itemize}
-\item When distribution parameters are expressions, NIMBLE
-  creates a new deterministic node that contains the expression for a
-  given parameter. The node is then a direct descendant of the new
-  deterministic node.  This is an optional feature, but it is
-  currently enabled in all cases.
-\item As discussed in Section \ref{subsec:BUGS-link} the use of link
-  functions causes new nodes to be introduced. This requires care if
-  you need to initialize values in stochastic declarations with link functions.
-\item Use of alternative parameterizations of distributions, described in Section \ref{subsec:dists-and-functions}. For
-  example when a user provides the precision of a normal distribution
-  as \cd{tau}, NIMBLE creates a new node \cd{sd <- 1/sqrt(tau)} and
-  uses \cd{sd} as a parameter in the normal distribution.  If many
-  nodes use the same \cd{tau}, only one new \cd{sd} node will be
-  created, so the computation \cd{1/sqrt(tau)} will not be repeated
-  redundantly.    
-\end{itemize}
-
-\section{Creating model objects}
-
-NIMBLE provides two functions for creating model objects:
-\cd{nimbleModel} and \cd{readBUGSmodel}. The first, \cd{nimbleModel}, is the primary way to create models and
-was illustrated in Chapter \ref{cha:intro}. The second, \cd{readBUGSmodel} provides compatibility with BUGS file
-formats for models, variables, data, and initial values for MCMC.  
-
-NIMBLE also provides some additional flexibility in setting data in a model and in defining multiple models from the same model definition, as described at the end of this section. 
-
-
-\subsection{Using \cd{nimbleModel} to specify a model}
-
-  The R help page
-(\cd{?nimbleModel}) provides more details on \cd{nimbleModel} arguments.
-
-
-%% There are five arguments to \cd{nimbleModel} that provide information
-%% about the model, of which \cd{code} is
-%% the only required one.  Understanding these arguments involves some
-%% basic concepts about NIMBLE and ways it differs from BUGS and JAGS, so
-%% we explain them here. 
-
-%% \begin{description}
-%% \item[code] This is R code for the BUGS model.  With just a few
-%%   exceptions such as \cd{T()} and \cd{I()} notation, BUGS code is
-%%   syntactically compatible with R, so it can be held in an R object.
-%%   There are three ways to make such an object, by using
-%%   \cd{nimbleCode()}, the synonym \cd{BUGScode()}, or simply the R
-%%   function \cd{quote()}.
-
-%% \item[constants] This is a named list of values that cannot be modified after
-%%   creating the model definition.  They may include constants such as
-%%   \begin{enumerate}
-%%   \item \cd{N} in the pump example, which is required for processing
-%%     the BUGS code since it appears in \cd{for(i in 1:N)}.
-%%   \item vectors of indices, such as when the model has nodes like
-%%     \cd{y[i] $\sim$ dnorm(mu[blockID[i] ], sd)}, where \cd{blockID} is a
-%%     vector of experimental block IDs that indicate which \cd{mu} is needed
-%%     for each \cd{y}.  Since vectors of indices are used to define the
-%%     model graph, they cannot be changed after model definition
-%%   \item values that appear only on the right-hand side of BUGS declarations,
-%%     such as covariates/predictors in regression-style models. 
-%%   \end{enumerate}
-%%   However, as mentioned previously, data values can be provided via
-%%   the \cd{constants} argument for compatibility with BUGS and JAGS. 
-%%   NIMBLE will then determine which variables appear on the left-hand
-%%   side of BUGS declarations and will treat these as data rather
-%%   than constants, without any need for users to call \cd{setData()}.
-%% \item[dimensions] This is a named list of vectors of the sizes of
-%%   variables that appear in the model with unfilled indices such as
-%%   \cd{x[,]}.  For the most part, NIMBLE determines the sizes of model
-%%   variables automatically, but in cases with blank index fields,
-%%   dimension information is required. As described in the section below
-%%   about indexing, NIMBLE currently requires square brackets with blank
-%%   indices (or complete indicies such as \cd{1:N}, of course) when the full extent of a variable is needed.  The dimension
-%%   argument for \cd{x[,]} would be e.g. \cd{list(x = c(10, 8))} if \cd{x} is a 10-by-8
-%%   matrix.  Dimension information can alternatively be taken from
-%%   \cd{constants} or \cd{data} if these are provided.  \footnote{We
-%%     have also seen cases where the dimension information inferred from
-%%     the BUGS code does not match the data matrix because the model
-%%     only applies to a subset of the data matrix.  In a case like that,
-%%     either \cd{dimensions} must be provided to fit the entire data
-%%     matrix or only the appropriate subset of the data matrix must be
-%%     used in the model.}
-%% \item[data] This is a named list of values to be used as data, with
-%%   \cd{NA}s to indicate missing data.
-%% \item[inits] This is a named list of initial values for the model.
-%%   These are neither data nor constants, but rather values with which to
-%%   initialize the model. For variables that are a mix of data and non-data,
-%%   we recommend using NA for the data elements for clarity, but NIMBLE
-%%   ignores initial values for data nodes.
-%% \end{description}
- 
-
-\subsection{Specifying a model from standard BUGS and JAGS input files}
+\subsection{Creating a model from standard BUGS and JAGS input files}
 \label{sec:readBUGSmodel}
 
 Users with BUGS and JAGS experience may have files set up in standard
@@ -990,21 +230,8 @@ In either case, after processing the inputs, it calls \cd{nimbleModel}.
 Note that unlike BUGS and JAGS, only a single set of initial values can be
 specified in creating a model. Please see \cd{help(readBUGSmodel)} for argument details.  
 
-%% \cd{readBUGSmodel()} can take the following arguments:
-%% \begin{description}
-%% \item[model] is either a file name, an R code object such as can be
-%%   passed in the \cd{code} argument of \cd{nimbleModel()}, or a R
-%%   function whose body contains the model code. 
-%% \item[data] is either a file name or a named list specifying constants
-%%   and data together, the way they would be provided for BUGS or JAGS.
-%%   \cd{readBUGSmodel()} treats values that appear on the left-hand side
-%%   of BUGS declarations as data and other values as constants, so you
-%%   do not need to call the \cd{setData} method.
-%% \item[inits] is either a file name or a named list of initial values.  
-%% \end{description}
-
 As an example of using \cd{readBUGSmodel}, let's create a model for the \nm{pump} example from BUGS.
-<<readBUGSmodel>>=
+<<readBUGSmodel, message=FALSE>>=
 pumpDir <- system.file('classic-bugs', 'vol1', 'pump', package = 'nimble')
 pumpModel <- readBUGSmodel('pump.bug', data = 'pump-data.R', 
                            inits = 'pump-init.R', dir = pumpDir)
@@ -1027,38 +254,18 @@ Note that NIMBLE does not handle formatting such as in some of the
 original BUGS examples in which data was indicated with syntax such as
 \cd{data x in `x.txt'}.
 
-\subsection{Providing data via setData}
-
-Whereas the \nm{constants} are a property of the \nm{model definition}
--- since they may help determine the model structure itself --
-\nm{data} nodes can be different in different copies of the model
-generated from the same \nm{model definition}.  For this reason,
-\nm{data} is not required to be provided when the model code is
-processed.  It can be provided later via the model member function
-\cd{setData}. e.g., \cd{pump\$setData(pumpData)}, where \cd{pumpData}
-is a named list of data values.
-
-\cd{setData} does two things: it sets the values of the data nodes,
-and it flags those nodes as containing data.  \cd{nimbleFunction}
-programmers can then use that information to control whether an
-algorithm should over-write data or not.  For example, NIMBLE's
-\cd{simulate} functions by default do not overwrite data values but
-can be told to do so.  Values of data variables can be replaced, and
-the indication of which nodes should be treated as data can be reset
-by using the \cd{resetData} method, e.g. \cd{pump\$resetData()}.
-
 \subsection{Making multiple instances from the same model definition}
 \label{sub:multiple-instances}
   
 Sometimes it is useful to have more than one copy of the same model.
-For example, \cd{nimbleFunction}s are often bound to a particular
-model as a result of \cd{setup} code.  A user could build multiple
-algorithms to use the same model instance, or they may want each
-algorithm to have its own instance of the model.
+For example, an algorithm (i.e., nimbleFunction) such as an MCMC will be
+bound to a particular model before it is run.  A user could build multiple algorithms
+to use the same model instance, or they may want each algorithm to
+have its own instance of the model.
 
 There are two ways to create new instances of a model, shown in this example:
 
-<<>>=
+<<message=FALSE>>=
 simpleCode <- nimbleCode({
     for(i in 1:N) x[i] ~ dnorm(0, 1)
     })
@@ -1071,15 +278,153 @@ simpleModelCopy1 <- simpleModelDefinition$newModel(check = FALSE)
 ## Make another instance from the same definition
 simpleModelCopy2 <- simpleModelDefinition$newModel(check = FALSE)
 ## Ask simpleModelCopy2 for another copy of itself
-## small bug in version 0.6-1 means we need to set 'data' to an
-## empty list for this to work; this will be fixed in 0.6-2
-simpleModelCopy3 <- simpleModelCopy2$newModel(check = FALSE, data =
-   list())
+simpleModelCopy3 <- simpleModelCopy2$newModel(check = FALSE)
 @ 
 
 Each copy of the model can have different nodes flagged as data and
 different values in any nodes.  They cannot have different values of
 \cd{N} because that is a constant; it must be a constant because
 it helps define the model.
+
+\section{NIMBLE models are objects you can query and manipulate}
+\label{sec:nodes-and-variables}
+
+NIMBLE models are objects that can be modified and manipulated from R.
+In this section we introduce some basic ways to use a model object.
+Chapter \ref{cha:using-bugs-models} covers more topics for writing
+algorithms that use models.
+
+
+\subsection{What are variables and nodes?}
+\label{sec:what-are-nodes-and-variables}
+
+This section discusses some basic concepts and terminology to
+be able to speak about NIMBLE models clearly.
+
+Suppose we have created a model from the following BUGS code.
+% This chunk can be modified to jut remove the nimbleModel call.
+
+<<echo=FALSE,message=FALSE>>=
+read_chunk(file.path('chunks', 'usingBugsModels_chunks.R'))
+@ 
+
+<<usingModelsExample, message=FALSE>>=
+@ 
+
+In NIMBLE terminology:
+\begin{itemize}
+\item The \textit{variables} of this model are \cd{a}, \cd{y}, \cd{z},
+  and \cd{y.squared}.
+\item The \textit{nodes} of this model are \cd{a}, \cd{y[1]} $,\ldots,$
+  \cd{y[5]}, \cd{z[1,1]} $,\ldots,$ \cd{z[5, 3]}, and
+  \cd{y.squared[1:5]}.  In graph terminology, nodes are vertices in
+  the model graph.
+\item the \textit{node functions} of this model are
+  \verb|a ~ dnorm(0, 0.001)|, \verb|y[i] ~ dnorm(a, 0.1)|,
+  \verb|z[i,j] ~ dnorm(y[i], sd = 0.1)|, and
+  \verb|y.squared[1:5] <- y[1:5]^2|.  Each node's calculations are
+  handled by a node function.  Sometimes the distinction between
+  nodes and node functions is important, but when it is not important
+  we may refer to both simply as \textit{nodes}.  
+\item  The \textit{scalar elements} of this model include all the scalar
+  nodes as well as the scalar elements \cd{y.squared[1]} $,\ldots,$
+  \cd{y.squared[5]} of the multivariate node \cd{y.squared[1:5]}.
+\end{itemize}
+
+
+
+\subsection{Determining the nodes and variables in a model}
+
+  
+One can determine the variables in a model using \cd{getVarNames} and the  nodes in a model using \cd{getNodeNames}. Optional arguments to \cd{getNodeNames} allow you to select only certain types of nodes, as discussed in Section \ref{sec:get-nodes} and in the R help for \cd{getNodeNames}. 
+
+<<getVarAndNodeNames>>=
+@ 
+
+Note that some of the nodes may be ``lifted'' nodes introduced by
+NIMBLE (Section \ref{sec:introduced-nodes}). In this case \cd{lifted\_d1\_over\_sqrt\_oPtau\_cP} (this is a node for the standard deviation of the \cd{z} nodes using NIMBLE's canonical parameterization of the normal distribution) is the only lifted node in the model.
+
+To determine the dependencies of one or more nodes in the model, you can use \cd{getDependencies} as discussed in Section \ref{sec:cdgetdependencies}.
+
+
+\subsection{Accessing nodes}
+\label{sec:accessing-nodes}
+
+Model variables can be accessed and set just as in R using \cd{\$} and
+\cd{[[ ]]}.  For example
+
+<<usingModelVars>>=
+@ 
+
+
+While nodes that are part of a variable can be accessed as above, each
+node also has its own name that can be used to access it directly.  For
+example, \cd{y[2]} has the name ``y[2]'' and can be accessed by that
+name as follows:
+
+
+<<usingNodeNames>>=
+@ 
+
+Notice that node names can include index blocks, such as
+\cd{model[[`z[2:4, 1:2]']]}, and these are not strictly required to
+correspond to actual nodes.  Such blocks can be subsequently
+sub-indexed in the regular R manner, such as \cd{model[['z[2:4, 1:2]']][1, 2]}.
+
+\subsection{How nodes are named}
+\label{sec:how-nodes-are}
+
+Every node has a name that is a character string including its
+indices, with a space after every comma.  For example, \cd{X[1, 2, 3]}
+has the name ``X[1, 2, 3]''.  Nodes following multivariate
+distributions have names that include their index blocks.  For
+example, a multivariate node for \cd{X[6:10, 3]} has the name ``X[6:10, 3]''.
+
+
+The definitive source for node names in a model is
+\cd{getNodeNames}, described previously.  
+
+In the event you need to ensure that a name is formatted correctly,
+you can use the \cd{expandNodeNames} method. For
+example, to get the spaces correctly inserted into ``X[1,1:5]'':
+
+<<multivariateExpandNodeNames>>=
+@ 
+
+Alternatively, for those inclined to R's less commonly used features, a nice trick is
+to use its \cd{parse} and \cd{deparse} functions.  
+<<>>=
+deparse(parse(text = "X[1,1:5]", keep.source = FALSE)[[1]])
+@ 
+
+
+The \cd{keep.source = FALSE} makes \cd{parse} more efficient.
+
+\subsection{Why use node names?}
+\label{sec:why-use-node}
+
+Syntax like \cd{model[["z[2, 3]"]]} may seem strange at first, because
+the natural habit of an R user would be \cd{model[["z"]][2,3]}.  To see
+its utility, consider the example of writing the nimbleFunction given in
+Section \ref{sec:creating-your-own}.  By giving every scalar node a name, even
+if it is part of a multivariate variable, one can write functions in R
+or NIMBLE that access any single node by a name, regardless of the
+dimensionality of the variable in which it is embedded.  This is particularly
+useful for NIMBLE, which resolves how to access a particular node
+during the compilation process.
+
+
+\subsection{Checking if a node holds data}
+\label{sec:cdisdata}
+
+Finally, you can query whether a node is flagged as data using the
+\cd{isData} method applied to one or more nodes or nodes within variables:
+<<isData>>=
+model$isData('z[1]')
+model$isData(c('z[1]', 'z[2]', 'a'))
+model$isData('z')
+model$isData('z[1:3, 1]')
+@ 
+
 
 

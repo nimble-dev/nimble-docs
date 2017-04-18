@@ -44,7 +44,7 @@ pump$getDependencies(c('alpha', 'beta'), determOnly = TRUE)
 ## Check that the lifted node was initialized. 
 pump[["lifted_d1_over_beta"]] ## It was.
 ## Now let's simulate new theta values
-set.seed(0) ## This makes the simulations here reproducible
+set.seed(1) ## This makes the simulations here reproducible
 pump$simulate('theta')
 pump$theta   ## the new theta values
 ## lambda and logProb_x haven't been re-calculated yet
@@ -68,12 +68,12 @@ pumpMCMC <- buildMCMC(pumpConf)
 CpumpMCMC <- compileNimble(pumpMCMC, project = pump)
 
 niter <- 1000
-set.seed(0)
+set.seed(1)
 CpumpMCMC$run(niter)
 
 samples <- as.matrix(CpumpMCMC$mvSamples)
 
-par(mfrow = c(1, 4), mai = c(.6, .5, .1, .2))
+par(mfrow = c(1, 4), mai = c(.6, .4, .1, .2))
 plot(samples[ , 'alpha'], type = 'l', xlab = 'iteration',
      ylab = expression(alpha))
 plot(samples[ , 'beta'], type = 'l', xlab = 'iteration',
@@ -96,11 +96,11 @@ pumpMCMC2 <- buildMCMC(pumpConf)
 CpumpNewMCMC <- compileNimble(pumpMCMC2, project  = pump,
                               resetFunctions = TRUE)
 
-set.seed(0);
+set.seed(1)
 CpumpNewMCMC$run(niter)
 samplesNew <- as.matrix(CpumpNewMCMC$mvSamples)
 
-par(mfrow = c(1, 4), mai = c(.6, .5, .1, .2))
+par(mfrow = c(1, 4), mai = c(.6, .4, .1, .2))
 plot(samplesNew[ , 'alpha'], type = 'l', xlab = 'iteration',
      ylab = expression(alpha))
 plot(samplesNew[ , 'beta'], type = 'l', xlab = 'iteration',
@@ -121,10 +121,10 @@ box = list( list(c('alpha','beta'), c(0, Inf)))
 pumpMCEM <- buildMCEM(model = pump2, latentNodes = 'theta[1:10]',
                       boxConstraints = box)
 
-pumpMLE <- pumpMCEM()
 # Note: buildMCEM returns an R function that contains a
 # nimbleFunction rather than a nimble function. That is why
-# pumpMCEM() is used instead of pumpMCEM$run().
+# pumpMCEM() is used here instead of pumpMCEM$run().
+pumpMLE <- pumpMCEM()
 
 pumpMLE
 
@@ -156,7 +156,7 @@ simNodesTheta1to5 <- simNodesMany(pump, 'theta[1:5]')
 simNodesTheta6to10 <- simNodesMany(pump, 'theta[6:10]')
 
 ## ---- runPumpSimsR
-set.seed(0)  ## make the calculation repeatable
+set.seed(1)  ## make the calculation repeatable
 pump$alpha <- pumpMLE[1]
 pump$beta <- pumpMLE[2]
 ## make sure to update deterministic dependencies of the altered nodes
@@ -174,7 +174,7 @@ Cpump$beta <- pumpMLE[2]
 Cpump$calculate(Cpump$getDependencies(c('alpha','beta'), determOnly = TRUE))
 Cpump$theta <- saveTheta
 
-set.seed(0)
+set.seed(1)
 CsimNodesTheta1to5$run(10)
 CsimNodesTheta1to5$mv[['theta']][1:2]
 CsimNodesTheta1to5$mv[['logProb_x']][1:2]

@@ -1,3 +1,34 @@
+## @knitr rc-intro
+
+nimExp <- nimbleFunction(
+       # run-time code for our computation
+       run = function(x = double(1)) {
+           returnType(double(1))
+           n <- length(x)
+           # some functions, like numeric, mimic R
+           # but also may have additional/different features
+           out <- numeric(n, init = FALSE)
+           # core computation
+           for( i in 1:n) 
+                out[i] <- exp(x[i])
+           return(out)
+       }
+)
+
+x <- rnorm(5)
+exp(x)
+nimExp(x)
+
+## @knitr rc-compiling
+
+CnimExp <- compileNimble(nimExp)
+CnimExp(x)
+
+## @knitr rc-using
+
+CnimExp(x)
+
+
 ## @knitr nf-intro
 
 logProbCalcPlus <- nimbleFunction(
@@ -20,7 +51,7 @@ logProbCalcPlusA <- logProbCalcPlus(testModel, 'a')
 testModel$b <- 1.5
 logProbCalcPlusA$run(0.25) 
 dnorm(1.25,0,1,TRUE)+dnorm(1.5,1.25,1,TRUE) ## direct validation
-testModel$a  ## a was set to 0.5 + valueToAdd
+testModel$a  ## 'a' was set to 0.5 + valueToAdd
 
 
 ## @knitr nf-compiling
@@ -52,25 +83,26 @@ CtestModel$a     ## a == 1.5 + 3
 ## @knitr nf-RCfun
 
 solveLeastSquares <- nimbleFunction(
-    run = function(X = double(2), y = double(1)) {
+    run = function(X = double(2), y = double(1)) { ## type declarations
         ans <- inverse(t(X) %*% X) %*% (t(X) %*% y)
         return(ans)
-        returnType(double(2))
+        returnType(double(2))  ## return type declaration
     } )
 
 X <- matrix(rnorm(400), nrow = 100)
 y <- rnorm(100)
 solveLeastSquares(X, y)
+
 CsolveLeastSquares <- compileNimble(solveLeastSquares)
 CsolveLeastSquares(X, y)
 
 ## @knitr mv-setup-code
 ## Accepting modelValues as a setup argument
-setupFunction = function(propModelValues, model){
+swConf <- modelValuesConf(vars = 'w',
+                                    types = 'double',
+                                    sizes = 1)
+setup = function(propModelValues, model, savedWeightsConf){
     ## Building a modelValues in the setup function 
-    savedWeightsConf <- modelValuesConf(vars = 'w',
-                                        types = 'double',
-                                        sizes = 1)
     savedWeights <- modelValues(conf = savedWeightsConf)
     ## List of nodes to be used in run function
     modelNodes <- model$getNodeNames(stochOnly = TRUE,
@@ -78,7 +110,7 @@ setupFunction = function(propModelValues, model){
 }
 
 ## @knitr mv-run-time
-runFunction = function(){
+run = function(){
     ## gets the number of rows of propSamples
     m <- getsize(propModelValues)
 
@@ -100,21 +132,21 @@ runFunction = function(){
 }
 
 ## @knitr mv-compilation-example
-##   Simple model and modelValue for example
+## simple model and modelValues for example use with code above
 targetModelCode <- nimbleCode({
     x ~ dnorm(0,1)
     for(i in 1:4)
         y[i] ~ dnorm(0,1)
 })
 
-##	Code for proposal model
+## code for proposal model
 propModelCode <- nimbleCode({
 	x ~ dnorm(0,2)
 	for(i in 1:4)
 		y[i] ~ dnorm(0,2)
 })
 
-##	Building R models
+## creating the models
 targetModel = nimbleModel(targetModelCode, check = FALSE)
 propModel = nimbleModel(propModelCode, check = FALSE)
 cTargetModel = compileNimble(targetModel)
@@ -143,28 +175,28 @@ PropSamp_Gen <- nimbleFunction(
     )
 
 ## nimbleFunction for calculating importance weights
-## Recylcing setupFunction and runFunction as defined in earlier example
-impWeights_Gen <- nimbleFunction(setup = setupFunction,
-                                 run = runFunction)
+## uses setup and run functions as defined in previous code chunk
+impWeights_Gen <- nimbleFunction(setup = setup,
+                                 run = run)
       
 
-## Making instances of nimbleFunctions
-## Note that both functions share the same modelValues object
+## making instances of nimbleFunctions
+## note that both functions share the same modelValues object
 RPropSamp <- PropSamp_Gen(sampleMV, propModel)
-RImpWeights <- impWeights_Gen(sampleMV, targetModel)
+RImpWeights <- impWeights_Gen(sampleMV, targetModel, swConf)
 
-# Compiling 
+## compiling 
 CPropSamp <- compileNimble(RPropSamp, project = propModel)
 CImpWeights <- compileNimble(RImpWeights, project = targetModel)
 
-#Generating and saving proposal sample of size 10
+## generating and saving proposal sample of size 10
 CPropSamp$run(10)
 
-## Calculating the importance weights and saving to mv
+## calculating the importance weights and saving to mv
 CImpWeights$run()
 
-## Retrieving the modelValues objects
-## Extracted objects are C-based modelValues objects
+## retrieving the modelValues objects
+## extracted objects are C-based modelValues objects
 
 savedPropSamp_1 = CImpWeights$propModelValues
 savedPropSamp_2 = CPropSamp$mv
@@ -180,13 +212,12 @@ savedPropSamp_2['x',1]
 savedPropSamp_1['x',1] <- 0 ## example of directly setting a value
 savedPropSamp_2['x',1]
 
-## Viewing the saved importance weights
+## viewing the saved importance weights
 savedWeights <- CImpWeights$savedWeights
 unlist(savedWeights[['w']])
 
-#Viewing first 3 rows. Note that savedPropSsamp_1['x', 1] was altered 
+## viewing first 3 rows -- note that savedPropSsamp_1['x', 1] was altered 
 as.matrix(savedPropSamp_1)[1:3, ]
-
 
 ## @knitr usingMemberFunctions
 
@@ -289,10 +320,10 @@ useThem <- nimbleFunction(
     )
 
 useThem1 <- useThem()
-set.seed(0)
+set.seed(1)
 useThem1$run(1:5)    
 CuseThem1 <- compileNimble(useThem1)
-set.seed(0)
+set.seed(1)
 CuseThem1$run(1:5)
 
 ## @knitr dataStructures
@@ -300,8 +331,8 @@ CuseThem1$run(1:5)
 dataNF <- nimbleFunction(
     setup = function() {
         X <- 1
-        Y <- as.numeric(c(1, 2)) ## will be a scalar if all sizes are 1
-        Z <- matrix(as.numeric(1:4), nrow = 2) ## will be a scalar is all sizes are 1
+        Y <- as.numeric(c(1, 2))
+        Z <- matrix(as.numeric(1:4), nrow = 2) 
         setupOutputs(X, Y, Z)
     })
 
@@ -322,7 +353,7 @@ myDataNF$Y
 myDataNF$Z
 myUseDataNF$myDataNF$X
 
-nimbleOptions(useMultiInterfaceForNestedNimbleFunctions = FALSE)
+nimbleOptions(buildInterfacesForCompiledNestedNimbleFunctions = TRUE)
 CmyUseDataNF <- compileNimble(myUseDataNF)
 CmyUseDataNF$run(-100, -(100:110), matrix(-(101:120), nrow = 2))
 CmyDataNF <- CmyUseDataNF$myDataNF
