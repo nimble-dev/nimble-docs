@@ -1,0 +1,13 @@
+# NIMBLE developer notes
+
+These pages are intended as quick guides for how to make some kinds of changes in NIMBLE's source code, how to follow various processing flows, and how find what you need from the internals of NIMBLE objects.
+
+## Some original developer notes on the GitHub Wiki.
+
+We put some initial notes [here](https://github.com/nimble-dev/nimble/wiki/NIMBLE-Developer-Guide).  These include
+
+1. [Guide to defining a new distribution in NIMBLE](https://github.com/nimble-dev/nimble/wiki/Defining-a-new-distribution-in-NIMBLE).
+
+2. [First bit of introduction of the NIMBLE compiler](https://github.com/nimble-dev/nimble/wiki/NIMBLE-compiler).  (This is very cursory.)
+
+3. [Summary of processing flow of compiling a nimbleFunction](https://github.com/nimble-dev/nimble/wiki/NIMBLE-function-compilation-flow)
