@@ -15,3 +15,4 @@ We put some initial notes [here](https://github.com/nimble-dev/nimble/wiki/NIMBL
 ## Here are some newer pages:
 
 4. [Navigating nimble objects to find internal information](navigating_nimble_objects.html), especially about compilation.
+
