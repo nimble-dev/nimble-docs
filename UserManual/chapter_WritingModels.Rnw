@@ -55,7 +55,7 @@ NIMBLE extends the BUGS language in the following ways:
   calculations of simple algebra, can be used in deterministic declarations.
 \item Distribution parameters can be expressions, as in JAGS but not
   in WinBUGS.  Caveat: parameters to \emph{multivariate}
-  distributions (\emph{e.g.,} \cd{dmnorm}) cannot be expressions (but an expression can be defined in a separate deterministic expression and the resulting variable then used). % still true. -Perry
+  distributions (e.g., \cd{dmnorm}) cannot be expressions (but an expression can be defined in a separate deterministic expression and the resulting variable then used). % still true. -Perry
  \item Alternative models can be defined from the same model code by
    using if-then-else statements that are evaluated when the model is defined.
 \item More flexible indexing of vector nodes within larger variables is allowed.  For example one can place a multivariate normal vector arbitrarily within a higher-dimensional object, not just in the last index.

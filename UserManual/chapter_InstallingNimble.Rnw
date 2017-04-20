@@ -39,8 +39,7 @@ Most fairly recent versions of these requirements should work.
 \label{sec:compiler}
 
 NIMBLE needs a C++ compiler and the standard utility \nm{make} in
-order to generate and compile C++ for models and algorithms.
-\footnote{This differs from most packages, which might need a C++ compiler
+order to generate and compile C++ for models and algorithms.\footnote{This differs from most packages, which might need a C++ compiler
   only when the package is built.  If you normally install R packages using
   \cd{install.packages} on Windows or OS X, the package arrives
   already built to your system.}
@@ -92,7 +91,7 @@ should be checked by default.
 \section{Installing the NIMBLE package}
 
 Since NIMBLE is an R package, you can install it in the usual way, via
-\\\cd{install.packages('nimble')} in R or using the \cd{R CMD INSTALL}
+\\\cd{install.packages("nimble")} in R or using the \cd{R CMD INSTALL}
 method if you download the package source directly. 
 
 NIMBLE can also be obtained from the \href{http://r-nimble.org}{NIMBLE website}. To install from our website, please see our \href{http://r-nimble.org/download}{Download page} for the specific invocation of \cd{install.packages}.

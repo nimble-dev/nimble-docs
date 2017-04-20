@@ -258,7 +258,7 @@ Supported distributions, listed by their ``d'' function, include:
   \item \cd{ddirch(x, alpha, log)}
   \item \cd{dmnorm\_chol(x, mean, cholesky, prec\_param, log)}
   \item \cd{dmvt\_chol(x, mu, cholesky, df, prec\_param, log)}
-  \item \cd{dwish\_chol(x, cholesky, df, \hspace{4mm}scale\_param, log)}
+  \item \cd{dwish\_chol(x, cholesky, df, \\scale\_param, log)}
 \end{itemize}
 \end{multicols}
 
@@ -419,7 +419,7 @@ column-major order.
 ## Example of creating and resizing a floating-point vector
 ## myNumericVector will be of length 10, with all elements initialized to 2 
 myNumericVector <- numeric(10, value = 2) 
-## resize this numeric vector to be length 20; the last 10 elements will be 0
+## resize this numeric vector to be length 20; last 10 elements will be 0
 setSize(myNumericVector, 20)
 @
 

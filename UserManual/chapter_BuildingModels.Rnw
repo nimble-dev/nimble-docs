@@ -367,9 +367,9 @@ name as follows:
 @ 
 
 Notice that node names can include index blocks, such as
-\cd{model[[`z[2:4, 1:2]']]}, and these are not strictly required to
+\cd{model[["z[2:4, 1:2]"]]}, and these are not strictly required to
 correspond to actual nodes.  Such blocks can be subsequently
-sub-indexed in the regular R manner, such as \cd{model[['z[2:4, 1:2]']][1, 2]}.
+sub-indexed in the regular R manner, such as \cd{model[["z[2:4, 1:2]"]][1, 2]}.
 
 \subsection{How nodes are named}
 \label{sec:how-nodes-are}

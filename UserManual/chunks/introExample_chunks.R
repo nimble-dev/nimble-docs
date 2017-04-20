@@ -21,7 +21,7 @@ pumpInits <- list(alpha = 1, beta = 1,
 
 ## ---- explorePump
 
-pump <- nimbleModel(code = pumpCode, name = 'pump', constants = pumpConsts,
+pump <- nimbleModel(code = pumpCode, name = "pump", constants = pumpConsts,
                     data = pumpData, inits = pumpInits)
 
 pump$getNodeNames()
@@ -38,20 +38,20 @@ pump$plotGraph()
 ## ---- manipPump
 
 ## Show all dependencies of alpha and beta terminating in stochastic nodes
-pump$getDependencies(c('alpha', 'beta'))
+pump$getDependencies(c("alpha", "beta"))
 ## Now show only the deterministic dependencies
-pump$getDependencies(c('alpha', 'beta'), determOnly = TRUE)
+pump$getDependencies(c("alpha", "beta"), determOnly = TRUE)
 ## Check that the lifted node was initialized. 
 pump[["lifted_d1_over_beta"]] ## It was.
 ## Now let's simulate new theta values
 set.seed(1) ## This makes the simulations here reproducible
-pump$simulate('theta')
+pump$simulate("theta")
 pump$theta   ## the new theta values
 ## lambda and logProb_x haven't been re-calculated yet
 pump$lambda ## these are the same values as above
 pump$logProb_x
-pump$getLogProb('x') ## The sum of logProb_x
-pump$calculate(pump$getDependencies(c('theta')))
+pump$getLogProb("x") ## The sum of logProb_x
+pump$calculate(pump$getDependencies(c("theta")))
 pump$lambda  ## Now they have.
 pump$logProb_x
 
@@ -62,7 +62,7 @@ Cpump$theta
 
 ## ---- mcmcPump
 pumpConf <- configureMCMC(pump, print = TRUE)
-pumpConf$addMonitors(c('alpha', 'beta', 'theta'))
+pumpConf$addMonitors(c("alpha", "beta", "theta"))
 
 pumpMCMC <- buildMCMC(pumpConf)
 CpumpMCMC <- compileNimble(pumpMCMC, project = pump)
@@ -74,20 +74,20 @@ CpumpMCMC$run(niter)
 samples <- as.matrix(CpumpMCMC$mvSamples)
 
 par(mfrow = c(1, 4), mai = c(.6, .4, .1, .2))
-plot(samples[ , 'alpha'], type = 'l', xlab = 'iteration',
+plot(samples[ , "alpha"], type = "l", xlab = "iteration",
      ylab = expression(alpha))
-plot(samples[ , 'beta'], type = 'l', xlab = 'iteration',
+plot(samples[ , "beta"], type = "l", xlab = "iteration",
      ylab = expression(beta))
-plot(samples[ , 'alpha'], samples[ , 'beta'], xlab = expression(alpha),
+plot(samples[ , "alpha"], samples[ , "beta"], xlab = expression(alpha),
      ylab = expression(beta))
-plot(samples[ , 'theta[1]'], type = 'l', xlab = 'iteration',
+plot(samples[ , "theta[1]"], type = "l", xlab = "iteration",
      ylab = expression(theta[1]))
 
-acf(samples[, 'alpha']) ## plot autocorrelation of alpha sample
-acf(samples[, 'beta'])  ## plot autocorrelation of beta  sample
+acf(samples[, "alpha"]) ## plot autocorrelation of alpha sample
+acf(samples[, "beta"])  ## plot autocorrelation of beta  sample
 
 ## ---- mcmcPump2
-pumpConf$addSampler(target = c('alpha', 'beta'), type = 'RW_block',
+pumpConf$addSampler(target = c("alpha", "beta"), type = "RW_block",
                     control = list(adaptInterval = 100))
                                      
 pumpMCMC2 <- buildMCMC(pumpConf)
@@ -101,24 +101,24 @@ CpumpNewMCMC$run(niter)
 samplesNew <- as.matrix(CpumpNewMCMC$mvSamples)
 
 par(mfrow = c(1, 4), mai = c(.6, .4, .1, .2))
-plot(samplesNew[ , 'alpha'], type = 'l', xlab = 'iteration',
+plot(samplesNew[ , "alpha"], type = "l", xlab = "iteration",
      ylab = expression(alpha))
-plot(samplesNew[ , 'beta'], type = 'l', xlab = 'iteration',
+plot(samplesNew[ , "beta"], type = "l", xlab = "iteration",
      ylab = expression(beta))
-plot(samplesNew[ , 'alpha'], samplesNew[ , 'beta'], xlab = expression(alpha),
+plot(samplesNew[ , "alpha"], samplesNew[ , "beta"], xlab = expression(alpha),
      ylab = expression(beta))
-plot(samplesNew[ , 'theta[1]'], type = 'l', xlab = 'iteration',
+plot(samplesNew[ , "theta[1]"], type = "l", xlab = "iteration",
      ylab = expression(theta[1]))
 
-acf(samplesNew[, 'alpha']) ## plot autocorrelation of alpha sample
-acf(samplesNew[, 'beta'])  ## plot autocorrelation of beta  sample
+acf(samplesNew[, "alpha"]) ## plot autocorrelation of alpha sample
+acf(samplesNew[, "beta"])  ## plot autocorrelation of beta  sample
 
 ## ---- mcemPump
 pump2 <- pump$newModel()
 
-box = list( list(c('alpha','beta'), c(0, Inf)))
+box = list( list(c("alpha","beta"), c(0, Inf)))
 
-pumpMCEM <- buildMCEM(model = pump2, latentNodes = 'theta[1:10]',
+pumpMCEM <- buildMCEM(model = pump2, latentNodes = "theta[1:10]",
                       boxConstraints = box)
 
 # Note: buildMCEM returns an R function that contains a
@@ -152,29 +152,29 @@ simNodesMany <- nimbleFunction(
         }
     })
 
-simNodesTheta1to5 <- simNodesMany(pump, 'theta[1:5]')
-simNodesTheta6to10 <- simNodesMany(pump, 'theta[6:10]')
+simNodesTheta1to5 <- simNodesMany(pump, "theta[1:5]")
+simNodesTheta6to10 <- simNodesMany(pump, "theta[6:10]")
 
 ## ---- runPumpSimsR
 set.seed(1)  ## make the calculation repeatable
 pump$alpha <- pumpMLE[1]
 pump$beta <- pumpMLE[2]
 ## make sure to update deterministic dependencies of the altered nodes
-pump$calculate(pump$getDependencies(c('alpha','beta'), determOnly = TRUE))
+pump$calculate(pump$getDependencies(c("alpha","beta"), determOnly = TRUE))
 saveTheta <- pump$theta
 simNodesTheta1to5$run(10)
-simNodesTheta1to5$mv[['theta']][1:2]
-simNodesTheta1to5$mv[['logProb_x']][1:2]
+simNodesTheta1to5$mv[["theta"]][1:2]
+simNodesTheta1to5$mv[["logProb_x"]][1:2]
 
 ## ---- runPumpSimsC
 CsimNodesTheta1to5 <- compileNimble(simNodesTheta1to5,
                                     project  = pump, resetFunctions = TRUE)
 Cpump$alpha <- pumpMLE[1]
 Cpump$beta <- pumpMLE[2]
-Cpump$calculate(Cpump$getDependencies(c('alpha','beta'), determOnly = TRUE))
+Cpump$calculate(Cpump$getDependencies(c("alpha","beta"), determOnly = TRUE))
 Cpump$theta <- saveTheta
 
 set.seed(1)
 CsimNodesTheta1to5$run(10)
-CsimNodesTheta1to5$mv[['theta']][1:2]
-CsimNodesTheta1to5$mv[['logProb_x']][1:2]
+CsimNodesTheta1to5$mv[["theta"]][1:2]
+CsimNodesTheta1to5$mv[["logProb_x"]][1:2]
