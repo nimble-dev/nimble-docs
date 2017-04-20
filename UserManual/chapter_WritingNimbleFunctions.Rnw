@@ -225,8 +225,8 @@ myModel$calculate(nodes[ values(model, nodes) + 0.1 < x ])
 @ 
 
 Note that one cannot create new vectors of nodes in run code.  They
-can only be indexed within a call to calculate, calculateDiff,
-simulate or getLogProb.
+can only be indexed within a call to \cd{calculate}, \cd{calculateDiff},
+\cd{simulate} or \cd{getLogProb}.
 
 \subsection{Getting and setting variable and node values}
 
@@ -238,7 +238,7 @@ Here is an example that illustrates getting and setting of nodes and subsets of 
 \begin{itemize}
   \item In \cd{model[[node]]}, \cd{node} can only be a single node name, not a vector of multiple nodes nor an element of such a vector (\cd{model[[ nodes[i] ]]} does not work).  The node itself may be a vector, matrix or array node.
   \item In fact, \cd{node} can be a node-name-like character string, even if it is not actually a node in the model.  See example 4 in the code below.
-  \item One can also use \cd{model\$nodeName}, with the caveat that \cd{nodeName} can't be a variable and so would only make sense for a nimbleFunction written for models known to have a specific node.
+  \item One can also use \cd{model\$nodeName}, with the caveat that \cd{nodeName} can't be a variable (i.e., it needs to be the actual name of a variable or node) and so would only make sense for a nimbleFunction written for models known to have a specific node.
  \item one should use the \cd{<<-} global assignment operator to assign into model nodes. 
 \end{itemize}
 
@@ -259,24 +259,25 @@ cm <- compileNimble(m)
 
 nfGen <- nimbleFunction(
     setup = function(model) {
-        ## node1 and node2 would typically be setup arguments, so they could
-        ## have different values for different models.  We are assigning values
-        ## here so the example is clearer.
+    ## node1 and node2 would typically be setup arguments, so they could
+    ## have different values for different models.  We are assigning values
+    ## here so the example is clearer.
         node1 <- 'sigma'            ## a scalar node 
         node2 <- 'y[1:5]'           ## a vector node
-        notReallyANode <- 'y[2:4]'  ## y[2:4] is allowed even though it is not a node!
+        notReallyANode <- 'y[2:4]'  ## y[2:4] allowed even though not a node!
     },
     run = function(vals = double(1)) {
         tmp0 <- model[[node1]]           # 1. tmp0 will be a scalar
         tmp1 <- model[[node2]]           # 2. tmp1 will be a vector
         tmp2 <- model[[node2]][1]        # 3. tmp2 will be a scalar
         tmp3 <- model[[notReallyANode]]  # 4. tmp3 will be a vector
-        tmp4 <- model$y[3:4]             # 5. hard-coded access to a model variable
-        model[[node1]] <<- runif(1) # 5. node1 is scalar so can be assigned a scalar
+        tmp4 <- model$y[3:4]      # 5. hard-coded access to a model variable
+        # 6. node1 is scalar so can be assigned a scalar:
+        model[[node1]] <<- runif(1) 
         model[[node2]][1] <<- runif(1) 
-                 # 6. an element of node2 can be assigned a scalar 
+                 # 7. an element of node2 can be assigned a scalar 
         model[[node2]] <<- runif(length(model[[node2]]))
-                 # 7. a vector can be assigned to the vector node2
+                 # 8. a vector can be assigned to the vector node2
         model[[node2]][1:3] <<- vals[1:3] 
              ## elements of node2 can be indexed as needed
         returnType(double(1))
@@ -333,8 +334,10 @@ can be achieved by wrapping a scalar in \cd{c()} when necessary.
 For example:
 
 <<eval=FALSE>>=
-values(model, nodes[1]) <- c(rnorm(1)) # c(rnorm(1)) creates vector of length one
-# values(model, nodes[1]) <- rnorm(1)  # won't compile because rnorm(1) is a scalar
+## c(rnorm(1)) creates vector of length one:
+values(model, nodes[1]) <- c(rnorm(1)) 
+## won't compile because rnorm(1) is a scalar
+# values(model, nodes[1]) <- rnorm(1)  
 
 out <- values(model, nodes[1]) ## out is a vector
 out2 <- values(model, nodes[1])[1] ## out2 is a scalar

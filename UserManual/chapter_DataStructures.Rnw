@@ -258,7 +258,7 @@ nimbleListTypes <- list(nimbleType(name = 'x', type = 'integer', dim = 0),
 @
 Creating definitions using a list of \cd{nimbleType}s can be useful, as it allows for programmatic generation of nimbleList elements.
 
-Once a nimbleList definition has been created, new instances of nimbleLists can be made from that definition using the \cd{new()} member function.  The \cd{new()} function can optionally take initial values for the list elements as arguments.  Below, we create a new nimbleList from our \cd{exampleNimListDef} and specify values for the two elements of our list:
+Once a nimbleList definition has been created, new instances of nimbleLists can be made from that definition using the \cd{new} member function.  The \cd{new} function can optionally take initial values for the list elements as arguments.  Below, we create a new nimbleList from our \cd{exampleNimListDef} and specify values for the two elements of our list:
 
 <<exampleCreateNimList>>=
  exampleNimList <- exampleNimListDef$new(x = 1, Y = diag(2))
@@ -268,7 +268,7 @@ Once created, nimbleList elements can be accessed using the \cd{\$} operator, ju
 <<exampleSetNimList>>=
  exampleNimList$x <- 7
 @
-nimbleList definitions can be created either in R's global environment or in \cd{setup} code of a nimbleFunction.  Once a nimbleList definition has been made, new instances of nimbleLists can be created using the \cd{new()} function in R's global environment, in setup code, or in run code of a nimbleFunction.
+nimbleList definitions can be created either in R's global environment or in \cd{setup} code of a nimbleFunction.  Once a nimbleList definition has been made, new instances of nimbleLists can be created using the \cd{new} function in R's global environment, in setup code, or in run code of a nimbleFunction.
 
 nimbleLists can also be passed as arguments to run code of nimbleFunctions and returned from nimbleFunctions.  To use a nimbleList as a run function argument, the name of the nimbleList definition should be provided as the argument type, with a set of parentheses following.  To return a nimbleList from the run code of a nimbleFunction, the \cd{returnType} of that function should be the name of the nimbleList definition, again using a following set of parentheses.
 
