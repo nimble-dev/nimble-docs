@@ -1,0 +1,144 @@
+# Planning to make dynamic (stochastic) indexing work
+
+## Some prototype cases:
+
+```{r, eval = FALSE}
+## Basic case
+quote({
+    for(i in 1:5) x[i] ~ dnorm(0, sd = 1)
+    p <- rep(0.2, 5)
+    for(i in 1:10) {
+        k[i] ~ dcat(p)
+        y[i] ~ dnorm( x[k[i]], sd = 1)
+    }
+})
+
+
+```
+
+
+
+```{r, eval=FALSE}
+## Computed indices
+quote({
+    for(i in 1:5) x[i] ~ dnorm(0, sd = 1)
+    p <- rep(0.2, 4)
+    for(i in 1:10) {
+        k[i] ~ dcat(p)
+        y[i] ~ dnorm( x[k[i]+1], sd = 1) ## or foo(k[i])
+    }
+})
+```
+
+
+```{r, eval=FALSE}
+## computed from multiple other nodes
+quote({
+    for(i in 1:5) x[i] ~ dnorm(0, sd = 1)
+    p <- rep(0.2, 2)
+    for(i in 1:10) {
+        k[i] ~ dcat(p)
+        j[i] ~ dcat(p)
+        y[i] ~ dnorm( x[k[i]+j[i]], sd = 1) ## or foo(k[i], j[i])
+    }
+})
+```
+
+
+```{r, eval = FALSE}
+## Non-simple alignment of indices
+quote({
+    for(i in 1:5) x[i] ~ dnorm(0, sd = 1)
+    p <- rep(0.2, 5)
+    for(i in 1:10) {
+        k[i] ~ dcat(p)
+        y[i] ~ dnorm( x[k[11-i]], sd = 1)
+    }
+})
+```
+
+
+```{r, eval = FALSE}
+## chained cases
+quote({
+    for(i in 1:5) x[i] ~ dnorm(0, sd = 1)
+    p <- rep(0.2, 5)
+    for(i in 1:10) {
+        k[i] ~ dcat(p)
+        y[i] ~ dnorm( x[k[i]], sd = 1)
+    }
+    
+    for(i in 1:10) {
+        j[i] ~ dcat(p)
+        z[i] ~ dnorm( y[j[i]], sd = 1)
+    }
+    
+})
+
+```
+
+
+```{r, eval = FALSE}
+## More complicated connected cases
+quote({
+    for(i in 1:5) x[i] ~ dnorm(0, sd = 1)
+    p <- rep(0.2, 5)
+    for(i in 1:10) {
+        k[i] ~ dcat(p)
+        y[i] ~ dnorm( x[k[i]], sd = 1)
+    }
+
+    for(i in 1:5) w[i] ~ dnorm(0, sd = 1)
+    for(i in 1:10) {
+        l[i] ~ dcat(p)
+        m[i] <- foo(l[i], x[floor(i/2)])
+        z[i] ~ dnorm( w[m[i]] + y[i], sd = 1)
+    }
+    
+})
+
+```
+
+## Design ideas
+
+Using the first simple prototype as an example: There would be a special abstract node `x` representing all of x.  Let's call it a "dynamically indexed variable".  If helpful, we could label it `x_dynamicIndex_` or similar.   In effect all nodes within x (`x[i]`) would have x as a child.  And all nodes that use `x` with unknown index (`y[i]`) would have x as a parent.  But we need a way to get children of `x[3]` without including all of y.  So this would be done at run-time.
+
+Note that we are already very close to having the capability of getting dependencies at run-time.  So this would be an extension of that.
+
+In order to do so, we could have a system where, when we need dependencies of `c(x[3], x[5:7])` (i.e., an arbitrary subset of x), the occurrence of a dynamicIndex variable would trigger different handling.  First, in setup code, `model$getDependencies(c(x[3], x[5:7]))` would return an object that simply contains the content `c(x[3], x[5:7])` and a tag (attribute or class) that the dependencies need run-time evaluation.  Second, the run-time evaluation system would need to handle `x` specially: it would need to query its children for which ones currently use an index in `(3, 5, 6, 7)`.
+
+I think the easiest way to implement this would be to lift non-simple dynamic indices.  E.g.,
+```{r, eval = FALSE}
+## from
+y[i] ~ dnorm( x[ k[i] + 1], 1)
+## we would create
+y_index1_x[i] <- k[i] + 1
+y[i] ~ dnorm( x[ y_index1_x[i] ], 1)
+```
+The point is that we need a way at run-time to ask for the index value, e.g. `k[i] + 1`.  Another way to do this would be to pack it into the `getParam` system, since this contains a `switch` statement with arbitrary computations for different cases.
+
+Of course, the `getDependencies` input could start "above" elements of x and could continue beyond elements of y.   The "more complicated connected cases" is particularly challenging: A change to an element of x can have `y[i]` as a child, `m[i]` as a child (an index for `z[i]`), and then `z[i]` as a child by virtue of modifying `y[i]` and/or the index `m[i]`.  Note that I am using `i` generically here as "unkown index".
+
+At first glance, this would imply that some nodes (e.g. `m[i]`) need to be calculated before subsequent dependencies can be determined.  In other words, determining dependencies and running the calculations would need to be intermixed.  For example, if we use the "current" value of `m[i]` to determine which `z[i]`s to include, would we get the wrong answer because the value of `m[i]` could change when the calculations are run?  But the following observation makes it possible to determine dependencies prior to any calculations: `z[5]` needs to count as a dependency *either* if `m[5]` is a dependency *or*  if `w[ current value of m[5] ]` is a dependency.   Put another way: say `w[3]` changes and `m[5] = 3`.   If `m[5]` changes, then `z[5]` must be a dependency because its index for `y` changed.  If `m[5]` does not change, then `z[5]` must be a dependency because `w[m[5]]` changed.
+
+A topic for more thought is multivariate dynamic indexing and combinations of dynamic and static indexing.  From `x[i, k[j] ]`, would we create `x_dynamicIndex_i1_`, `x_dynamicIndex_i2_`, etc?  It may be feasible since these only exist as abstractions in the graph; we don't actually build nodeFunctions for them.  Also it would prevent wasted dynamic dependency searches over both indices (if we just decide any dynamic index makes all indices treated as dynamic).
+
+## Implementation steps
+
+This is going to be rough and surely not anticipate every step.
+
+1. Modify the extraction of parentNodeNames to recurse into index expressions.  Currently that step errors out if an index involves a node.
+
+2. Modify the extraction of parentNodeNames to somehow annotate when a parent involves a dynamic index (and in which index slot(s) this occurs). 
+
+3. Modify construction of the graph information in R to include dynamicIndex nodes.  This would involve a new node type label and some additional thought: what information needs to be retained, if any?  We already keep track of which piece of a child expression each parent expression represents.  That may be enough.
+
+4. Modify C++ graph classes.
+
+5. Modify getDependencies so during setup it can return something annotated with "do this at run-time"
+
+6. Modify C++ nodeFunctionVector to capture "do this at run-time"
+
+7. Write versions of calculate etc. that gather dependencies at run time.  *A major part of this step can be done fairly independently of the previous steps.*   This would also allow us to benchmark the run-time cost of getting dependencies by doing so for static cases.
+
+
