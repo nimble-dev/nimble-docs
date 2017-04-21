@@ -12,7 +12,7 @@ We put some initial notes [here](https://github.com/nimble-dev/nimble/wiki/NIMBL
 
 3. [Summary of processing flow of compiling a nimbleFunction](https://github.com/nimble-dev/nimble/wiki/NIMBLE-function-compilation-flow)
 
-4. [Cliff's notes on keyword processing](keywordProcessing.pdf)
+4. [Cliff's notes on keyword processing](keywordProcessing.tex).  (This currently links to a .tex file.)
 
 ## Here are some newer pages:
 
