@@ -1,0 +1,29 @@
+# Notes on extending AD!
+
+## DSL interface to call to get derivatives?
+
+1. predefined nimbleList
+2. keyword processing, size processing, etc.
+    a. Make decision on DSL format from [wiki discussion](https://github.com/nimble-dev/nimble/wiki/Automatic-differentiation-in-NIMBLE).
+3. generalize `run_gradient` to `run_derivs` and `getGradient` to `getDerivs` (use `nimbleCppADinfoClass` to pack up any additional information such as which variables and what order derivatives are requested - maybe not worry about full generality).
+4. [CppAD documentation on getting different derivatives](https://www.coin-or.org/CppAD/Doc/adfun.htm)
+5. Derivatives of order n should be returned with nDim = n+1 (Jacobian, etc.)
+6. Nested derivatives should work easily (if one templated method calls another templated method), but if not, let's punt for now.
+7. The argument packing and unpacking would establish the "standard" order, which the programmer would have to understand in order to use the result correctly.  Could be helpful to make an object with that standard order information easily usable.
+8. Requests for derivs wrt to specific inputs (or outputs) would need to make use of the standard order.
+9. Possibly return a character vector orders in the nimbleList.
+10. For now (maybe for a long time!), no derivatives are allowed wrt elements of a nimbleList argument or for elements of a nimbleList return value.
+11. Question: Should we implement everything for non-scalar (or vector only?, or non-scalar always treated as vector) return values at this stage?
+12. Eigen processing works, but is worth some careful checking (especially our own eigen classes).
+
+## Build CppAD definitions for distributions
+
+1. Template Model Builder has done a good job of this (with macros).
+
+## nodeFunctions and calculate...?
+
+1. `enableDerivs=TRUE` for nodeFunctions.  Need to treat "inputs" as the graph parents, not actual function arguments.
+2. Write `calculate` and `calculateDiff` that propagates the chain rule.
+3. Figure out DSL call for model$calculate with derivatives.
+
+
