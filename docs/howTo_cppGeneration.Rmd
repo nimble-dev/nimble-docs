@@ -1,0 +1,31 @@
+---
+title: "How to Add a New C++ Output Generator"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(nimble)
+```
+
+This guide describes how to add a new C++ output generator to NIMBLE.  C++ output generators are used to generate lines of C++ code from NIMBLE syntax trees.  
+
+## Adding a C++ Generator
+
+1.  Add an entry to the `cppOutputCalls` list in  [genCpp_generateCpp.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/genCpp_generateCpp.R).  The entry should be of the form `fxnName = 'cppGeneratorName'`, where where `fxnName` is the name of the DSL function to generate C++ code for, and `'cppGeneratorName'` is a character string naming the new C++ generator function.
+
+2. Create a new C++ generator function.  
+    * NIMBLE C++ generator functions take two arguemnts: 
+        1. `code`, a NIMBLE expression class object that has been annotated by size processing
+        2. `symTab`, the `symbolTable` for the `nimbleFunction` method that code is being generated for.
+    * C++ generator functions should return a character string that is a line of C++ code.  
+
+
+
+## Commonly Used C++ Generators
+
+NIMBLE has many C++ generator functions.  We list a few below, but they can all be found in [genCpp_generateCpp.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/genCpp_generateCpp.R).
+
+* `cppOutputPointerDereference`: used to dereference a C++ pointer object
+* `cppOutputTemplate`: used to generate a line of code for a C++ template object
+* `cppOutputLiteral`: used by the `cppLiteral()` function.  The `cppLiteral` function takes character strings of fully written C++ code as arguments, and outputs that same code.  Useful in situations where a complex / unique line of code needs to be generated, and it is simpler to type the code out manually than generate it.  Some examples exist in [cppDefs_nimbleList.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/cppDefs_nimbleList.R).

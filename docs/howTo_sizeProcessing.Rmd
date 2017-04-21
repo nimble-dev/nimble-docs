@@ -8,7 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(nimble)
 ```
 
-This guide first briefly describes the size processing system in NIMBLE.  It then describes the process of adding a new size processor and lists some commonly used size processors.
+This guide first briefly describes the size processing system in NIMBLE.  It then describes the process of adding a new size processor and lists some commonly used size processors.  Note that NIMBLE's size processing functionality can largely be found in [genCpp_sizeProcessing.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/genCpp_sizeProcessing.R).
 
 
 ## Size Processing Overview
@@ -38,16 +38,16 @@ Size processors collect additional expressions, called `asserts`, that are later
     * `code`: the expression class object representing the node of the syntax tree
     * `symTab`: the symbol table for the nimbleFunction method that is currently being size processed
     * `typeEnv`: an environment with size expressions for known objects.  See additional information at top of `genCpp_initSizes.R`.
-* Any new size processor should set the `code` fields described in [Size Processing Notes](#size-processing-notes)
+* Any new size processor should set the `code` fields described in [Size Processing Overview](#size-processing-overview)
 * If another size processor is called from within the new size processor (e.g. `sizeInsertIntermediate()` is commonly called from within a size processor), be sure to collect the `asserts` returned by that size processor. Size processing functions can also create their own `asserts` expressions.  Any `asserts` either created or collected within a size processor should be returned from that size processor.  If it is known that no `asserts` exist at the end of a size processor, an empty `list()` should be returned.
 
-* Any new size processing function must be added to the `sizeCalls` list, located at the top of `genCpp_sizeProcessing.R`.  The entry should be of the form `fxnName = 'sizeProcessorName'`, where `fxnName` is the name of the DSL function to be size processed, and `'sizeProcessorName'` is a character string naming the new size processing function.
+* Any new size processing function must be added to the `sizeCalls` list, located at the top of [genCpp_sizeProcessing.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/genCpp_sizeProcessing.R).  The entry should be of the form `fxnName = 'sizeProcessorName'`, where `fxnName` is the name of the DSL function to be size processed, and `'sizeProcessorName'` is a character string naming the new size processing function.
 
 
 
 ## Commonly Used Size Processors
 
-* `exprClasses_setSizes()`:  See note above the `exprClasses_setSizes()` function in `genCpp_sizeProcessing.R` for more information.
+* `exprClasses_setSizes()`:  See note above the `exprClasses_setSizes()` function in [genCpp_sizeProcessing.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/genCpp_sizeProcessing.R) for more information.
 * `sizeInsertIntermediate()`:  Used to lift a node, creating an intermediate node.  Useful especially in situations where a part of a line of code needs to be eigenized.  
 * `sizeAssignAfterRecursing()`:  The main size processor for assignment operations.  Called after the left and right hand sides of an assignment operation have been annotated.  This processor considers all valid combinations of left hand and right hand side types for an assignment operations, and as such is rather long.
 * `recurseSetSizes()`: Recursively annotates arguments of a node in the syntax tree.  Should generally be called at the beginning of a size processor if that node's arguments may need processing. 

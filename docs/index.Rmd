@@ -12,6 +12,15 @@ We put some initial notes [here](https://github.com/nimble-dev/nimble/wiki/NIMBL
 
 3. [Summary of processing flow of compiling a nimbleFunction](https://github.com/nimble-dev/nimble/wiki/NIMBLE-function-compilation-flow)
 
+4. [Cliff's notes on keyword processing](keywordProcessing.pdf)
+
 ## Here are some newer pages:
 
 4. [Navigating nimble objects to find internal information](navigating_nimble_objects.html), especially about compilation.
+
+5. [How to add a new symbol type](howTo_symbolTable.html)
+
+6. [How to add a new size processor](howTo_sizeProcessing.html)
+
+7. [How to add a new C++ output generator](howTo_cppGeneration.html)
+

@@ -120,7 +120,7 @@ $(document).ready(function () {
 </div>
 
 
-<p>This tutorial first briefly describes symbols and <code>symbolTables</code> in NIMBLE. It then describes the process of adding a new symbol type to NIMBLE’s processing system.</p>
+<p>This tutorial first briefly describes symbols and <code>symbolTables</code> in NIMBLE. It then describes the process of adding a new symbol type to NIMBLE’s processing system. Note that definitions for symbols in NIMBLE are located in <a href="https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/types_symbolTable.R">types_symbolTable.R</a></p>
 <div id="symbols-and-symboltables" class="section level2">
 <h2>Symbols and symbolTables</h2>
 <p>Symbols in NIMBLE represent objects that are used within <code>nimbleFunction</code>s. Symbols are stored in a <code>symbolTable</code>. <code>symbolTable</code>s are populated throughout the compilation process, and can be referenced during compilation to retrieve useful information about the objects needed within a <code>nimbleFunciton</code>.</p>
@@ -135,7 +135,7 @@ $(document).ready(function () {
 <pre class="r"><code>myMatrixSymbol &lt;- nimble:::symbolDouble(name = &quot;myMatrix&quot;, size = c(2,2), nDim = 2)</code></pre>
 <p>Assuming that a symbolTable named <code>mySymTab</code> already existed, <code>myMatrixSymbol</code> could be added to <code>mySymTab</code> via:</p>
 <pre class="r"><code>mySymTab$addSymbol(myMatrixSymbol)</code></pre>
-<p>The symbols avaialable in a <code>symbolTable</code> can be viewed by</p>
+<p>The symbols available in a <code>symbolTable</code> can be viewed by</p>
 <pre class="r"><code>mySymTab</code></pre>
 <pre><code>## symbol table:
 ## myMatrix: double sizes = (2, 2), nDim = 2</code></pre>
@@ -145,14 +145,14 @@ $(document).ready(function () {
 </div>
 <div id="adding-a-new-symbol-type" class="section level2">
 <h2>Adding a New Symbol Type</h2>
-<p>To create a new symbol type, you must create a new reference class definition for that type. Many examples of such reference class definitions can be found in the <code>types_symbolTable.R</code> file.</p>
+<p>To create a new symbol type, you must create a new reference class definition for that type. Many examples of such reference class definitions can be found in the <a href="https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/types_symbolTable.R">types_symbolTable.R</a> file.</p>
 <p>New reference class definitions for symbol objects in NIMBLE should inherit from the <code>symbolBase</code> reference class, which defines the <code>name</code> and <code>type</code> fields. Additional fields can be included that can contain information that will be useful to have at a later point in processing.</p>
 <p>New symbol type reference class definitions should define at least two methods:</p>
 <ul>
 <li><p><code>show()</code>, which is called when an object is printed. The <code>show()</code> method can easily be written by analogy to the currently existing symbol reference class <code>show()</code> methods.</p></li>
 <li><p><code>genCppVar(...)</code>, which is used to generate a line of C++ code that will create a new instance of this variable. The <code>genCppVar(...)</code> method should return a reference class that can be used to generate a line of C++ code that will create a new object of that type.</p></li>
 </ul>
-<p>Generally, the <code>genCppVar(...)</code> method should return a call to either <code>cppVar()</code> or <code>cppVarFull()</code>, both reference class definitons that exist in cppDefs_variables.R. <code>cppVar()</code> can be used to generate C++ code that creates instances of objects, pointers to objects, or references to objects. If a more detailed line of C++ code needs to be generated (e.g. for static or templated objects), the <code>cppVarFull()</code> class should be used. Examples of using both <code>cppVar()</code> and <code>cppVarFull()</code> to define <code>genCppVar(...)</code> methods can be found in <code>types_symbolTable.R</code>.</p>
+<p>Generally, the <code>genCppVar(...)</code> method should return a call to either <code>cppVar()</code> or <code>cppVarFull()</code>, both reference class definitions that exist in cppDefs_variables.R. <code>cppVar()</code> can be used to generate C++ code that creates instances of objects, pointers to objects, or references to objects. If a more detailed line of C++ code needs to be generated (e.g. for static or templated objects), the <code>cppVarFull()</code> class should be used. Examples of using both <code>cppVar()</code> and <code>cppVarFull()</code> to define <code>genCppVar(...)</code> methods can be found in <a href="https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/types_symbolTable.R">types_symbolTable.R</a> .</p>
 </div>
 <div id="tips" class="section level2">
 <h2>Tips</h2>

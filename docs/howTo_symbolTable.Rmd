@@ -9,7 +9,7 @@ library(nimble)
 mySymTab <- nimble:::symbolTable()
 ```
 
-This tutorial first briefly describes symbols and `symbolTables` in NIMBLE.  It then describes the process of adding a new symbol type to NIMBLE's processing system.
+This tutorial first briefly describes symbols and `symbolTables` in NIMBLE.  It then describes the process of adding a new symbol type to NIMBLE's processing system.  Note that definitions for symbols in NIMBLE are located in [types_symbolTable.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/types_symbolTable.R) 
 
 ## Symbols and symbolTables
 
@@ -43,7 +43,7 @@ mySymTab$getSymbolObject('myMatrix')
 
 ## Adding a New Symbol Type
 
-To create a new symbol type, you must create a new reference class definition for that type.  Many examples of such reference class definitions can be found in the `types_symbolTable.R` file.
+To create a new symbol type, you must create a new reference class definition for that type.  Many examples of such reference class definitions can be found in the [types_symbolTable.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/types_symbolTable.R)  file.
 
 New reference class definitions for symbol objects in NIMBLE should inherit from the `symbolBase` reference class, which defines the `name` and `type` fields.  Additional fields can be included that can contain information that will be useful to have at a later point in processing.  
 
@@ -53,7 +53,7 @@ New symbol type reference class definitions should define at least two methods:
 
 * `genCppVar(...)`, which is used to generate a line of C++ code that will create a new instance of this variable.  The `genCppVar(...)` method should return a reference class that can be used to generate a line of C++ code that will create a new object of that type.
 
-Generally, the `genCppVar(...)` method should return a call to either `cppVar()` or `cppVarFull()`, both reference class definitions that exist in cppDefs_variables.R.  `cppVar()` can be used to generate C++ code that creates instances of objects, pointers to objects, or references to objects.  If a more detailed line of C++ code needs to be generated (e.g. for static or templated objects), the `cppVarFull()` class should be used.  Examples of using both `cppVar()` and `cppVarFull()` to define `genCppVar(...)` methods can be found in `types_symbolTable.R`.
+Generally, the `genCppVar(...)` method should return a call to either `cppVar()` or `cppVarFull()`, both reference class definitions that exist in cppDefs_variables.R.  `cppVar()` can be used to generate C++ code that creates instances of objects, pointers to objects, or references to objects.  If a more detailed line of C++ code needs to be generated (e.g. for static or templated objects), the `cppVarFull()` class should be used.  Examples of using both `cppVar()` and `cppVarFull()` to define `genCppVar(...)` methods can be found in [types_symbolTable.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/types_symbolTable.R) .
 
 ## Tips
 
