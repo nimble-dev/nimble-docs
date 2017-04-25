@@ -1,6 +1,8 @@
 nimble-docs
 ===========
 
+https://nimble-dev.github.io/nimble-docs
+
 Repository for NIMBLE documentation
 
 To build the User Manual, go to the User Manual directory and run 'make NimbleUserManual.pdf'.
