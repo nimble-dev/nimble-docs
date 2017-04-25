@@ -30,10 +30,10 @@ model <- nimbleModel(mc, data = list(z = matrix(rnorm(15), nrow = 5)))
 
 model$a <- 5
 model$a
-model[['a']]
+model[["a"]]
 model$y[2:4] <- rnorm(3)
 model$y
-model[['y']][c(1, 5)] <- rnorm(2)
+model[["y"]][c(1, 5)] <- rnorm(2)
 model$y
 model$z[1,]
 
@@ -45,16 +45,16 @@ model$getNodeNames()
 ## @knitr usingModelLogProbs
 
 model$logProb_y
-model$calculate('y')
+model$calculate("y")
 model$logProb_y
 
 ## @knitr usingNodeNames
 
-model[['y[2]']]
-model[['y[2]']] <- -5
+model[["y[2]"]]
+model[["y[2]"]] <- -5
 model$y
-model[['z[2, 3]']]
-model[['z[2:4, 1:2]']][1, 2]
+model[["z[2, 3]"]]
+model[["z[2:4, 1:2]"]][1, 2]
 model$z[2, 2]
 
 ## @knitr multivariateExpandNodeNames
@@ -85,23 +85,23 @@ model <- nimbleModel(mc, data = list(z = matrix(rnorm(15), nrow = 5)))
 
 model$a <- 1
 model$y
-model$simulate('y[1:3]')
-## simulate(model, 'y[1:3]')
+model$simulate("y[1:3]")
+## simulate(model, "y[1:3]")
 model$y
-model$simulate('y')
-model$y
-model$z
-model$simulate(c('y[1:3]', 'z[1:5, 1:3]'))
+model$simulate("y")
 model$y
 model$z
-model$simulate(c('z[1:5, 1:3]'), includeData = TRUE)
+model$simulate(c("y[1:3]", "z[1:5, 1:3]"))
+model$y
+model$z
+model$simulate(c("z[1:5, 1:3]"), includeData = TRUE)
 model$z
 
 ## @knitr calcSimGLPdirect
 
-## y2lp <- model$nodes[['y[2]']]$calculate()
+## y2lp <- model$nodes[["y[2]"]]$calculate()
 ## y2lp
-## model$nodes[['y[2]']]$getLogProb()
+## model$nodes[["y[2]"]]$getLogProb()
 
 ## @knitr reinitPumpModel
 
@@ -124,7 +124,7 @@ pumpData <- list(x = c(5, 1, 5, 14, 3, 19, 1, 1, 4, 22))
 pumpInits <- list(alpha = 1, beta = 1,
               theta = rep(0.1, pumpConsts$N))
 
-pump <- nimbleModel(code = pumpCode, name = 'pump', constants = pumpConsts,
+pump <- nimbleModel(code = pumpCode, name = "pump", constants = pumpConsts,
                     data = pumpData, inits = pumpInits)
 
 ## @knitr getVarAndNodeNamesPump
@@ -150,17 +150,17 @@ multiVarModel2 <- nimbleModel(multiVarCode2, dimensions = list(mu = 5, cov = c(5
                              calculate = FALSE)
 
 
-multiVarModel2$expandNodeNames('Y')
+multiVarModel2$expandNodeNames("Y")
 
-multiVarModel2$expandNodeNames(c('X', 'Y'), returnScalarComponents = TRUE)
+multiVarModel2$expandNodeNames(c("X", "Y"), returnScalarComponents = TRUE)
 
 
 ## @knitr getDependencies
 
-pump$getDependencies('alpha')
-pump$getDependencies(c('alpha', 'beta'))
-pump$getDependencies('theta[1:3]', self = FALSE)
-pump$getDependencies('theta[1:3]', stochOnly = TRUE, self = FALSE)
+pump$getDependencies("alpha")
+pump$getDependencies(c("alpha", "beta"))
+pump$getDependencies("theta[1:3]", self = FALSE)
+pump$getDependencies("theta[1:3]", stochOnly = TRUE, self = FALSE)
 # get all dependencies, not just the direct descendants
-pump$getDependencies('alpha', downstream = TRUE)
-pump$getDependencies('alpha', downstream = TRUE, dataOnly = TRUE)
+pump$getDependencies("alpha", downstream = TRUE)
+pump$getDependencies("alpha", downstream = TRUE, dataOnly = TRUE)

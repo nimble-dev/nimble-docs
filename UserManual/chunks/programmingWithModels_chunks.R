@@ -47,11 +47,11 @@ code <- nimbleCode({
     b ~ dnorm(a, 1)
 })
 testModel <- nimbleModel(code, check = FALSE)
-logProbCalcPlusA <- logProbCalcPlus(testModel, 'a')
+logProbCalcPlusA <- logProbCalcPlus(testModel, "a")
 testModel$b <- 1.5
 logProbCalcPlusA$run(0.25) 
 dnorm(1.25,0,1,TRUE)+dnorm(1.5,1.25,1,TRUE) ## direct validation
-testModel$a  ## 'a' was set to 0.5 + valueToAdd
+testModel$a  ## "a" was set to 0.5 + valueToAdd
 
 
 ## @knitr nf-compiling
@@ -98,8 +98,8 @@ CsolveLeastSquares(X, y)
 
 ## @knitr mv-setup-code
 ## Accepting modelValues as a setup argument
-swConf <- modelValuesConf(vars = 'w',
-                                    types = 'double',
+swConf <- modelValuesConf(vars = "w",
+                                    types = "double",
                                     sizes = 1)
 setup = function(propModelValues, model, savedWeightsConf){
     ## Building a modelValues in the setup function 
@@ -124,9 +124,9 @@ run = function(){
         ## calculates the log likelihood of the model
         targLL <- model$calculate()
         ## retreaves the saved log likelihood from the proposed model
-        propLL <- propModelValues['propLL',i][1]
+        propLL <- propModelValues["propLL",i][1]
         ## saves the importance weight for the i-th sample 
-        savedWeights['w', i][1] <<- exp(targLL - propLL)
+        savedWeights["w", i][1] <<- exp(targLL - propLL)
     }
     ## does not return anything
 }
@@ -153,8 +153,8 @@ cTargetModel = compileNimble(targetModel)
 cPropModel = compileNimble(propModel)
 
 
-sampleMVConf = modelValuesConf(vars = c('x', 'y', 'propLL'), 
-    types = c('double', 'double', 'double'), 
+sampleMVConf = modelValuesConf(vars = c("x", "y", "propLL"), 
+    types = c("double", "double", "double"), 
     sizes = list(x = 1, y = 4, propLL = 1) )
 
 sampleMV <- modelValues(sampleMVConf)
@@ -169,7 +169,7 @@ PropSamp_Gen <- nimbleFunction(
         for(i in 1:m){
             propModel$simulate()
             nimCopy(from = propModel, to = mv, nodes = nodeNames, row = i)
-            mv['propLL', i][1] <<- propModel$calculate()
+            mv["propLL", i][1] <<- propModel$calculate()
         }
     }
     )
@@ -205,18 +205,18 @@ savedPropSamp_2 = CPropSamp$mv
 # both provide interface to the same compiled modelValues objects!
 # This is because they were both built from sampleMV.
 
-savedPropSamp_1['x',1]
+savedPropSamp_1["x",1]
 
-savedPropSamp_2['x',1]
+savedPropSamp_2["x",1]
 
-savedPropSamp_1['x',1] <- 0 ## example of directly setting a value
-savedPropSamp_2['x',1]
+savedPropSamp_1["x",1] <- 0 ## example of directly setting a value
+savedPropSamp_2["x",1]
 
 ## viewing the saved importance weights
 savedWeights <- CImpWeights$savedWeights
-unlist(savedWeights[['w']])
+unlist(savedWeights[["w"]])
 
-## viewing first 3 rows -- note that savedPropSsamp_1['x', 1] was altered 
+## viewing first 3 rows -- note that savedPropSsamp_1["x", 1] was altered 
 as.matrix(savedPropSamp_1)[1:3, ]
 
 ## @knitr usingMemberFunctions
@@ -224,9 +224,9 @@ as.matrix(savedPropSamp_1)[1:3, ]
 methodsDemo <- nimbleFunction(
     setup = function() {sharedValue <- 1},
     run = function(x = double(1)) {
-        print('sharedValues = ', sharedValue, '\n')
+        print("sharedValues = ", sharedValue, "\n")
         increment()
-        print('sharedValues = ', sharedValue, '\n')
+        print("sharedValues = ", sharedValue, "\n")
         A <- times(5)
         return(A * x)
         returnType(double(1))
@@ -279,13 +279,13 @@ derived1 <- nimbleFunction(
     contains = baseClass,
     setup = function(){},
     run = function(x = double(1)) {
-        print('run 1')
+        print("run 1")
         return(sum(x))
         returnType(double())
     },
     methods = list(
         foo = function() {
-        print('foo 1')
+        print("foo 1")
         return(rnorm(1, 0, 1))
         returnType(double())
     }))
@@ -294,13 +294,13 @@ derived2 <- nimbleFunction(
     contains = baseClass,
     setup = function(){},
     run = function(x = double(1)) {
-        print('run 2')
+        print("run 2")
         return(prod(x))
         returnType(double())
     },
     methods = list(
         foo = function() {
-        print('foo 2')
+        print("foo 2")
         return(runif(1, 100, 200))
         returnType(double())
     }))

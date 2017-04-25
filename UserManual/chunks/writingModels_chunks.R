@@ -30,15 +30,15 @@ sizes <- c(45, 30, 30,
            rep(50, 4),
            rep(20, 4))
 
-edge.color <- 'black'
+edge.color <- "black"
     ## c(
-    ## rep('green', 8),
-    ## rep('red', 4),
-    ## rep('blue', 4),
-    ## rep('purple', 4))
-stoch.color <- 'deepskyblue2'
-det.color <- 'orchid3'
-rhs.color <- 'gray73'
+    ## rep("green", 8),
+    ## rep("red", 4),
+    ## rep("blue", 4),
+    ## rep("purple", 4))
+stoch.color <- "deepskyblue2"
+det.color <- "orchid3"
+rhs.color <- "gray73"
 fill.color <- c(
     rep(stoch.color, 3),
     rep(rhs.color, 4),
@@ -47,7 +47,7 @@ fill.color <- c(
 )
 
 
-plot(model$graph, vertex.shape = 'crectangle',
+plot(model$graph, vertex.shape = "crectangle",
      vertex.size = sizes,
      vertex.size2 = 20,
      layout = layout,

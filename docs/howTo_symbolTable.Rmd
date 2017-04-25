@@ -1,0 +1,62 @@
+---
+title: "How to Add a New Symbol Type"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(nimble)
+mySymTab <- nimble:::symbolTable()
+```
+
+This tutorial first briefly describes symbols and `symbolTables` in NIMBLE.  It then describes the process of adding a new symbol type to NIMBLE's processing system.  Note that definitions for symbols in NIMBLE are located in [types_symbolTable.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/types_symbolTable.R) 
+
+## Symbols and symbolTables
+
+Symbols in NIMBLE represent objects that are used within `nimbleFunction`s.  Symbols are stored in a `symbolTable`.  `symbolTable`s are populated throughout the compilation process, and can be referenced during compilation to retrieve useful information about the objects needed within a `nimbleFunciton`.  
+
+Each symbol entered into a `symbolTable` is a reference class object that will contain at the least the following two fields:
+
+* `name`, a character string giving the name of the object
+* `type`, a character string giving the type of the object
+
+Possible values of the `type` field  include types representing basic objects in `nimbleFunction`s, such as `integer` and `double`, and types representing more complex objects, such as `nimbleList`. 
+
+Different symbol types may have fields in addition to the `name` and `type` fields.  For example, the `double` symbol type also has fields for `size` and `nDim`.  
+
+To create a new symbol object from an existing symbol type, call the reference class definition that exists for that symbol type.  For example, a new symbol representing a 2x2 double matrix, named `myMatrix`, can be created by calling
+```{r}
+myMatrixSymbol <- nimble:::symbolDouble(name = "myMatrix", size = c(2,2), nDim = 2)
+```
+Assuming that a symbolTable named `mySymTab` already existed, `myMatrixSymbol` could be added to `mySymTab` via:
+```{r}
+mySymTab$addSymbol(myMatrixSymbol)
+```
+The symbols available in a `symbolTable` can be viewed by
+```{r}
+mySymTab
+```
+To get a symbol object from a `symbolTable`, you can call:
+```{r}
+mySymTab$getSymbolObject('myMatrix')
+```
+
+## Adding a New Symbol Type
+
+To create a new symbol type, you must create a new reference class definition for that type.  Many examples of such reference class definitions can be found in the [types_symbolTable.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/types_symbolTable.R)  file.
+
+New reference class definitions for symbol objects in NIMBLE should inherit from the `symbolBase` reference class, which defines the `name` and `type` fields.  Additional fields can be included that can contain information that will be useful to have at a later point in processing.  
+
+New symbol type reference class definitions should define at least two methods:
+
+* `show()`, which is called when an object is printed.  The `show()` method can easily be written by analogy to the currently existing symbol reference class `show()` methods.
+
+* `genCppVar(...)`, which is used to generate a line of C++ code that will create a new instance of this variable.  The `genCppVar(...)` method should return a reference class that can be used to generate a line of C++ code that will create a new object of that type.
+
+Generally, the `genCppVar(...)` method should return a call to either `cppVar()` or `cppVarFull()`, both reference class definitions that exist in cppDefs_variables.R.  `cppVar()` can be used to generate C++ code that creates instances of objects, pointers to objects, or references to objects.  If a more detailed line of C++ code needs to be generated (e.g. for static or templated objects), the `cppVarFull()` class should be used.  Examples of using both `cppVar()` and `cppVarFull()` to define `genCppVar(...)` methods can be found in [types_symbolTable.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/types_symbolTable.R) .
+
+## Tips
+
+* The `symbolBasic()` reference class can be used to create symbol types for numeric objects (e.g. double, integer).  See the `symbolDouble()` function for an example of this.
+
+* If a symbol object's type is `Ronly`, that object will be prevented from generating any C++ code.  This can be useful if an object's information is needed in a `symbolTable` (e.g. for later use in size processing), but that object is not needed in C++ code.

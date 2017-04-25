@@ -87,13 +87,14 @@ about its graph.
 % TODO: the logic here is a bit weird - we say we want to know all parents of theta are initialized by our code actually finds dependencies of alpha+beta not parents of theta
 
 <<manipPump>>=
+"
 @ 
 
 Notice that the first \cd{getDependencies} call returned dependencies
 from \cd{alpha} and \cd{beta} down to the next stochastic nodes in the
 model.  The second call requested only deterministic dependencies.
-The call to \cd{pump\$simulate(`theta')}
-expands \cd{`theta'} to include all nodes in \cd{theta}.  After
+The call to \cd{pump\$simulate("theta")}
+expands \cd{"theta"} to include all nodes in \cd{theta}.  After
 simulating into \cd{theta}, we can see that \cd{lambda} and the log
 probabilities of \cd{x} still reflect the old values of \cd{theta}, so
 we \cd{calculate} them and then see that they have been updated.
@@ -202,9 +203,9 @@ Here are a few things to notice about the nimbleFunction.
 \item Multiple instances, or ``specializations'', can be made by
   calling \cd{simNodesMany} with different arguments.  Above, \cd{simNodesTheta1to5} has
   been made by calling \cd{simNodesMany} with the \cd{pump} model and
-  nodes \cd{`theta[1:5]'} as inputs to
+  nodes \cd{"theta[1:5]"} as inputs to
   the \cd{setup} function, while \cd{simNodesTheta6to10} differs by
-  providing \cd{`theta[6:10]'} as an argument.  The returned objects
+  providing \cd{"theta[6:10]"} as an argument.  The returned objects
   are objects of a uniquely
   generated R reference class with fields (member data) for the results of the
   \cd{setup} code and a \cd{run} method (member function). 
