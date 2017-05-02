@@ -48,6 +48,7 @@
  %       \left(\frac{n}{m} \right)^{\frac{n}{2}} x^{\frac{n}{2} - 1} 
  %       \left\{1 + \frac{nx}{m} \right\}^{-\frac{(n + m)}{2}}$} & 0 & \\
  %     & $n > 0$, $m > 0$ \\
+      Flat (improper) & \cd{dflat()} & $\propto 1$ & & \\
       Gamma       & \cd{dgamma(shape = r, rate = $\lambda$)} & 
       \multirow{2}{*}{
         $\frac{\textstyle \lambda^r x^{r - 1} \exp(-\lambda x)}
@@ -60,6 +61,7 @@
  %       {\textstyle \Gamma(r)}$
  %     } & $0$ & \\
  %     gamma       & $\lambda >0$, $b > 0$, $r > 0$ \\
+      Half Flat (improper) & \cd{dflat()} & $\propto 1$ & $0$ & \\
       Inverse      & \cd{dinvgamma(shape = r,} & 
       \multirow{2}{*}{
         $\frac{\textstyle \lambda^r x^{-(r + 1)} \exp(-\lambda / x)}

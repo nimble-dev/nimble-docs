@@ -295,6 +295,15 @@ See Section \ref{sec:user-distributions} to learn how to write new distributions
 
 \input{densityTableLong.tex}
 
+\paragraph{Improper distributions}
+
+Note that \cd{dflat} and \cd{dhalfflat} specify improper prior distributions
+and should only be used when the posterior distribution of the model is known to be proper.
+Also for these distributions, the density function returns the unnormalized density
+and the simulation function returns \cd{NaN} so these distributions
+are not appropriate for algorithms that need to simulate from the
+prior or require proper (normalized) densities.
+
 \subsubsection{Alternative parameterizations for distributions}
 \label{subsec:alternative-params}
 
