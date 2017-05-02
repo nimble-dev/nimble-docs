@@ -82,10 +82,10 @@ End-to-end examples of MCMC in NIMBLE can be found in Sections \ref{sec:creating
 The MCMC configuration contains information needed for building an MCMC.  When no customization is needed, one can jump directly to the \cd{buildMCMC} step below.  An MCMC configuration is an object of class \cd{MCMCconf}, which includes:
 
 \begin{itemize}
-    \item the model on which the MCMC will operate;
-    \item the model nodes which will be sampled (updated) by the MCMC;
-    \item the samplers and their internal configurations, called control parameters;
-    \item two sets of variables that will be monitored (recorded) during execution of the MCMC and thinning intervals for how often each set will be recorded. Two sets are allowed because it can be useful to monitor different variables at different intervals.
+    \item The model on which the MCMC will operate
+    \item The model nodes which will be sampled (updated) by the MCMC
+    \item The samplers and their internal configurations, called control parameters
+    \item Two sets of variables that will be monitored (recorded) during execution of the MCMC and thinning intervals for how often each set will be recorded. Two sets are allowed because it can be useful to monitor different variables at different intervals
 \end{itemize}
 
 \subsection{Default MCMC configuration}
@@ -105,34 +105,33 @@ The default sampler assigned to a stochastic node is determined by the following
 \begin{enumerate}
 \item If the node has no stochastic dependents, a \cd{posterior\_predictive} sampler is assigned.  This sampler sets the new value for the node simply by simulating from its distribution.
 \item If the node has a conjugate relationship between its prior distribution and the distributions of its stochastic dependents, a \cd{conjugate} (`Gibbs') sampler is assigned.
-\item If the node is binary-valued (strictly taking values 0 or 1), then a \cd{binary} sampler is assigned.  This sampler calculates the conditional probability for both possible node values and draws the new node value from the conditional distribution, in effect making a Gibbs sampler. 
 \item If the node follows a multinomial distribution, then a \cd{RW\_multinomial} sampler is assigned.  This is a discrete random-walk sampler in the space of multinomial outcomes.
-\item If the node is otherwise discrete-valued, then a \cd{slice} sampler is assigned \citep{Neal2003}.
 \item If a node follows a Dirichlet distribution, then a \cd{RW\_dirichlet} sampler is assigned.  This is a random walk sampler in the space of the simplex defined by the Dirichlet.
-\item If the node follows a multivariate distribution, then a \cd{RW\_block} sampler is assigned for all elements.  This is a Metropolis-Hastings adaptive random-walk sampler with a multivariate normal proposal \citep{Roberts_Sahu_1997}.
+\item If the node follows any other  multivariate distribution, then a \cd{RW\_block} sampler is assigned for all elements.  This is a Metropolis-Hastings adaptive random-walk sampler with a multivariate normal proposal \citep{Roberts_Sahu_1997}.
+\item If the node is binary-valued (strictly taking values 0 or 1), then a \cd{binary} sampler is assigned.  This sampler calculates the conditional probability for both possible node values and draws the new node value from the conditional distribution, in effect making a Gibbs sampler.
+\item If the node is otherwise discrete-valued, then a \cd{slice} sampler is assigned \citep{Neal2003}.
 \item If none of the above criteria are satisfied, then a \cd{RW} sampler is assigned.  This is a Metropolis-Hastings adaptive random-walk sampler with a univariate normal proposal distribution.
 \end{enumerate}
+
+These sampler assignment rules can be inspected, reordered, and easily modified using the system option \cd{nimbleOptions("MCMCdefaultSamplerAssignmentRules")}, and customized  \cd{samplerAssignmentRules} objects.
 
 The default control parameters governing each of these samplers can be inspected and modified with \cd{nimbleOptions("MCMCcontrolDefaultList")}.  %These default values are described in Section \ref{sec:samplers-provided}, along with the related sampling algorithms.
 
 Details of each sampler and its control parameters can be found by invoking \cd{help(samplers)} in R with \cd{nimble} loaded.
 
-\subsubsection{Modifying the default sampler assignments}
+\subsubsection{Sampler assignment rules}
 
-\cd{configureMCMC} can take control arguments \cd{useConjugacy}, \cd{onlyRW}, \cd{onlySlice}, and \\
-\cd{multivariateNodesAsScalars} to modify default sampler assignments.
-These tell \cd{configureMCMC} whether to assign conjugate sampler
-when possible, whether to use only random walk or only slice samplers,
-and whether to sample scalar elements of multivariate nodes
-individually, respectively.  See \cd{help(configureMCMC)} for usage
-details.
+The behaviour of \cd{configureMCMC} can be customized to control how samplers are assigned.  A new set of sampler assignment rules can be created using \cd{samplerAssignmentRules()}, which can be modified using the \cd{addRule} and \cd{reorder} methods, then passed as an argument to \cd{configureMCMC}.  Alternatively, the default behaviour of \cd{configureMCMC} can be altered by setting the system option \cd{MCMCdefaultSamplerAssignmentRules} to a custom \cd{samplerAssignmentRules} object.  See \cd{help(samplerAssignmentRules)} for details.
+
+\subsubsection{Options to control default sampler assignments}
+
+As a lightweight alternative to using \cd{samplerAssignmentRules}, very basic control of default sampler assignments is provided via two arguments to \cd{configureMCMC}.  The \cd{useConjugacy} argument controls whether conjugate samplers are assigned when possible, and the \\
+\cd{multivariateNodesAsScalars} argument controls whether scalar elements of multivariate nodes are sampled individually. See \cd{help(configureMCMC)} for usage details.
 
 %% The following optional control arguments to \cd{configureMCMC()} may be used to override the default assignment of sampler algorithms:
 
 %% \begin{description}
 %% \item[useConjugacy (default \cd{TRUE})] If \cd{TRUE}, conjugate samplers will be assigned to nodes determined to be in conjugate relationships.  If \cd{FALSE}, no conjugate samplers will be assigned.
-%% \item[onlyRW (default \cd{FALSE})]  If \cd{TRUE}, \cd{RW} samplers will be assigned to all non-terminal, continuous-valued stochastic nodes.  Terminal stochastic nodes are still assigned \cd{posteriorpredictive} samplers.
-%% \item[onlySlice (default \cd{FALSE})]  If \cd{TRUE}, \cd{slice} samplers will be assigned to all non-terminal stochastic nodes.  Terminal stochastic nodes are still assigned \nm{posteriorpredictive} samplers.
 %% \item[multivariateNodesAsScalars (default \cd{FALSE})]  If \cd{TRUE}, then independent scalar random walk Metropolis-Hastings samplers (\cd{RW}) will be assigned to all scalar components comprising multivariate nodes.  This contrasts the default behavior of a single block sampler being assigned to multivariate nodes.  Regardless of the value of this argument, conjugate samplers will be assigned to conjugate (scalar and multivariate nodes), provided \cd{useConjugacy = TRUE}.
 %% \end{description}
 
@@ -163,6 +162,20 @@ If a data node is included in \cd{nodes}, \emph{it will be assigned a sampler}. 
 
 \subsubsection{Creating an empty configuration} 
 If you plan to customize the choice of all samplers, it can be useful to obtain a configuration with no sampler assignments at all.  This can be done by any of \cd{nodes = NULL}, \cd{nodes = character()}, or \cd{nodes = list()}. 
+
+\subsubsection{Overriding the default sampler assignment rules}
+The default rules used for assigning samplers to model nodes can be overridden using the \cd{rules} argument to \cd{configureMCMC}.  This argument must be an object of class \\
+\cd{samplerAssignmentRules}, which defines an ordered set of rules for assigning samplers.  Rules can be modified and reordered, to give different precedence to particular samplers, or to assign user-defined samplers (see section \ref{sec:user-samplers}).  The following example creates a new set of rules (which initially contains the default assignment rules), reorders the rules, adds a new rule, then uses these rules to create an MCMC configuration object.
+
+<<mcmcconfrules, eval=FALSE>>=
+my_rules <- samplerAssignmentRules()
+my_rules$reorder(c(8, 1:7))
+my_rules$addRule(condition = quote(model$getDistribution(node) == "dmnorm"),
+                 sampler = new_dmnorm_sampler)
+mcmcConf <- configureMCMC(Rmodel, rules = my_rules)
+@
+
+In addition, the default behaviour of \cd{configureMCMC} can be altered by setting the system option \cd{nimbleOptions(MCMCdefaultSamplerAssignmentRules = my\_rules)}, or reset to the original default behaviour using \cd{nimbleOptions(MCMCdefaultSamplerAssignmentRules = samplerAssignmentRules())}.
 
 \subsubsection{Overriding the default sampler control list values}
 The default values of control list elements for all sampling algorithms may be overridden through use of the \cd{control} argument to \cd{configureMCMC}, which should be a named list. 
@@ -734,7 +747,6 @@ The following code executes the following MCMC algorithms on the \cd{litters} ex
 \item WinBUGS
 \item JAGS
 \item NIMBLE default configuration
-\item NIMBLE configuration with argument \cd{onlySlice = TRUE}
 \item NIMBLE custom configuration using two \cd{crossLevel} samplers
 \end{enumerate}
 
@@ -745,7 +757,7 @@ output <- MCMCsuite(
     data = data,
     inits = inits,
     monitors = 'mu',
-    MCMCs = c('winbugs', 'jags', 'nimble', 'nimble_slice', 'nimble_CL'),
+    MCMCs = c('winbugs', 'jags', 'nimble', 'nimble_CL'),
     MCMCdefs = list(
         nimble_CL = quote({
             mcmcConf <- configureMCMC(Rmodel, nodes = NULL)
@@ -779,7 +791,6 @@ output$summary
 # winbugs      0.8795868 0.8889000 0.04349589 0.7886775 0.9205025
 # jags         0.8872778 0.8911989 0.02911325 0.8287991 0.9335317
 # nimble       0.8562232 0.8983763 0.12501395 0.4071524 0.9299781
-# nimble_slice 0.8975283 0.9000483 0.02350363 0.8451926 0.9367147
 # nimble_CL    0.8871314 0.8961146 0.05243039 0.7640730 0.9620532
 # 
 # , , mu[2]
@@ -787,7 +798,6 @@ output$summary
 # winbugs      0.7626974 0.7678000 0.04569705 0.6745975 0.8296025
 # jags         0.7635539 0.7646913 0.03803033 0.6824946 0.8313314
 # nimble       0.7179094 0.7246935 0.06061116 0.6058669 0.7970130
-# nimble_slice 0.7665562 0.7683093 0.04051432 0.6641368 0.8350716
 # nimble_CL    0.7605938 0.7655945 0.09138471 0.5822785 0.9568195
 \end{verbatim}
 
@@ -836,8 +846,6 @@ NIMBLE MCMC algorithms may be specified using the \cd{MCMCs} argument to \cd{MCM
 \item[\cd{"Stan"}]: Stan default MCMC algorithm 
 \item[\cd{"nimble"}]: NIMBLE MCMC using the default configuration 
 \item[\cd{"nimble\_noConj"}]: NIMBLE MCMC using the default configuration with \cd{useConjugacy = FALSE} 
-\item[\cd{"nimble\_RW"}]: NIMBLE MCMC using the default configuration with \cd{onlyRW = TRUE}
-\item[\cd{"nimble\_slice"}]: NIMBLE MCMC using the default configuration with \cd{onlySlice= TRUE}
 \item[\cd{"autoBlock"}]: NIMBLE MCMC algorithm with block sampling of dynamically determined parameter groups attempting to maximize sampling efficiency 
 \end{description}
 \ \\  % to fix spacing 

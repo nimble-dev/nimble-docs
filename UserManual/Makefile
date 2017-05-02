@@ -5,7 +5,7 @@ NimbleUserManual.pdf :	NimbleUserManual.Rnw chapter_*.Rnw *Table*tex
 
 includesMCMConly.pdf :	includesMCMConly.Rnw chapter_MCMC.Rnw
 	Rscript -e "library(knitr);  knit2pdf('includesMCMConly.Rnw')"
-	open includesMCMConly.pdf
+	open -a "Google Chrome" includesMCMConly.pdf
 
 NimbleUserManualNoEval.pdf :	NimbleUserManual.Rnw
 	Rscript makeNimbleUserManualNoEval.R 
