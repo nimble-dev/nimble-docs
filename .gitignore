@@ -10,6 +10,8 @@ UserManual/.Rapp.history
 
 UserManual/.Rhistory
 
+docs/.Rhistory
+
 *.gz
 
 *.pdf

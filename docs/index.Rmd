@@ -1,6 +1,6 @@
 # NIMBLE developer notes
 
-These pages are intended as quick guides for how to make some kinds of changes in NIMBLE's source code, how to follow various processing flows, and how find what you need from the internals of NIMBLE objects.
+These pages are intended as quick guides for how to make some kinds of changes in NIMBLE's source code, how to follow various processing flows, and how find what you need from the internals of NIMBLE objects.  For more information about NIMBLE, including the User Manual, please see [r-nimble.org](http://r-nimble.org).
 
 ## Some original developer notes on the GitHub Wiki.
 
