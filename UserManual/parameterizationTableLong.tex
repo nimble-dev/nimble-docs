@@ -57,8 +57,18 @@
      \texttt{dweib(shape, scale)} & canonical \\
      \texttt{dweib(shape, rate)} & \verb|dweib(shape, scale = 1 / rate)| \\
      \texttt{dweib(shape, lambda)} & \verb|dweib(shape, scale = lambda^(- 1 / shape)| \\
+     \texttt{dwish_chol(cholesky, df} & canonical (scale) \\
+       \hspace{5mm}\texttt{scale\_param=1)}          & \\
+     \texttt{dwish_chol(cholesky, df} & canonical (inverse scale) \\
+       \hspace{5mm}\texttt{scale\_param=0)}          & \\
      \texttt{dwish(R, df)} & \texttt{dwish(cholesky = chol(R), df, scale\_param = 0)}\\ 
      \texttt{dwish(S, df)} & \texttt{dwish(cholesky = chol(S), df, scale\_param = 1)}\\ 
+     \texttt{dinvwish_chol(cholesky, df} & canonical (scale) \\
+       \hspace{5mm}\texttt{scale\_param=1)}          & \\
+     \texttt{dinvwish_chol(cholesky, df} & canonical (inverse scale) \\
+       \hspace{5mm}\texttt{scale\_param=0)}          & \\
+     \texttt{dinvwish(R, df)} & \texttt{dinvwish(cholesky = chol(R), df, scale\_param = 0)}\\
+     \texttt{dinvwish(S, df)} & \texttt{dinvwish(cholesky = chol(S), df, scale\_param = 1)}\\
      \end{longtable}
   \end{center}
 %\end{table}

@@ -340,7 +340,7 @@ order.  NIMBLE knows that rate is an alternative to scale and that
 
 \input{parameterizationTableLong.tex}
 
-Note that for multivariate normal, multivariate t, and Wishart, the canonical
+Note that for multivariate normal, multivariate t, Wishart, and Inverse Wishart, the canonical
 parameterization uses the Cholesky decomposition of one of the
 precision/inverse scale or covariance/scale matrix. For example, for the multivariate normal, if  \cd{prec\_param=TRUE}, the \cd{cholesky} argument is treated as the Cholesky
 decomposition of a precision matrix.  Otherwise it is treated as the
@@ -359,7 +359,7 @@ In addition, NIMBLE supports alternative distribution names, known as aliases, a
 
 %TODO: WHAT IS THE STATUS OF THE NEXT STATEMENT?: I've added inverse gamma in 0.6-4 and will do inverse wishart in 0.6-5. Hopefully will get to some others as well soon-ish - CJP.
 
-We plan to, but do not currently, include the following distributions as part of core NIMBLE: double exponential (Laplace), beta-binomial, Dirichlet-multinomial, F, Pareto, inverse Wishart, or forms of the multivariate t other than the standard one provided. 
+We plan to, but do not currently, include the following distributions as part of core NIMBLE: double exponential (Laplace), beta-binomial, Dirichlet-multinomial, F, Pareto, or forms of the multivariate t other than the standard one provided. 
 % [F is easy to add as it has R functions]
 
 
