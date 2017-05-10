@@ -1,0 +1,150 @@
+---
+title: "How NIMBLE represents the graph of a model internally"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(nimble)
+```
+
+This document gives a guided tour of some internals of model objects in R with the goal of illustrating the concepts and data structures of a model defined by BUGS code.  It does not cover the C++ representation of the final directed acyclic graph (DAG).
+
+## Toy model
+
+Here is a toy model whose only purpose is to illustrate concepts:
+
+```{r}
+mc <- nimbleCode({
+    x[1:10] <- seq(.1, .2, length = 10)
+    y[1] <- sum(x[1:5])
+    y[2] <- sum(x[6:10])
+    z[1] <- sum(x[1:2])
+    z[2] ~ dnorm( mean = x[3] + sum(a[1:2]), sd = 1)
+})
+
+m <- nimbleModel(mc)
+```
+
+### Basics: what is the final graph?
+
+The final graph is simple enough that the `igraph` output and plot for it are useful:
+
+```{r}
+m$modelDef$graph
+library(igraph)
+plot(m$modelDef$graph)
+```
+
+Notice that some nodes were declared explicitly (`x[1:10]`) while others were inferred from right-hand side (RHS) expressions (`x[1:2]`).  Such "LHSinferred" nodes (yes, that is what they are called) are included as children of the larger node of which they are a part.  They require special handling during `getDependencies`.  They are also the reason for a fair bit of the complexity described below, which is why this toy model includes them.
+
+### The `modelDef` and `maps`
+
+The `modelDef` (model definition) contains all the information about a model's structure that is not specific to one instance of the model.  This is most of the interesting stuff.  The exception is that data labeling can be different for difference instances and so is in the `model`, not the `modelDef`.
+
+Within the `modelDef`, the trove of information about nodes and their relationships is in the `maps`, so-called because many of its objects provide a way to map between one kind of information and another such as a node name and a `graphID`.
+
+Let's extract the `maps` and look at its contents.
+
+```{r}
+maps <- m$modelDef$maps
+ls(maps)
+```
+
+Much of the content of `maps` is redundant information organized for fast lookup in different ways for different needs. We'll walk through pieces of this.
+
+### Nodes, RHSonly nodes, vertices, and elements
+
+When we talk casually about a graph for `nimbleFunction` purposes, we use "node" with multiple meanings.  For building and understanding the model, several distinct concepts have evolved:
+
+1. A "node with a nodeFunction", or "nodeFunction" for short, is an entity that appeared as a unit on the LHS of a BUGS declaration.  This means it will be calculated (simulated, etc.) as a unit via a nodeFunction.  Example: `x[1:10]`.
+
+2. A "RHSonly node" (right-hand-side-only node) is an entity that appeared only the RHS of a BUGS declaration *and was never part of something in a LHS declaration*.  Examples: `a[1:2]` is a RHSonly node.  `x[1:5]` is *not* a RHSonly node because it is part of `x[1:10]`.
+
+3. A "vertex" is anything represented in the graph.  This includes nodes and the smallest subsets of their elements that appear as a unit on the RHS (or their complements).  Examples: `x[1:2]`, `x[3]` and `x[4:5]` are vertices.  `x[1:5]` would have been a vertex if `x[1:2]` and `x[3]` had not been used separately, but we always split into smallest elements; notice that `x[1:2]`, `x[3]`, and `x[4:5]` all have `y[1]` as a childe.  `x[4:5]` never appears in the BUGS code but it is a vertex because it is the complement (what is left over) of splitting `x[1:5]` into `x[1:2]` and `x[3]`.  All vertices must use contiguous index blocks, so there can be multiple vertices created from the complement.
+
+4. An "element" is any scalar element of any variable.  Unfortunately, it appeared to be necessary to assign a unique `elementID` to every scalar element for construction and lookup purposes.
+
+The names and uses of `maps` variables related to these concepts can be confusing, partly because there are ambiguous names (for historical reasons that perhaps we should try to improve) and partly because the concepts need to be combined in particular ways.  For example, the `nodeNames` includes names of vertices (including nodeFunctions and RHSonly nodes).
+
+Let's look at some of these:
+
+```{r}
+maps$elementNames      ## a name for every scalar element
+maps$nodeNames         ## a name for everything in the graph
+maps$nodeNamesRHSonly  ## which are RHSonly
+maps$types             ## labels of node types
+cbind(maps$nodeNames, maps$types) ## types correspond to nodeNames
+```
+
+Note that vertices that are in the graph as if they had been on the LHS of a declaration are called "LHSinferred".  (One could argue that a better name would be "RHSinferred", since they were inferred to be necessary based on appearance on the RHS of a BUGS declaration.)
+
+#### The user-facing concept of "nodes"
+
+A user shouldn't need to think about elements vs. vertices vs. nodes.  They might need to think about RHSonly vs. stoch vs. determ nodes (and also data, but that's a label on some stochastic nodes, not a node type).  Hence the following:
+
+```{r}
+args(m$getNodeNames) ## fair bit of control
+m$getNodeNames()     ## nodeFunctions!
+m$getNodeNames(includeRHSonly = TRUE)  ## The full graph except split vertices
+```
+
+A purpose of splitting vertices as described above is to find dependencies correctly.  E.g. the dependencies of `x[2]` should include `x[1:10]`, `y[1]` and `z[1]`.  At the time of this writing there is a bug with a pending fix that returns all dependencies of `x[1:10]`.  In typical use this won't make algorithms wrong but it will make them slow by calculating more than necessary. 
+
+```{r}
+m$getDependencies('x[2]')
+```
+
+## various IDs: elementIDs, vertexIDs, and graphIDs
+
+The various IDs are important for looking up information and mapping between the different concepts.
+
+The `graphIDs` aligns with the `nodeNames` and `types`
+
+```{r}
+data.frame(maps$nodeNames, maps$graphIDs, maps$types)
+```
+
+The elementIDs are simply a unique integer for each scalar element.  Let's use those to illustrate the next concept about how some IDs are stored.
+
+### Storing IDs in environments with variables matching the model's variables
+
+Variables in the model can be matrices, arrays, etc.  We often need to go from character node names to various IDs in order to query graph relationships (and back to character names).  Early versions of procesing to do this became bottlenecks.  Eventually we settled on the following, illustrated for elementIDs
+
+```{r}
+maps$vars2ID_elements       ## this is an environment
+ls(maps$vars2ID_elements)   ## with variables matching those in the model
+maps$vars2ID_elements$x     ## variables are real size but contain IDs
+## which lets us use R's parser and evaluator to extract IDs from character code
+## of arbitrary model variable expressions
+eval(parse(text = 'x[3:7]', keep.source=FALSE)[[1]], envir = maps$vars2ID_elements)
+```
+
+See `parseEvalNumericMany` for how we do this efficiently for many cases in one `eval`.
+
+### Mapping from one kind of ID to another.
+
+Some elements of `maps` are integer vectors that convert one kind of ID to another.  For example, if we want to get the vertexIDs of scalar elements of `x`:
+
+```{r}
+maps$elementID_2_vertexID[maps$vars2ID_elements$x]
+```
+
+## Other content to be explained
+```{r}
+maps$vars2ID_elements$x
+maps$elementID_2_vertexID
+maps$elementID_2_vertexID[maps$vars2ID_elements$x]
+maps$vertexID_2_nodeID
+maps$vertexID_2_nodeID[maps$elementID_2_vertexID[maps$vars2ID_elements$x]]
+maps$graphID_2_nodeName
+maps$graphID_2_nodeFunctionName
+maps$nodeNamesRHSonly
+maps$vars2GraphID_functions$x
+maps$vars2GraphID_values$x
+maps$vars2GraphID_functions_and_RHSonly$x
+maps$vars2GraphID_functions$a
+maps$vars2GraphID_values$a
+maps$vars2GraphID_functions_and_RHSonly$a
+maps$vars2GraphID_values$x
+```

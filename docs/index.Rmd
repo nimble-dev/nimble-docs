@@ -24,3 +24,4 @@ We put some initial notes [here](https://github.com/nimble-dev/nimble/wiki/NIMBL
 
 7. [How to add a new C++ output generator](howTo_cppGeneration.html)
 
+8. [Internals of model graph information (nodes etc.)](model_graph_internals.html)

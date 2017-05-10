@@ -55,6 +55,8 @@ Size processors collect additional expressions, called `asserts`, that are later
 
 ## Tips, tricks, and useful size processors
 
+* How to find the size processor used for a function of interest: `nimble:::sizeCalls[['+']]`
+
 * `exprClasses_setSizes()`:  This is the entry point for any size processing.  In some cases it is called exlicitly for recursion, but usually recursion is done via a call to `recurseSetSizes`. See note above the `exprClasses_setSizes()` function in [genCpp_sizeProcessing.R](https://github.com/nimble-dev/nimble/blob/devel/packages/nimble/R/genCpp_sizeProcessing.R) for more information.
 * `sizeInsertIntermediate()`:  Used to lift an expression, creating an intermediate variable.  Useful especially in situations where a part of a line of code needs to be eigenized.  E.g., if we have `foo(bar(x), z)` and the size processor determines that bar(x) needs to be evaluated outside of the foo expression, using `asserts <- c(asserts, sizeInsertIntermediate(code, 1, symTab, typeEnv))` will result in `Interm32 <- bar(x)` as an assertion (where 32 is an arbitrary unique integer) and `foo(Interm32, z)` as the current code.  Note that `bar(x)` should already have been processed (by recursion) prior to lifting it to an intermediate.  
 * `sizeAssignAfterRecursing()`:  The main size processor for assignment operations.  Called after the right hand side of an assignment operation has been annotated.  This processor considers all valid combinations of left hand and right hand side types for an assignment operations, and as such is rather long.
