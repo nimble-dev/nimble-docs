@@ -272,21 +272,20 @@ nimbleList definitions can be created either in R's global environment or in \cd
 
 nimbleLists can also be passed as arguments to run code of nimbleFunctions and returned from nimbleFunctions.  To use a nimbleList as a run function argument, the name of the nimbleList definition should be provided as the argument type, with a set of parentheses following.  To return a nimbleList from the run code of a nimbleFunction, the \cd{returnType} of that function should be the name of the nimbleList definition, again using a following set of parentheses.
 
-Below, we demonstrate a function that takes the \cd{exampleNimList} as an argument, modifies its \cd{Y} element, and returns the nimbleList.  We note that nimbleFunctions that take nimbleLists as run arguments must have setup code.  For functions that need no setup code, setting \cd{setup = TRUE} will allow these functions to work correctly.
+Below, we demonstrate a function that takes the \cd{exampleNimList} as an argument, modifies its \cd{Y} element, and returns the nimbleList.
 
 <<exampleNimListFunction>>=
 mynf <- nimbleFunction(
-  setup = TRUE,
   run = function(vals = exampleNimListDef()){
     onesMatrix <- matrix(value = 1, nrow = 2, ncol = 2)
     vals$Y  <- onesMatrix
     returnType(exampleNimListDef())
     return(vals)
   })
-Rnf <- mynf()
+ 
+## pass exampleNimList as argument to mynf
+mynf(exampleNimList)
 
-## pass exampleNimList as argument to run function
-Rnf$run(exampleNimList)
 @
 
 nimbleList arguments to run functions are passed by reference -- this means that if an element of a nimbleList argument is modified within a function, that element will remain modified when the function has finished running.  To see this, we can inspect the value of the \cd{Y} element of the \cd{exampleNimList} object and see that it has been modified.

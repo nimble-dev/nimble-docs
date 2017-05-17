@@ -361,11 +361,13 @@ dimensions are supported for double, integer, and logical.  Only
 vectors (one dimension) are supported for character.  Unlike R, NIMBLE supports true
 scalars, which have 0 dimensions.
 
-% A nimbleList data structure can contain arbitrary other NIMBLE objects,
-% including other nimbleLists.  Like other NIMBLE types, nimbleLists are
-% strongly typed: each nimbleList is created from a configuration that
-% declares what types of objects it will hold.  nimbleLists are covered
-% in chapter (\ref{XYZ}).
+
+\subsection{\cd{nimbleList} data structures}
+\label{sec:nimbleList-RCFuns}
+
+A \cd{nimbleList} is a data structure that can contain arbitrary other NIMBLE objects, including other \cd{nimbleList}s.
+Like other NIMBLE types, nimbleLists are strongly typed: each \cd{nimbleList} is created from a configuration that
+declares what types of objects it will hold.  \cd{nimbleList}s are covered in Chapter \ref{sec:nimbleLists}.
 
 \subsection{How numeric types work}
 \label{sec:how-types-work}
