@@ -183,7 +183,8 @@ timeConf$addSampler(target = c("a", "b", "c", "mu_0"), type = "RW_PF_block",
   of the algorithm and calling nimbleFunctions for computations.  
   
   NIMBLE provides an ascent-based MCEM algorithm, created using \cd{buildMCEM}, that automatically determines when the algorithm has converged by examining 
-  the size of the changes in the likelihood between each iteration.  
+  the size of the changes in the likelihood between each iteration.  Additionally, the MCEM algorithm can provide an estimate of the asymptotic covariance matrix of the parameters.  An example of calculating the asymptotic covariance can be found in Section \ref{sec:estimate-mcem-cov}.
+  
   We will revisit the \nm{pump} example to illustrate the use of
   NIMBLE's MCEM algorithm.
   
@@ -259,11 +260,25 @@ The  \cd{mcmcControl} argument will be passed to \cd{configureMCMC} to define th
   
   In addition, the MCEM has some extra control options that can be used to further tune the convergence criterion.  See \cd{help(buildMCEM)} for more information.  
   
-Once an MCEM has been built for the model of interest, it can be run as follows. There is only one run-time argument, \cd{initM}, which is the number of MCMC iterations to use when the algorithm is initialized.
+The \cd{buildMCEM} function returns a list with two elements.  The first element is a function called \cd{run}, which will use the MCEM algorithm to estimate the MLEs.  The second function is called \cd{estimateCov}, and is described in Section \ref{sec:estimate-mcem-cov}.  The \cd{run} function can be run as follows. There is only one run-time argument, \cd{initM}, which is the number of MCMC iterations to use when the algorithm is initialized.
 
 <<run-MCEM, eval = runMCEMs>>=
-pumpMLE <- pumpMCEM(initM = 1000)
+pumpMLE <- pumpMCEM$run(initM = 1000)
 pumpMLE
 @ 
 
 Direct maximization after analytically integrating over the latent nodes (possible for this model but often not feasible) gives estimates of $\hat\alpha=0.823$ and $\hat\beta = 1.261$, so the MCEM seems to do pretty well, though tightening the convergence criteria may be warranted in actual usage. 
+
+\subsection{Estimating the Asymptotic Covariance From MCEM}
+\label{sec:estimate-mcem-cov}
+
+The second element of the list returned by a call to \cd{buildMCEM} is a function called \cd{estimateCov}, which estimates the asymptotic covariance of the parameters at their MLE values.  If the \cd{run} function has been called previously, the \cd{estimateCov} function will automatically use the MLE values produced by the \cd{run} function to estimate the covariance.  Alternatively, a user can supply their own MLE values using the \cd{MLEs} argument, which allows the covariance to be estimated without having called the \cd{run} function. More details about the \cd{estimateCov} function can be found by calling \cd{help(buildMCEM)}.  Below is an example of using the \cd{estimateCov} function.
+
+<<run-MCEM-cov, eval = runMCEMs>>=
+pumpCov <- pumpMCEM$estimateCov()
+pumpCov
+
+##alternatively, you can manually specify the MLE values as a named vector.
+pumpCov <- pumpMCEM$estimateCov(MLEs = c(alpha = 0.823, beta = 1.261))
+@ 
+
