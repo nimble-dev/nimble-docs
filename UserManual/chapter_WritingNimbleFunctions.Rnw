@@ -128,7 +128,7 @@ Some of the useful tools and objects to create in setup functions include:
   \cd{getNodeNames}, \\\cd{getDependencies}, and other methods of a model,
   described in Sections \ref{sec:accessing-variables}-\ref{sec:nodeInfo}.
 \item[modelValues objects] These are discussed in Sections \ref{sec:modelValues-struct} and \ref{sec:access-model-modelv}.
-\item[nimbleList objects]  New instances of \cd{nimbleList}s can then
+\item[nimbleList objects]  New instances of \cd{nimbleList}s can
   be created from a nimbleList definition in either setup or run code. See Section \ref{sec:nimbleLists} for more information.
   % Comment: It is actually sketchy that we allow a nimbleList
   % definition to be created in setup code, because it would  have to
@@ -198,7 +198,7 @@ anywhere in the setup code.
 \section{Writing run code}
 \label{sec:nimble-lang-comp}
 
-In Chapter \ref{cha:RCfunctions} we described the functionality of the NIMBLE language that could be used in run code without setup code (typically in cases where no models, modelValues, or nimbleLists are needed).   Next we explain the additional features that allow use of models, modelValues, and nimbleLists in the run code. 
+In Chapter \ref{cha:RCfunctions} we described the functionality of the NIMBLE language that could be used in run code without setup code (typically in cases where no models or modelValues are needed).   Next we explain the additional features that allow use of models and modelValues in the run code. 
 
 \subsection{Driving models: \cd{calculate}, \cd{calculateDiff},
   \cd{simulate}, \cd{getLogProb}}
