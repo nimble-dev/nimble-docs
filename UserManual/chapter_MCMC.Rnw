@@ -121,7 +121,7 @@ Details of each sampler and its control parameters can be found by invoking \cd{
 
 \subsubsection{Sampler assignment rules}
 
-The behaviour of \cd{configureMCMC} can be customized to control how samplers are assigned.  A new set of sampler assignment rules can be created using \cd{samplerAssignmentRules()}, which can be modified using the \cd{addRule} and \cd{reorder} methods, then passed as an argument to \cd{configureMCMC}.  Alternatively, the default behaviour of \cd{configureMCMC} can be altered by setting the system option \cd{MCMCdefaultSamplerAssignmentRules} to a custom \cd{samplerAssignmentRules} object.  See \cd{help(samplerAssignmentRules)} for details.
+The behavior of \cd{configureMCMC} can be customized to control how samplers are assigned.  A new set of sampler assignment rules can be created using \cd{samplerAssignmentRules}, which can be modified using the \cd{addRule} and \cd{reorder} methods, then passed as an argument to \cd{configureMCMC}.  Alternatively, the default behavior of \cd{configureMCMC} can be altered by setting the system option \cd{MCMCdefaultSamplerAssignmentRules} to a custom \cd{samplerAssignmentRules} object.  See \cd{help(samplerAssignmentRules)} for details.
 
 \subsubsection{Options to control default sampler assignments}
 
@@ -175,7 +175,7 @@ my_rules$addRule(condition = quote(model$getDistribution(node) == "dmnorm"),
 mcmcConf <- configureMCMC(Rmodel, rules = my_rules)
 @
 
-In addition, the default behaviour of \cd{configureMCMC} can be altered by setting the system option \cd{nimbleOptions(MCMCdefaultSamplerAssignmentRules = my\_rules)}, or reset to the original default behaviour using \cd{nimbleOptions(MCMCdefaultSamplerAssignmentRules = samplerAssignmentRules())}.
+In addition, the default behavior of \cd{configureMCMC} can be altered by setting the system option \cd{nimbleOptions(MCMCdefaultSamplerAssignmentRules = my\_rules)}, or reset to the original default behavior using \cd{nimbleOptions(MCMCdefaultSamplerAssignmentRules = samplerAssignmentRules())}.
 
 \subsubsection{Overriding the default sampler control list values}
 The default values of control list elements for all sampling algorithms may be overridden through use of the \cd{control} argument to \cd{configureMCMC}, which should be a named list. 

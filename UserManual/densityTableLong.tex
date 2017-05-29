@@ -48,7 +48,7 @@
  %       \left(\frac{n}{m} \right)^{\frac{n}{2}} x^{\frac{n}{2} - 1} 
  %       \left\{1 + \frac{nx}{m} \right\}^{-\frac{(n + m)}{2}}$} & 0 & \\
  %     & $n > 0$, $m > 0$ \\
-      Flat (improper) & \cd{dflat()} & $\propto 1$ & & \\
+      Flat & \cd{dflat()} & $\propto 1$ (improper) & & \\
       Gamma       & \cd{dgamma(shape = r, rate = $\lambda$)} & 
       \multirow{2}{*}{
         $\frac{\textstyle \lambda^r x^{r - 1} \exp(-\lambda x)}
@@ -61,7 +61,7 @@
  %       {\textstyle \Gamma(r)}$
  %     } & $0$ & \\
  %     gamma       & $\lambda >0$, $b > 0$, $r > 0$ \\
-      Half Flat (improper) & \cd{dflat()} & $\propto 1$ & $0$ & \\
+      Half flat & \cd{dhalfflat()} & $\propto 1$ (improper) & $0$ & \\
       Inverse      & \cd{dinvgamma(shape = r,} & 
       \multirow{2}{*}{
         $\frac{\textstyle \lambda^r x^{-(r + 1)} \exp(-\lambda / x)}
@@ -140,18 +140,17 @@
  %     $\scriptstyle \text{max}(0,n_+ - m_1)$ & 
  %     $\scriptstyle \text{min}(n_1,m_1)$ \\
  %     hypergeometric & $0 \leq n_i$, $0 < m_1 \leq n_+$  \\
-      Wishart (FIXME - check) & \cd{dwish(R = R, df = k)} &
+      Wishart & \cd{dwish(R = R, df = k)} &
       \multirow{2}{*}{
-        $\frac{\textstyle |x|^{(k-p-1)/2} |R|^{k/2} \exp\{-\text{tr}(Rx/2)\}}
-               {\textstyle 2^{pk/2} \pi^{p(p-1)/4} \prod{i=1}{p} \Gamma((k+1-i)/2)}$
+        $\frac{\textstyle |x|^{(k-p-1)/2} |R|^{k/2} \exp\{-\text{tr}(Rx)/2\}}
+               {\textstyle 2^{pk/2} \pi^{p(p-1)/4} \prod_{i=1}{p} \Gamma((k+1-i)/2)}$
       } \\
       & $R \; p \times p$ pos. def., $k \geq p$ \\
-      Inverse Wishart (FIXME - check) & \cd{dinvwish(S = S, df = k)} &
+      Inverse & \cd{dinvwish(S = S, df = k)} &
       \multirow{2}{*}{
-        $\frac{\textstyle |x|^{-(k+p+1)/2} |S|^{k/2} \exp\{-\text{tr}(Sx^{-1}/2)\}}                           {\textstyle 2^{pk/2} \pi^{p(p-1)/4} \prod{i=1}{p} \Gamma((k+1-i)/2)}$
-      } \\
-      & $S \; p \times p$ pos. def., $k \geq p$ \\
-
+        $\frac{\textstyle |x|^{-(k+p+1)/2} |S|^{k/2} \exp\{-\text{tr}(Sx^{-1})/2\}}                           {\textstyle 2^{pk/2} \pi^{p(p-1)/4} \prod_{i=1}{p} \Gamma((k+1-i)/2)}$ } \\
+      Wishart & $S \; p \times p$ pos. def., $k \geq p$ \\
+ 
   %    Multivariate & \verb+x ~ dmt(mu,Omega,k)+ &
   %    \multirow{2}{*}{
   %      $\frac{\textstyle \Gamma \{(k+p)/2\}}{\textstyle \Gamma(k/2) (n\pi)^{p/2}}

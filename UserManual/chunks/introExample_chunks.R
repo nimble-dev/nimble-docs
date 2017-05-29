@@ -124,7 +124,7 @@ pumpMCEM <- buildMCEM(model = pump2, latentNodes = "theta[1:10]",
 # Note: buildMCEM returns an R function that contains a
 # nimbleFunction rather than a nimble function. That is why
 # pumpMCEM() is used here instead of pumpMCEM$run().
-pumpMLE <- pumpMCEM()
+pumpMLE <- pumpMCEM$run()
 
 pumpMLE
 

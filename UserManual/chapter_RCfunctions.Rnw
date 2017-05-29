@@ -637,7 +637,7 @@ useful information.
 
 
 
-\section{Declarating argument and return types}
+\section{Declaring argument and return types}
 \label{sec:decl-argum-return}
 
 NIMBLE requires that types of arguments and the type of the return value be
