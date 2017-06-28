@@ -51,8 +51,9 @@ opts_chunk$set(eval = TRUE, message = FALSE) ## turned off message() output
   \begin{center}
   \includegraphics[width=1.5in]{nimble-icon.png}
   \end{center}
-  \end{figure}
-  \href{http://r-nimble.org}{R-nimble.org}
+\end{figure}
+\href{http://r-nimble.org}{http://r-nimble.org} \\
+\href{https://github.com/nimble-dev/nimble-docs/blob/master/UserManual}
 }
 \maketitle
 % load these prior to building the manual, because otherwise they
