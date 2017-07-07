@@ -302,21 +302,21 @@ execution (i.e., by pressing Control-C).  Simply include
 be done.  If there has been an
 interrupt waiting to be handled, the process will stop and return control to R.
 
-\subsection{Optimization: \cd{optim}}
+\subsection{Optimization: \cd{optim} and \cd{nimOptim}}
 
 NIMBLE provides a \cd{nimOptim} function that partially implement's R's
 \cd{optim} function with some minor differences.  \cd{nimOptim} supports
-optimization methods "Nelder-Mead", "BFGS", "CG", "L-BFGS-B", but does not
-support methods "SANN" and "Brent". NIMBLE's \cd{nimOptim} supports gradients
-using user-provided functions if available or finite differences otherwise, but
-it does not currently support Hessian computations. Currently \cd{nimOptim}
-does not support extra \dots parameters to the function being optimized, but a
-work-around is to create a new \cd{nimbleFunction} that binds those fixed
-parameters. Finally, \cd{nimOptim} requires a \cd{nimbleList} datatype for the
-\cd{control} parameter, whereas R's \cd{optim} uses a simple R \cd{list}. To
-define the \cd{control} parameter, create a default value with the
-\cd{nimOptimDefaultControl} function, and set any desired fields. For example
-usage, see the unit tests in
+optimization methods ``Nelder-Mead'', ``BFGS'', ``CG'', ``L-BFGS-B'', but does
+not support methods ``SANN'' and ``Brent''. NIMBLE's \cd{nimOptim} supports
+gradients using user-provided functions if available or finite differences
+otherwise, but it does not currently support Hessian computations. Currently
+\cd{nimOptim} does not support extra parameters to the function being optimized
+(via \cd{\dots}), but a work-around is to create a new \cd{nimbleFunction} that
+binds those fixed parameters. Finally, \cd{nimOptim} requires a \cd{nimbleList}
+datatype for the \cd{control} parameter, whereas R's \cd{optim} uses a simple R
+\cd{list}. To define the \cd{control} parameter, create a default value with
+the \cd{nimOptimDefaultControl} function, and set any desired fields. For
+example usage, see the unit tests in
 \href{https://github.com/nimble-dev/nimble/blob/master/packages/nimble/inst/tests/test-optim.R}{tests/test-optim.R}.
 
 \subsection{``nim'' synonyms for some functions}
