@@ -317,7 +317,7 @@ parameters. Finally, \cd{nimOptim} requires a \cd{nimbleList} datatype for the
 define the \cd{control} parameter, create a default value with the
 \cd{nimOptimDefaultControl} function, and set any desired fields. For example
 usage, see the unit tests in
-\href{tests/test-optim.R}{https://github.com/nimble-dev/nimble/blob/master/packages/nimble/inst/tests/test-optim.R}.
+\href{https://github.com/nimble-dev/nimble/blob/master/packages/nimble/inst/tests/test-optim.R}{tests/test-optim.R}.
 
 \subsection{``nim'' synonyms for some functions}
 \label{sec:altern-keyw-some}
