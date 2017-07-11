@@ -14,4 +14,6 @@ includes*nly*
 *.out
 *.log
 *.toc
+*.bbl
+*.blg
 figure
