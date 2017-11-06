@@ -1,4 +1,44 @@
-# Planning to make dynamic (stochastic) indexing work
+# High-level summary of handling of dynamic indexing
+
+Dynamic indexing involves cases where the indexing of a variable in the model involves an unknown and is not a constant at the time of model definition. E.g.,
+
+```
+code <- nimbleCode({
+  for(i in 1:n) {
+        y[i] ~ dnorm(mu[k[i]+1], 1)
+        k[i] ~ dcat(p[1:4])
+     }
+     for(j in 2:5)
+        mu[j] ~ dnorm(0, 1)
+})
+```
+
+When we detect this scenario, we inject an additional hidden model variable, named along the lines of `.mu_unknownIndex`. Each `y[i]` is a dependent of `.mu_unknownIndex`, while each `mu[j]` has `.mu_unknownIndex` as a dependent. This hidden model variable allows us to easily account for the changing structure of the graph as the `k[i]` values change.
+
+We handle calculations in an inefficient, but robust way. `getDependencies(mu[j])` returns all of the `y` values, so any calculate and simulate calls will be carried out for all possible dependents, even if a given `y[i]` is not currently a dependent of the `mu[j]` that has been modified.
+
+Calculate and simulate calls check that current dynamic index values are within the range of possible indexes for a given variable. 
+
+Functionality for handling dynamic indexing is only turned on when `nimbleOptions(allowDynamicIndexing)` is TRUE.
+
+# Overview of processing stages for dynamic indexing
+
+Various stages of creating a model definition in `BUGS_modelDef.R` involve special processing for dynamic indexing. In some cases calls are made to code in `BUGS_BUGSdecl.R`.
+
+- `getSymbolicParentNodesRecurse`: We first detect the presence of a dynamic index in `getSymbolicParentNodesRecurse`, called from `genSymbolicParentNodes`. At this point, the parent nodes are of a form like this (for the case of the above example):
+   - `.USED_IN_INDEX(k[i])`
+   - `.mu_unknownIndex_mu_oBk_oBi_cB_plus_1_cB_context2[.DYN_INDEXED(k[i] + 
+    1)]`
+- `genUnknownIndexDeclarations`: This adds a temporary declaration to `declInfo` that declares the unknownIndex variable implicitly introduced in the previous step. The new declaration looks like:
+   - `.mu_unknownIndex_mu_oBk_oBi_cB_plus_1_cB_context2[.DYN_INDEXED(k[i] + 
+    1)] <- mu[.DYN_INDEXED(k[i] + 1)]`
+- `genVarInfo3`: `varInfo` for unknownIndex variables is not handled here (see next bullet), but note that for dynamically-indexed RHS variable, we do not learn anything about the variable dimensions because we do not look at the possible values of the dynamic index. 
+- `addUnknownIndexVars`: Create variables for unknownIndex variables in varInfo. This is done here and not in `genVarInfo3` because `genVarInfo3` does a bunch of processing we don't need for the unknownIndex vars. 
+- `findDynamicIndexParticipants`:
+
+[IN PROGRESS]
+
+# Some older notes:
 
 ## Some prototype cases:
 
