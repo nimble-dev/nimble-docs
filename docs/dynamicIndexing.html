@@ -123,32 +123,50 @@ $(document).ready(function () {
 <h1>High-level summary of handling of dynamic indexing</h1>
 <p>Dynamic indexing involves cases where the indexing of a variable in the model involves an unknown and is not a constant at the time of model definition. E.g.,</p>
 <pre><code>code &lt;- nimbleCode({
-  for(i in 1:n) {
+  for(i in 1:4) {
         y[i] ~ dnorm(mu[k[i]+1], 1)
         k[i] ~ dcat(p[1:4])
      }
      for(j in 2:5)
         mu[j] ~ dnorm(0, 1)
-})</code></pre>
-<p>When we detect this scenario, we inject an additional hidden model variable, named along the lines of <code>.mu_unknownIndex</code>. Each <code>y[i]</code> is a dependent of <code>.mu_unknownIndex</code>, while each <code>mu[j]</code> has <code>.mu_unknownIndex</code> as a dependent. This hidden model variable allows us to easily account for the changing structure of the graph as the <code>k[i]</code> values change.</p>
-<p>We handle calculations in an inefficient, but robust way. <code>getDependencies(mu[j])</code> returns all of the <code>y</code> values, so any calculate and simulate calls will be carried out for all possible dependents, even if a given <code>y[i]</code> is not currently a dependent of the <code>mu[j]</code> that has been modified.</p>
+})
+</code></pre>
+<p>When we detect this scenario, we inject an additional hidden model variable/node, named along the lines of <code>.mu_unknownIndex</code>. Each <code>y[i]</code> is a dependent of <code>.mu_unknownIndex</code>, while each <code>mu[j]</code> has <code>.mu_unknownIndex</code> as a dependent. This hidden model variable allows us to easily account for the changing structure of the graph as the <code>k[i]</code> values change.</p>
+<p>We handle calculations in an inefficient, but robust way. <code>getDependencies(mu[j])</code> returns all of the <code>y</code> values (because of the hidden node lying between ‘mu’ and ‘y’), so any calculate and simulate calls will be carried out for all possible dependents, even if a given <code>y[i]</code> is not currently a dependent of the <code>mu[j]</code> that has been modified.</p>
 <p>Calculate and simulate calls check that current dynamic index values are within the range of possible indexes for a given variable.</p>
-<p>Functionality for handling dynamic indexing is only turned on when <code>nimbleOptions(allowDynamicIndexing)</code> is TRUE.</p>
+<p>Functionality for handling dynamic indexing is only turned on when <code>nimbleOptions(allowDynamicIndexing)</code> is TRUE in version 0.6-6.</p>
 </div>
 <div id="overview-of-processing-stages-for-dynamic-indexing" class="section level1">
 <h1>Overview of processing stages for dynamic indexing</h1>
 <p>Various stages of creating a model definition in <code>BUGS_modelDef.R</code> involve special processing for dynamic indexing. In some cases calls are made to code in <code>BUGS_BUGSdecl.R</code>.</p>
 <ul>
-<li><code>getSymbolicParentNodesRecurse</code>: We first detect the presence of a dynamic index in <code>getSymbolicParentNodesRecurse</code>, called from <code>genSymbolicParentNodes</code>. At this point, the parent nodes are of a form like this (for the case of the above example):</li>
+<li><code>genSymbolicParentNodes</code>: We first detect the presence of a dynamic index in <code>getSymbolicParentNodesRecurse</code>, called from <code>genSymbolicParentNodes</code>. At this point, the parent nodes are of a form like this (for the case of the above example):
+<ul>
 <li><code>.USED_IN_INDEX(k[i])</code></li>
-<li><code>.mu_unknownIndex_mu_oBk_oBi_cB_plus_1_cB_context2[.DYN_INDEXED(k[i] +  1)]</code></li>
-<li><code>genUnknownIndexDeclarations</code>: This adds a temporary declaration to <code>declInfo</code> that declares the unknownIndex variable implicitly introduced in the previous step. The new declaration looks like:</li>
-<li><code>.mu_unknownIndex_mu_oBk_oBi_cB_plus_1_cB_context2[.DYN_INDEXED(k[i] +  1)] &lt;- mu[.DYN_INDEXED(k[i] + 1)]</code></li>
+<li><code>.mu_unknownIndex_mu_oBk_oBi_cB_plus_1_cB_context2[.DYN_INDEXED(k[i] +  1)]</code> Note that it appears that <code>.USED_IN_INDEX()</code> is only used for a check for nonscalar dynamic indexing. IIRC the original intention was that this would be used for dynamically updating the graph when such a node was modified.</li>
+</ul></li>
+<li><code>genUnknownIndexDeclarations</code>: This adds a temporary declaration to <code>declInfo</code> that declares the unknownIndex variable implicitly introduced in the previous step. Having this new declaration results in the unknownIndex ‘variable’ get created in the graph using our regular processing. Dynamically indexed variables are detected based on the <code>.DYN_INDEXED()</code> tagging. Plus, the declaration is needed to ensure the original indexed variable still appears for processing if it is a RHS only (e.g., if <code>mu</code> were RHS only in the example). The new declaration looks like:
+<ul>
+<li><code>.mu_unknownIndex_mu_oBk_oBi_cB_plus_1_cB_context2[.DYN_INDEXED(k[i] + 1)] &lt;- mu[.DYN_INDEXED(k[i] + 1)]</code></li>
+<li>the <code>type</code> of the declaration is <code>unknownIndex</code></li>
+<li>vertex splitting in <code>genExpandedNodeAndParentNames3</code> is done based on this new declaration</li>
+</ul></li>
 <li><code>genVarInfo3</code>: <code>varInfo</code> for unknownIndex variables is not handled here (see next bullet), but note that for dynamically-indexed RHS variable, we do not learn anything about the variable dimensions because we do not look at the possible values of the dynamic index.</li>
-<li><code>addUnknownIndexVars</code>: Create variables for unknownIndex variables in varInfo. This is done here and not in <code>genVarInfo3</code> because <code>genVarInfo3</code> does a bunch of processing we don’t need for the unknownIndex vars.</li>
-<li><code>findDynamicIndexParticipants</code>:</li>
+<li><code>addUnknownIndexVars</code>:
+<ul>
+<li>Create variables for unknownIndex variables in varInfo. This is done here and not in <code>genVarInfo3</code> because <code>genVarInfo3</code> does a bunch of processing we don’t need for the unknownIndex vars. unknownIndex vars are found based on <code>type=='unknownIndex'</code></li>
+<li>Also, add a vector, <code>unknownIndexNames</code>, to the modelDef that stores the unknownIndex variable names</li>
+</ul></li>
+<li><code>findDynamicIndexParticipants</code>: based on the <code>.DYN_INDEXED()</code> tagging, find dynamically indexed variables and:
+<ul>
+<li>add <code>dynamicIndexInfo</code> field to declInfo, containing the code that calculates the dynamic index and the range of possible index values based on the dimension of the indexed variable; thisinfo will be used to generate checks on legitimate index values in nodeFunctions</li>
+<li>in <code>symbolicParentNodes</code>, replace dynamic indexing in <code>[ ... ]</code> with <code>[NA]</code></li>
+<li>in <code>symbolicParentNodes</code>, strip out <code>.USED_IN_INDEX()</code></li>
+</ul></li>
+<li><code>addFullDimExtentToUnknownIndexDeclarations</code>: based on <code>type=='unknownIndex'</code> put full range of variable into targetExpr and symbolicParentNodes, e.g., <code>mu[1:5]</code> and <code>.mu_unknownIndex_mu_oBk_oBi_cB_plus_1_cB_context2[1:5]</code>. This info can then be used in our standard graph processing so that dependencies going through the unknownIndex var are handled properly with our usual processing.</li>
+<li><code>genExpandedNodeAndParentNames3</code>: as a result of our standard graph processing, the dependents of a dynamically-indexed node become dependents of the entire unknownIndex variable and the unknownIndex variable becomes a dependent of all relevant nodes that are dynamically-indexed. unknownIndex nodes are treated as LHSinferred so they are graph dependency calcs pass through them.</li>
+<li><code>stripUnknownIndexDeclarations</code>: remove the unknownIndex BUGS declarations added in <code>genUnknownIndexDeclarations</code> (based on <code>type=='unknownIndex'</code>) and the unknownIndex vars added to varInfo in <code>addUnknownIndexVars</code> (based on <code>unknownIndexNames</code>).</li>
 </ul>
-<p>[IN PROGRESS]</p>
 </div>
 <div id="some-older-notes" class="section level1">
 <h1>Some older notes:</h1>
